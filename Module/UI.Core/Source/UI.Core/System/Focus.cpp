@@ -119,8 +119,15 @@ namespace ZyPlugin::UI
 
     void Focus::Reveal(Handle Element)
     {
-        if (!mTree.IsAlive(Element) || mTree.IsPending(Element))
+        if (!mTree.IsAlive(Element))
         {
+            return;
+        }
+
+        // An element just shown has no frame yet, so it is brought into view once the layout gives it one.
+        if (mTree.IsPending(Element))
+        {
+            mRevealed = Element;
             return;
         }
 
@@ -159,6 +166,21 @@ namespace ZyPlugin::UI
                 Moved->Follow  = false;
             }
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Focus::Settle()
+    {
+        if (!mRevealed.IsValid() || (mTree.IsAlive(mRevealed) && mTree.IsPending(mRevealed)))
+        {
+            return false;
+        }
+
+        const Handle Asked = Exchange(mRevealed, Handle());
+        Reveal(Asked);
+        return true;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

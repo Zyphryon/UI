@@ -78,8 +78,15 @@ namespace ZyPlugin::UI
 
         /// \brief Scrolls every scrolling element holding an element so the element stands in its view.
         ///
+        /// \note An element not laid out yet is kept, and brought into view by \ref Settle once it is.
+        ///
         /// \param Element The element brought into view.
         void Reveal(Handle Element);
+
+        /// \brief Brings into view an element asked for before it was laid out, once a layout has placed it.
+        ///
+        /// \return `true` when it was brought into view, `false` when none was waiting or it still waits.
+        Bool Settle();
 
         /// \brief Checks whether a text field holds the keyboard, as a control taking typed text does.
         ///
@@ -255,6 +262,7 @@ namespace ZyPlugin::UI
         Ref<Dispatcher>    mDispatcher;
         Ref<Pointer>       mPointer;
         Handle             mFocused;
+        Handle             mRevealed;
         Sequence<Shortcut> mShortcuts;
     };
 }

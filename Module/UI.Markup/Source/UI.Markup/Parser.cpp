@@ -195,6 +195,29 @@ namespace ZyPlugin::UI
             Output = Length::Auto();
             return true;
         }
+        
+        const Text Content = StrTrim(Value.GetString());
+
+        if (Content.GetSize() >= 3 && StrEqualCaseInsensitive(Content.Slice(0, 3), "Fit"))
+        {
+            const Text Most = StrTrim(Content.Slice(3));
+
+            if (Most.IsEmpty())
+            {
+                Output = Length::Auto();
+                return true;
+            }
+
+            UInt         Cursor  = 0;
+            const Real32 Ceiling = StrExtractNumber<Real32>(Most, Cursor);
+
+            if (Cursor != Most.GetSize() || Ceiling <= 0.0f)
+            {
+                return false;
+            }
+            Output = Length::Fit(Ceiling);
+            return true;
+        }
 
         if (Real32 Share; ParsePercent(Value.GetString(), Share))
         {

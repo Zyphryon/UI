@@ -151,6 +151,7 @@ namespace ZyPlugin::UI
             Auto,        ///< The size the content asks for, the value being ignored.
             Pixel,       ///< The value, in pixels.
             Percent,     ///< The value as a share of the parent's room, over nought through one.
+            Fit,         ///< The size the content asks for, up to the value in pixels, its content scrolling past it.
         };
 
         /// The measure of the length, read the way its unit says.
@@ -193,6 +194,25 @@ namespace ZyPlugin::UI
                 return Value;
             case Unit::Percent:
                 return Value * Room;
+            case Unit::Fit:
+                return Min(Content, Value);
+            default:
+                return Content;
+            }
+        }
+
+        /// \brief Gets the size the length asks for before the parent's room is known.
+        ///
+        /// \param Content The size the content asks for, in pixels.
+        /// \return The size, in pixels, the content's for a share of the room, which is only known once placed.
+        ZY_INLINE constexpr Real32 Ask(Real32 Content) const
+        {
+            switch (Measure)
+            {
+            case Unit::Pixel:
+                return Value;
+            case Unit::Fit:
+                return Min(Content, Value);
             default:
                 return Content;
             }
@@ -204,6 +224,15 @@ namespace ZyPlugin::UI
         ZY_INLINE static constexpr Length Auto()
         {
             return Length();
+        }
+
+        /// \brief Creates a length taken from the content, up to a size it never grows past.
+        ///
+        /// \param Most The most it grows to, in pixels.
+        /// \return The length, which resolves to the content's size held under \p Most.
+        ZY_INLINE static constexpr Length Fit(Real32 Most)
+        {
+            return Length(Most, Unit::Fit);
         }
 
         /// \brief Creates a length of so many pixels.

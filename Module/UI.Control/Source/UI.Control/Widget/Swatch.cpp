@@ -13,7 +13,6 @@
 #include "Swatch.hpp"
 #include "Panel.hpp"
 #include "UI.Core/Element.hpp"
-#include "UI.Core/Facet/Visual/Look.hpp"
 #include "UI.Core/Interface.hpp"
 #include "UI.Core/Paint/Canvas.hpp"
 #include "UI.Core/System/Painter.hpp"
@@ -32,8 +31,7 @@ namespace ZyPlugin::UI
     Element Swatch::Create(Element Parent, Color Value, Text Style)
     {
         const Element Result = Panel::Create(Parent, Style);
-        Result.Add<Checker>();
-        Result.Obtain<Look>().Background = Value;
+        Result.Add<Checker>().Value = Value;
         return Result;
     }
 
@@ -62,7 +60,13 @@ namespace ZyPlugin::UI
         Target.Provide<Checker>();
 
         // The checker marks the boards drawn, between the shadow and fill so a colour's transparency shows.
-        Target.GetPainter().AddDrawer<Checker>(150, Painter::Draw::Create<&Swatch::OnPaint>());
+        const Ptr<Interface> Owner = AddressOf(Target);
+
+        Target.GetPainter().AddDrawer<Checker>(150, Painter::Draw::Create(
+            [Owner](Ref<Canvas> Board, ConstRef<Painter::Brush> Element)
+            {
+                OnPaint(* Owner, Board, Element);
+            }));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -70,9 +74,9 @@ namespace ZyPlugin::UI
 
     void Swatch::SetValue(Element Target, Color Value)
     {
-        if (Target.Obtain<Look>().Background != Value)
+        if (const ConstPtr<Checker> Shown = Target.Get<Checker>(); Shown && Shown->Value != Value)
         {
-            Target.Edit<Look>()->Background = Value;
+            Target.Edit<Checker>()->Value = Value;
         }
     }
 
@@ -81,19 +85,20 @@ namespace ZyPlugin::UI
 
     Color Swatch::GetValue(Element Target)
     {
-        const ConstPtr<Look> Shade = Target.Get<Look>();
-        return Shade ? Shade->Background : Color::Transparent();
+        const ConstPtr<Checker> Shown = Target.Get<Checker>();
+        return Shown ? Shown->Value : Color::Transparent();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Swatch::OnPaint(Ref<Canvas> Board, ConstRef<Painter::Brush> Element)
+    void Swatch::OnPaint(Ref<Interface> Owner, Ref<Canvas> Board, ConstRef<Painter::Brush> Element)
     {
-        const Rect   Frame = Element.Frame;
-        const Real32 Cell  = Min(Frame.GetWidth(), Frame.GetHeight()) * 0.5f;
+        const Rect              Frame = Element.Frame;
+        const Real32            Cell  = Min(Frame.GetWidth(), Frame.GetHeight()) * 0.5f;
+        const ConstPtr<Checker> Shown = Owner.Peek<Checker>(Element.Slot);
 
-        if (Cell <= 0.0f)
+        if (Cell <= 0.0f || !Shown)
         {
             return;
         }
@@ -114,5 +119,7 @@ namespace ZyPlugin::UI
                 Board.DrawRect(Rect(Left, Top, Min(Left + Cell, Frame.GetMaximumX()), Bottom), Dark);
             }
         }
+
+        Board.DrawRect(Frame, Color::Fade(Shown->Value, Element.Opacity), Element.Radius);
     }
 }

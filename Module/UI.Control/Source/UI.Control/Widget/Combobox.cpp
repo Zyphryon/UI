@@ -91,6 +91,9 @@ namespace ZyPlugin::UI
             else
             {
                 Popup::Show(Owner, Parts->Popup, Self);
+
+                // The pick opens in view however far down its list it stands.
+                Owner.Reveal(Listbox::GetSelected(Element(Owner, Self)).GetHandle());
             }
             return true;
         }

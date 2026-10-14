@@ -119,6 +119,12 @@ namespace ZyPlugin::UI
             Reflow();
         }
 
+        // An element asked into view before it was laid out is scrolled to now, and the scroll laid out at once.
+        if (mFocus.Settle())
+        {
+            Reflow();
+        }
+
         // Only a layout tells how large a tooltip or a menu came out, so one past an edge is moved back after it.
         if (mPointer.Fence())
         {

@@ -357,7 +357,7 @@
     },
     "Combobox.List": {
       "Base": "Listbox",
-      "Height": 120,
+      "Height": "Fit 120",
       "Background": "#00000000",
       "Padding": 0
     },

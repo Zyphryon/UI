@@ -492,9 +492,7 @@ namespace ZyPlugin::UI
                                           Shape.Padding.Bottom;
 
         // A share of the parent is unknown until the parent is placed, so here it asks only for its content.
-        Target.Sizes[Row] = Vector2(
-            Shape.Width.Measure  == Length::Unit::Pixel ? Shape.Width.Value  : Wide,
-            Shape.Height.Measure == Length::Unit::Pixel ? Shape.Height.Value : Tall);
+        Target.Sizes[Row] = Vector2(Shape.Width.Ask(Wide), Shape.Height.Ask(Tall));
         return Pending;
     }
 
