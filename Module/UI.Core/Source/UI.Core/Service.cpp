@@ -21,9 +21,17 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    UInt32 Services::Next()
+    UInt32 Services::Declare(UInt64 Key)
     {
-        static UInt32 Count = 0;
-        return Count++;
+        static Table<UInt64, UInt32> Registry;
+
+        if (const ConstPtr<UInt32> Known = Registry.Find(Key))
+        {
+            return * Known;
+        }
+
+        const UInt32 Index = static_cast<UInt32>(Registry.GetSize());
+        Registry.Assign(Key, Index);
+        return Index;
     }
 }

@@ -25,7 +25,7 @@ namespace ZyPlugin::UI
     concept IsFacet = requires { Type::kMarks; };
 
     /// \brief Provides the index each kind of facet is known by, handed out the first time the kind is named.
-    class Facets final
+    class ZY_API Facets final
     {
     public:
 
@@ -39,7 +39,7 @@ namespace ZyPlugin::UI
 
             if (kIndex == kMaxFacets)
             {
-                kIndex = Declare(IsInteractive<Type>());
+                kIndex = Declare(Hash<Type>(), IsInteractive<Type>());
             }
             return kIndex;
         }
@@ -47,10 +47,7 @@ namespace ZyPlugin::UI
         /// \brief Gets the kinds of facet the pointer stops at.
         ///
         /// \return The mask of their indices.
-        static ConstRef<Mask> GetInteractive()
-        {
-            return GetRegistry().Interactive;
-        }
+        static ConstRef<Mask> GetInteractive();
 
     private:
 
@@ -58,10 +55,13 @@ namespace ZyPlugin::UI
         struct Registry final
         {
             /// The index the next kind takes.
-            UInt32 Count = 0;
+            UInt32                Count = 0;
 
             /// The kinds the pointer stops at.
-            Mask   Interactive;
+            Mask                  Interactive;
+
+            /// The index of every kind handed out, keyed by the hash of its name.
+            Table<UInt64, UInt32> Names;
         };
 
         /// \brief Checks whether a kind of facet stops the pointer at an element holding it.
@@ -80,20 +80,17 @@ namespace ZyPlugin::UI
             }
         }
 
-        /// \brief Hands out the next index.
+        /// \brief Hands out the index of a kind, the next one unless another library already named it.
         ///
+        /// \param Key         The hash of the kind's name, the same in every library.
         /// \param Interactive The flag, `true` when the kind stops the pointer, `false` otherwise.
         /// \return The index the kind is known by from now on.
-        static UInt32 Declare(Bool Interactive);
+        static UInt32 Declare(UInt64 Key, Bool Interactive);
 
-        /// \brief Gets the registry, which is constant-initialized, so reaching it costs no guard.
+        /// \brief Gets the registry, held out of line so every library in the process shares the one.
         ///
         /// \return The registry of every kind handed out so far.
-        static Ref<Registry> GetRegistry()
-        {
-            static Registry kInstance;
-            return kInstance;
-        }
+        static Ref<Registry> GetRegistry();
     };
 
     /// \brief Defines the interface a store of facets of any one kind is reached through by the tree.

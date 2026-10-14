@@ -63,7 +63,7 @@ namespace ZyPlugin::UI
     };
 
     /// \brief Provides the index each type of service is known by, handed out the first time the type is named.
-    class Services final
+    class ZY_API Services final
     {
     public:
 
@@ -77,7 +77,7 @@ namespace ZyPlugin::UI
 
             if (kIndex == kUnset)
             {
-                kIndex = Next();
+                kIndex = Declare(Hash<Type>());
             }
             return kIndex;
         }
@@ -87,9 +87,10 @@ namespace ZyPlugin::UI
         /// The index a type of service holds until it is first asked for.
         static constexpr UInt32 kUnset = kMaximum<UInt32>;
 
-        /// \brief Hands out the next index.
+        /// \brief Hands out the index of a type, the next one unless another library already named it.
         ///
-        /// \return The index the next type of service is known by.
-        static UInt32 Next();
+        /// \param Key The hash of the type's name, the same in every library.
+        /// \return The index the type of service is known by from now on.
+        static UInt32 Declare(UInt64 Key);
     };
 }

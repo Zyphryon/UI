@@ -21,17 +21,41 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    UInt32 Facets::Declare(Bool Interactive)
+    ConstRef<Mask> Facets::GetInteractive()
+    {
+        return GetRegistry().Interactive;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    UInt32 Facets::Declare(UInt64 Key, Bool Interactive)
     {
         Ref<Registry> Entries = GetRegistry();
+
+        if (const ConstPtr<UInt32> Known = Entries.Names.Find(Key))
+        {
+            return * Known;
+        }
+
         ZY_ASSERT(Entries.Count < kMaxFacets, "Every index of the facet mask is taken");
 
         const UInt32 Index = Entries.Count++;
+        Entries.Names.Assign(Key, Index);
 
         if (Interactive)
         {
             Entries.Interactive.Set(Index);
         }
         return Index;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Ref<Facets::Registry> Facets::GetRegistry()
+    {
+        static Registry Instance;
+        return Instance;
     }
 }
