@@ -489,8 +489,10 @@ namespace ZyPlugin::UI
     {
         Ref<Link> Entry = Target.Get<Binding>()->Links[Index];
 
+        // A value may hold a key of the lexicon itself, which only showing it again reads in the new language.
         if (Entry.Phrase.IsEmpty())
         {
+            Show(Target, Index, true);
             return;
         }
 
@@ -657,7 +659,13 @@ namespace ZyPlugin::UI
 
         // Copied, since the writer may add a facet and move the binding under it.
         const Writer Write = Entry.Write;
-        const Datum  Value = Evaluate(Data, Entry);
+        Datum        Value = Evaluate(Data, Entry);
+
+        // A value written `@Key` shows as the phrase the lexicon holds under the key, and `@@` as one at sign.
+        if (const Text Words = Value.GetText(); IsLocalized(Words))
+        {
+            Value = Datum(Words[1] == '@' ? Words.Slice(1) : Lookup(Target, Words.Slice(1)));
+        }
 
         if (!Write.IsEmpty())
         {

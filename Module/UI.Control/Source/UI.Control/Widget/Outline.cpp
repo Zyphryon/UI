@@ -76,6 +76,7 @@ namespace ZyPlugin::UI
         Repeater::SetItemHeight(GetList(Result), Markup::GetNumber(Node, "ItemHeight", 0.0f));
         Repeater::BuildRows(Reader, GetList(Result), Node);
         SetMultiple(Result, Markup::GetBool(Node, "Multiple"));
+        SetUnfolded(Result, Markup::GetBool(Node, "Unfolded"));
         SetDraggable(Result, Markup::GetText(Node, "DragRows"), Markup::GetBool(Node, "DropBetween"));
 
         if (const ConstPtr<JsonValue> Shape = Markup::GetField(Node, "ItemTemplate"); Shape && Shape->IsString())
@@ -182,16 +183,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        const Digest Branch = GetBranch(Binder::GetModel(Owner.GetTree()), Path);
-
-        if (Expanded)
-        {
-            Own->Opened.Insert(Branch);
-        }
-        else
-        {
-            Own->Opened.Erase(Branch);
-        }
+        Mark(* Own, GetBranch(Binder::GetModel(Owner.GetTree()), Path), Expanded);
         Own->Stale = true;
     }
 
@@ -201,7 +193,94 @@ namespace ZyPlugin::UI
     Bool Outline::IsExpanded(Element Owner, Text Path)
     {
         const ConstPtr<Hierarchy> Own = Owner.Get<Hierarchy>();
-        return Own && Own->Opened.Contains(GetBranch(Binder::GetModel(Owner.GetTree()), Path));
+        return Own && Opens(* Own, GetBranch(Binder::GetModel(Owner.GetTree()), Path));
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Outline::SetOpen(Element Owner, UInt64 Key, Bool Open)
+    {
+        if (const Ptr<Hierarchy> Own = Owner.Get<Hierarchy>(); Own && Key != 0)
+        {
+            if (Mark(* Own, Digest(Key), Open))
+            {
+                Own->Stale = true;
+            }
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Outline::IsOpen(Element Owner, UInt64 Key)
+    {
+        const ConstPtr<Hierarchy> Own = Owner.Get<Hierarchy>();
+        return Own && Key != 0 && Opens(* Own, Digest(Key));
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    UInt64 Outline::GetKey(Element Owner, Text Path)
+    {
+        const ConstPtr<Model> Data = Binder::GetModel(Owner.GetTree());
+        const SInt            Open = StrFindLast(Path, '[');
+
+        if (!Data || Open <= 0 || Path.GetBack() != ']')
+        {
+            return 0;
+        }
+
+        UInt32 Index = 0;
+
+        for (UInt Cursor = static_cast<UInt>(Open) + 1; Cursor + 1 < Path.GetSize() && StrIsDigit(Path[Cursor]); ++Cursor)
+        {
+            Index = Index * 10 + static_cast<UInt32>(Path[Cursor] - '0');
+        }
+        return Data->GetKey(Path.Slice(0, static_cast<UInt>(Open)), Index);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Str Outline::Locate(Element Owner, UInt64 Key)
+    {
+        const ConstPtr<Hierarchy> Own  = Owner.Get<Hierarchy>();
+        const ConstPtr<Model>     Data = Binder::GetModel(Owner.GetTree());
+
+        return Own && Data && Key != 0 && !Own->Base.IsEmpty() ? Search(* Data, Own->Nested, Own->Base, Key) : Str();
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Outline::Reveal(Element Owner, UInt64 Key)
+    {
+        const Str Path = Locate(Owner, Key);
+
+        Select(Owner, Path);
+
+        if (const ConstPtr<Hierarchy> Own = Owner.Get<Hierarchy>(); Own && !Path.IsEmpty() && Own->Wanted.IsEmpty())
+        {
+            if (const SInt32 Found = Find(* Own, Path); Found >= 0)
+            {
+                Repeater::ScrollTo(GetList(Owner), static_cast<UInt32>(Found));
+            }
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Outline::SetUnfolded(Element Owner, Bool Unfolded)
+    {
+        if (const Ptr<Hierarchy> Own = Owner.Get<Hierarchy>(); Own && Own->Unfolded != Unfolded)
+        {
+            Own->Unfolded = Unfolded;
+            Own->Turned.Clear();
+            Own->Stale    = true;
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -242,7 +321,7 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            if (const Digest Branch = GetBranch(Data, Path.Slice(0, Cursor)); Own->Opened.Insert(Branch))
+            if (Mark(* Own, GetBranch(Data, Path.Slice(0, Cursor)), true))
             {
                 Opened = true;
             }
@@ -641,7 +720,7 @@ namespace ZyPlugin::UI
             // A record says it may hold children before it does, so a game fills them only once it is opened.
             const UInt32 Held = Data.GetCount(Children);
             Entry.Parent = Held > 0 || Data.GetBool(Flag);
-            Entry.Open   = Entry.Parent && Own.Opened.Contains(GetBranch(AddressOf(Data), Entry.Path));
+            Entry.Open   = Entry.Parent && Opens(Own, GetBranch(AddressOf(Data), Entry.Path));
 
             const Bool Descend = Entry.Open && Held > 0;
             Output.Append(Move(Entry));
@@ -651,6 +730,45 @@ namespace ZyPlugin::UI
                 Walk(Data, Own, Children, static_cast<UInt16>(Depth + 1), Output);
             }
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Str Outline::Search(ConstRef<Model> Data, Text Nested, Text List, UInt64 Key)
+    {
+        for (UInt32 Index = 0, Count = Data.GetCount(List); Index < Count; ++Index)
+        {
+            Str Record;
+            Record.Format<"{0}[{1}]">(List, Index);
+
+            if (Data.GetKey(List, Index) == Key)
+            {
+                return Record;
+            }
+
+            if (Str Found = Search(Data, Nested, Str::Join(Record, '.', Nested), Key); !Found.IsEmpty())
+            {
+                return Found;
+            }
+        }
+        return Str();
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Outline::Opens(ConstRef<Hierarchy> Own, Digest Branch)
+    {
+        return Own.Turned.Contains(Branch) != Own.Unfolded;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Outline::Mark(Ref<Hierarchy> Own, Digest Branch, Bool Open)
+    {
+        return Open != Own.Unfolded ? Own.Turned.Insert(Branch) : Own.Turned.Erase(Branch);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -88,17 +88,8 @@ namespace ZyPlugin::UI
         /// The item list holding the rows.
         Handle           List;
 
-        /// The column the rows are sorted by, or below nought for the model's order.
-        SInt32           Sorted     = -1;
-
-        /// `true` when the rows run from the last value to the first.
-        Bool             Descending = false;
-
         /// The name of the value records are grouped by ahead of the sorted column, as `Folder`, or empty for none.
         Str              Group;
-
-        /// `true` when the group whose value reads highest, as a set flag, comes first, `false` when the lowest does.
-        Bool             GroupDown  = true;
 
         /// The code ordering two records, or empty to order them by their values.
         Comparer         Compare;
@@ -109,20 +100,29 @@ namespace ZyPlugin::UI
         /// The model the rows were last ordered from, so one put in its place orders them again.
         Ptr<Model>       Source     = nullptr;
 
+        /// The width each column was last laid out at, in pixels.
+        Sequence<Real32> Widths;
+
+        /// The column the rows are sorted by, or below nought for the model's order.
+        SInt32           Sorted     = -1;
+
         /// The model's count of changes when the grid last looked at its list.
         UInt32           Revision   = 0;
 
         /// The stamp of the newest change to the list or to what its records hold when the rows were last ordered.
         UInt32           Deep       = 0;
 
-        /// `true` when the rows are to be ordered again at the next update.
-        Bool             Stale      = true;
-
-        /// The width each column was last laid out at, in pixels.
-        Sequence<Real32> Widths;
-
         /// The distance the press on a column's grip landed left of its heading's right edge, in pixels.
         Real32           Grab       = 0.0f;
+
+        /// `true` when the rows run from the last value to the first.
+        Bool             Descending = false;
+
+        /// `true` when the group whose value reads highest, as a set flag, comes first, `false` when the lowest does.
+        Bool             GroupDown  = true;
+
+        /// `true` when the rows are to be ordered again at the next update.
+        Bool             Stale      = true;
     };
 
     /// \brief Represents the grid, a table of the records of a model's list, a row per record and a column per value.
@@ -287,11 +287,11 @@ namespace ZyPlugin::UI
             /// The name of the value sorted by, or empty when no column sorts the rows.
             Str      Key;
 
-            /// `true` when the column runs from the last value to the first.
-            Bool     Descending = false;
-
             /// The name of the value the records are grouped by first, or empty for none.
             Str      Group;
+
+            /// `true` when the column runs from the last value to the first.
+            Bool     Descending = false;
 
             /// `true` when the group reading highest comes first.
             Bool     GroupDown  = true;

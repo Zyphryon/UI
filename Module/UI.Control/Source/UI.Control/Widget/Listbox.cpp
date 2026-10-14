@@ -223,7 +223,13 @@ namespace ZyPlugin::UI
     void Listbox::SetIndex(Element Owner, SInt32 Index)
     {
         // A position below nought or past the items picks none.
-        Select(Owner, Index >= 0 ? Widget::GetChild(GetList(Owner), static_cast<UInt32>(Index)) : Element());
+        const Element List = GetList(Owner);
+        const Element Item = Index >= 0 ? Widget::GetChild(List, static_cast<UInt32>(Index)) : Element();
+
+        if (Item.GetHandle() != List.Get<Choice>()->Selected)
+        {
+            Select(Owner, Item);
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

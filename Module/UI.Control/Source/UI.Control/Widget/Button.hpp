@@ -53,5 +53,15 @@ namespace ZyPlugin::UI
         /// \param Target  The button whose text changes.
         /// \param Content The text to show on it.
         static void SetText(Element Target, Text Content);
+
+    private:
+
+        /// \brief Runs a toggle button, turning its checked state over on a click.
+        ///
+        /// \param Owner   The interface routing the event, through which the turned state is reported as a change.
+        /// \param Message The event climbing through the button; only a click whose target is the button turns it.
+        /// \param Self    The handle of the toggle button whose checked state is turned over.
+        /// \return `false` always, so the click goes on to the button's action.
+        static Bool OnToggle(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
     };
 }

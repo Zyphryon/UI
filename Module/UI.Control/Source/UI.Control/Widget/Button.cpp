@@ -11,6 +11,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Button.hpp"
+#include "Checkbox.hpp"
 #include "Common.hpp"
 #include "Label.hpp"
 #include "Panel.hpp"
@@ -51,6 +52,15 @@ namespace ZyPlugin::UI
     {
         const Element Result = Create(Parent, Markup::GetText(Node, "Text"), Markup::GetText(Node, "Style", "Button"));
         Reader.Bind(Result, Node, "Text", Binder::PutText<&Button::SetText>());
+
+        // A button standing for a flag wears the checked state, which a toggle turns over itself.
+        Result.SetState(Widget::Checked(), Markup::GetBool(Node, "Checked"));
+        Reader.Bind(Result, Node, "Checked", Binder::PutState<&Widget::Checked>(), Binder::TakeState<&Widget::Checked>());
+
+        if (Markup::GetBool(Node, "Toggle"))
+        {
+            Widget::Govern(Result, Handler::Create<&Button::OnToggle>(), true);
+        }
         return Result;
     }
 
@@ -68,5 +78,19 @@ namespace ZyPlugin::UI
     void Button::SetText(Element Target, Text Content)
     {
         Label::SetText(GetLabel(Target), Content);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Button::OnToggle(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
+    {
+        if (Message.Kind == Signal::kClick && Message.Target == Self)
+        {
+            Owner.Dispatch(Event(Signal::kBegin, Self));
+            Checkbox::SetChecked(Owner, Self, !Owner.HasState(Self, Widget::Checked()));
+            Owner.Dispatch(Event(Signal::kEnd, Self));
+        }
+        return false;
     }
 }

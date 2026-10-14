@@ -31,17 +31,17 @@ namespace ZyPlugin::UI
             Focus,    ///< While the element or anything it holds has the keyboard.
         };
 
-        /// The key that runs it.
-        ZyInput::Key      Key       = ZyInput::Key::Unknown;
-
-        /// The modifier keys held with it, which must be exactly the ones of shift, control and alt held.
-        ZyInput::Modifier Modifiers = ZyInput::Modifier::None;
-
         /// The identifier of the action it runs, as \ref Interface::Bind binds one, or zero to run only its code.
         UInt64            Action    = 0;
 
         /// The code it runs instead of the action, or empty to run the action.
         Handler           Callback;
+
+        /// The key that runs it.
+        ZyInput::Key      Key       = ZyInput::Key::Unknown;
+
+        /// The modifier keys held with it, which must be exactly the ones of shift, control and alt held.
+        ZyInput::Modifier Modifiers = ZyInput::Modifier::None;
 
         /// Where the pointer or the keyboard must be, for a shortcut an element keeps.
         Scope             Where     = Scope::Anywhere;

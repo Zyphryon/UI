@@ -87,6 +87,18 @@ namespace ZyPlugin::UI
         /// The rows that exist, in no order.
         Sequence<Cell>     Cells;
 
+        /// The positions of every record picked, lowest first, the one at \ref Selected among them.
+        Sequence<UInt32>   Picked;
+
+        /// The states each row wears by a value of its record, bound when the row is made.
+        Sequence<RowState> RowStates;
+
+        /// The path of each record, in order, from the root, as `Scene[0].Children[2]`, for records named one by one.
+        Sequence<Str>      Records;
+
+        /// The paths of \ref Records, read once.
+        Sequence<Path>     Paths;
+
         /// The count of records the list holds, as the model last showed it.
         UInt32             Count      = 0;
 
@@ -114,29 +126,17 @@ namespace ZyPlugin::UI
         /// The height of the room the rows are seen through, as the last layout found it.
         Real32             View       = 0.0f;
 
-        /// `true` when control and shift pick several records together.
-        Bool               Multiple   = false;
-
-        /// The positions of every record picked, lowest first, the one at \ref Selected among them.
-        Sequence<UInt32>   Picked;
-
         /// The position a pick made with shift reaches from, or below nought for none.
         SInt32             Anchor     = -1;
+
+        /// `true` when control and shift pick several records together.
+        Bool               Multiple   = false;
 
         /// `true` when a right press on a row picks its record before the menu opens, unless it is picked already.
         Bool               RightPick  = true;
 
-        /// The states each row wears by a value of its record, bound when the row is made.
-        Sequence<RowState> RowStates;
-
         /// `true` when the records are named one by one rather than counted from one list.
         Bool               Named      = false;
-
-        /// The path of each record, in order, from the root, as `Scene[0].Children[2]`, for records named one by one.
-        Sequence<Str>      Records;
-
-        /// The paths of \ref Records, read once.
-        Sequence<Path>     Paths;
     };
 
     /// \brief Represents an item list, a scrolling column or grid of template rows, of which only those in view exist.

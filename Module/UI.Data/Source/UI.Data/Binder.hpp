@@ -379,7 +379,7 @@ namespace ZyPlugin::UI
         /// \param To     The path of the record they read from now, which may take more or fewer steps.
         static void Descend(Element Target, ConstRef<Path> From, ConstRef<Path> To);
 
-        /// \brief Reads one binding of an element written `@Key` again from the lexicon, and shows it.
+        /// \brief Reads a binding written `@Key` again from the lexicon and shows it, any other shown again as it is.
         ///
         /// \param Target The element holding the binding.
         /// \param Index  The index of the binding, which a field written out in place leaves alone.

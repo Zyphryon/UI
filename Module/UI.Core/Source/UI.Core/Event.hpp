@@ -93,6 +93,21 @@ namespace ZyPlugin::UI
         /// The control it happened to.
         Handle          Target;
 
+        /// The text typed, for text typed into the control.
+        Text              Content;
+
+        /// The other element a drag or a popup involves, as its signal says, or one naming nothing.
+        Handle            Other;
+
+        /// The pointer, in units of the interface.
+        Vector2           Position;
+
+        /// How far the wheel turned, in notches, or how far a drag moved, in units.
+        Vector2           Delta;
+
+        /// How many presses of the button in a row landed on the control, two making a double click.
+        UInt32           Count     = 1;
+
         /// The pointer button, for presses, drags, releases and clicks.
         ZyInput::Button   Button    = ZyInput::Button::Left;
 
@@ -101,21 +116,6 @@ namespace ZyPlugin::UI
 
         /// The modifier keys held, for the pointer's buttons and moves, the wheel and keys.
         ZyInput::Modifier Modifiers = ZyInput::Modifier::None;
-
-        /// The pointer, in units of the interface.
-        Vector2           Position;
-
-        /// How far the wheel turned, in notches, or how far a drag moved, in units.
-        Vector2           Delta;
-
-        /// The text typed, for text typed into the control.
-        Text              Content;
-
-        /// The other element a drag or a popup involves, as its signal says, or one naming nothing.
-        Handle            Other;
-
-        /// How many presses of the button in a row landed on the control, two making a double click.
-        UInt32           Count     = 1;
 
         /// \brief Constructs an event of a kind, targeting a control.
         ///

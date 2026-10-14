@@ -95,8 +95,8 @@ namespace ZyPlugin::UI
         /// The item list holding the rows.
         Handle            List;
 
-        /// The identifiers of the paths of the records whose branches are open.
-        Bag<Digest>       Opened;
+        /// The identifiers of the records whose branches stand turned from how every branch starts.
+        Bag<Digest>       Turned;
 
         /// The rows, in order, as the tree was last laid out.
         Sequence<Limb>    Limbs;
@@ -104,29 +104,32 @@ namespace ZyPlugin::UI
         /// The model the tree was last laid out from, so one put in its place lays it out again.
         Ptr<Model>        Source   = nullptr;
 
-        /// The model's count of changes when the tree view last looked at its list.
-        UInt32            Revision = 0;
-
-        /// The stamp of the newest change to the top list or to anything beneath it when the tree was last laid out.
-        UInt32            Deep     = 0;
-
-        /// `true` when the tree is to be laid out again at the next update.
-        Bool              Stale    = true;
-
         /// The path of a record to pick once the tree is next laid out, as one picked before its row existed.
         Str               Wanted;
 
         /// The kind rows are carried as and accept when dropped on, or empty when they are not dragged.
         Str               Carry;
 
-        /// `true` when a row dropped near another's edge lands beside it rather than in it.
-        Bool              Between  = false;
-
         /// The row showing the marker of where a row carried over it lands, or one naming nothing.
         Handle            Lit;
 
         /// The drop being reported, as \ref Outline::GetLanding reads it.
         Landing           Last;
+
+        /// The model's count of changes when the tree view last looked at its list.
+        UInt32            Revision = 0;
+
+        /// The stamp of the newest change to the top list or to anything beneath it when the tree was last laid out.
+        UInt32            Deep     = 0;
+
+        /// `true` when every branch starts open, so the turned ones are the closed ones.
+        Bool              Unfolded = false;
+
+        /// `true` when the tree is to be laid out again at the next update.
+        Bool              Stale    = true;
+
+        /// `true` when a row dropped near another's edge lands beside it rather than in it.
+        Bool              Between  = false;
     };
 
     /// \brief Represents a tree view of the records of a model list and, under each open one, its children, indented.
@@ -209,6 +212,46 @@ namespace ZyPlugin::UI
         /// \param Path  The path of the record, as `Scene[0].Children[2]`.
         /// \return `true` if it is, `false` otherwise.
         static Bool IsExpanded(Element Owner, Text Path);
+
+        /// \brief Opens or closes the branch of a record named by its key, without reporting it.
+        ///
+        /// \param Owner The tree view holding the record.
+        /// \param Key   The key of the record, as the model keeps it.
+        /// \param Open  The flag, `true` to show its children, `false` to hide them.
+        static void SetOpen(Element Owner, UInt64 Key, Bool Open);
+
+        /// \brief Checks whether the branch of a record named by its key is open.
+        ///
+        /// \param Owner The tree view holding the record.
+        /// \param Key   The key of the record, as the model keeps it.
+        /// \return `true` if it is, `false` otherwise.
+        static Bool IsOpen(Element Owner, UInt64 Key);
+
+        /// \brief Gets the key of a record, as the model keeps it.
+        ///
+        /// \param Owner The tree view holding the record.
+        /// \param Path  The path of the record, as `Scene[0].Children[2]`.
+        /// \return The key, or nought when the path names no keyed record.
+        static UInt64 GetKey(Element Owner, Text Path);
+
+        /// \brief Finds a record named by its key anywhere in the tree, open branches or closed.
+        ///
+        /// \param Owner The tree view holding the record.
+        /// \param Key   The key of the record, as the model keeps it.
+        /// \return The path of the record, or empty when the tree holds none with that key.
+        static Str Locate(Element Owner, UInt64 Key);
+
+        /// \brief Picks a record by its key alone, unreported, opening the branches above it and scrolling to its row.
+        ///
+        /// \param Owner The tree view to pick in.
+        /// \param Key   The key of the record, or nought to pick none.
+        static void Reveal(Element Owner, UInt64 Key);
+
+        /// \brief Changes whether every branch starts open, so only the ones closed by hand stay closed.
+        ///
+        /// \param Owner    The tree view whose branches start open or closed.
+        /// \param Unfolded The flag, `true` for branches to start open, `false` for them to start closed.
+        static void SetUnfolded(Element Owner, Bool Unfolded);
 
         /// \brief Lets control and shift pick several rows together.
         ///
@@ -334,6 +377,21 @@ namespace ZyPlugin::UI
         /// \return The digest the branch is held under while open.
         static Digest GetBranch(ConstPtr<Model> Data, Text Path);
 
+        /// \brief Checks whether a branch is open, turned from how every branch starts or not.
+        ///
+        /// \param Own    The facet of the tree view.
+        /// \param Branch The identifier of the record whose branch is checked.
+        /// \return `true` if the branch is open, `false` otherwise.
+        static Bool Opens(ConstRef<Hierarchy> Own, Digest Branch);
+
+        /// \brief Opens or closes a branch, keeping it among the turned ones when it differs from how branches start.
+        ///
+        /// \param Own    The facet of the tree view.
+        /// \param Branch The identifier of the record whose branch is opened or closed.
+        /// \param Open   The flag, `true` to open the branch, `false` to close it.
+        /// \return `true` if the branch changed, `false` when it stood that way already.
+        static Bool Mark(Ref<Hierarchy> Own, Digest Branch, Bool Open);
+
         /// \brief Lays the tree out again, keeping every record picked picked while it still has a row.
         ///
         /// \param Owner The tree view to lay out.
@@ -401,5 +459,14 @@ namespace ZyPlugin::UI
         /// \param Path The path of the record.
         /// \return The position of the row, or below nought when the record has none.
         static SInt32 Find(ConstRef<Hierarchy> Own, Text Path);
+
+        /// \brief Finds a record by its key in a list of the model and in the children of each of its records.
+        ///
+        /// \param Data   The model the records are read from.
+        /// \param Nested The name of the list each record holds its children in.
+        /// \param List   The path of the list to search.
+        /// \param Key    The key of the record.
+        /// \return The path of the record, or empty when the list holds none with that key.
+        static Str Search(ConstRef<Model> Data, Text Nested, Text List, UInt64 Key);
     };
 }
