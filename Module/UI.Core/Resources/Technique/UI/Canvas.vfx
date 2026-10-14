@@ -1,0 +1,70 @@
+{
+    "Properties": {
+        "Blend": {
+            "SrcColor": "SrcAlpha",
+            "DstColor": "OneMinusSrcAlpha",
+            "SrcAlpha": "One",
+            "DstAlpha": "OneMinusSrcAlpha"
+        },
+        "Depth": {
+            "Mask": false,
+            "Condition": "Always"
+        },
+        "Rasterizer": {
+            "Cull": "None",
+            "Scissor": true
+        },
+        "Layout": {
+            "Attributes": [
+                [0, "Float32x4",    0,  0, 1],
+                [1, "Float32x4",    0, 16, 1],
+                [2, "UIntNorm16x4", 0, 32, 1],
+                [3, "UIntNorm8x4",  0, 40, 1],
+                [4, "UIntNorm8x4",  0, 44, 1],
+                [5, "UInt16x4",     0, 48, 1],
+                [6, "Float32x1",    0, 56, 1]
+            ],
+            "Primitive": "TriangleList"
+        }
+    },
+    "Signature": {
+        "Textures": [
+            { "Name": "Atlas", "Frequency": "Material", "Register": 0 },
+            { "Name": "Image", "Frequency": "Material", "Register": 1 },
+            { "Name": "Layer", "Frequency": "Material", "Register": 2 }
+        ],
+        "Uniforms": [
+            { "Name": "Camera", "Frequency": "Frame", "Type": "Float4", "Count": 4 }
+        ]
+    },
+    "Program": {
+        "Defines": ["UI_SUBPIXEL=0.125", "UI_MATERIALS=256", "UI_TRANSFORMS=256"],
+        "Shaders": {
+            "GLSL": [
+                { "Path": "Canvas.glsl", "Stage": "Vertex"   },
+                { "Path": "Canvas.glsl", "Stage": "Fragment" }
+            ],
+            "HLSL": [
+                { "Path": "Canvas.hlsl", "Stage": "Vertex"   },
+                { "Path": "Canvas.hlsl", "Stage": "Fragment" }
+            ]
+        }
+    },
+    "Features": [
+        { "Name": "sRGB",    "Program": { "Defines": ["ENABLE_SRGB_TARGET"] } },
+        { "Name": "Encode",  "Program": { "Defines": ["ENABLE_SRGB_ENCODE"] } },
+        { "Name": "Solid",   "Properties": {
+            "Blend": { "SrcColor": "One", "DstColor": "Zero", "SrcAlpha": "One", "DstAlpha": "Zero" },
+            "Depth": { "Mask": true, "Condition": "Less" } } },
+        { "Name": "Behind",  "Properties": {
+            "Depth": { "Mask": false, "Condition": "Less" } } }
+    ],
+    "Preload": [
+        [ "sRGB" ],
+        [ "sRGB", "Encode" ],
+        [ "sRGB", "Solid" ],
+        [ "sRGB", "Behind" ],
+        [ "sRGB", "Encode", "Solid" ],
+        [ "sRGB", "Encode", "Behind" ]
+    ]
+}

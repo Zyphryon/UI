@@ -1,0 +1,202 @@
+{
+  "Fonts": {
+    "Body": "Resources://Font/MedievalSharp-Regular.fnt"
+  },
+  "Images": {
+    "Door": "Resources://Image/Door.tex"
+  },
+  "Colors": {
+    "Clear": "#00000000"
+  },
+  "Styles": {
+    "Button": {
+      "Sounds": {
+        "Hover": "Resources://Sound/Hover.snd",
+        "Press": "Resources://Sound/Press.snd",
+        "Click": "Resources://Sound/Click.snd"
+      }
+    },
+    "Featured": {
+      "Base": "Button",
+      "Gradient": {
+        "From": "#F0B94A",
+        "To": "#B5651D",
+        "Angle": 180
+      },
+      "Glow": {
+        "Color": "#F0D98F99",
+        "Blur": 14,
+        "Spread": 2
+      },
+      "InnerGlow": {
+        "Color": "#FFFFFF40",
+        "Blur": 6
+      },
+      "Animation": "Pulse",
+      "When": {
+        "Hover": {
+          "Glow": {
+            "Color": "#FFE9A8DD",
+            "Blur": 20,
+            "Spread": 4
+          }
+        }
+      }
+    },
+    "Featured.Label": {
+      "Base": "Button.Label",
+      "Tint": "#2A1A08"
+    },
+    "Framed": {
+      "Base": "Button",
+      "Background": "Clear",
+      "Shadow": {},
+      "Padding": [
+        22,
+        12
+      ],
+      "Image": {
+        "Source": "Door",
+        "Region": [
+          0,
+          0,
+          0.5,
+          1
+        ],
+        "Slice": 18,
+        "Tint": "#A89F8F"
+      },
+      "Transition": 0.15,
+      "When": {
+        "Hover": {
+          "Image": {
+            "Tint": "#FFE9A8"
+          }
+        },
+        "Press": {
+          "Image": {
+            "Tint": "#FFFFFF",
+            "Region": [
+              0.5,
+              0,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "Framed.Label": {
+      "Base": "Button.Label",
+      "Stroke": "#000000",
+      "StrokeWidth": 2
+    },
+    "Purse": {
+      "Base": "Label",
+      "Tint": "Gold",
+      "Stroke": "#2A1A08",
+      "StrokeWidth": 1,
+      "Enter": "FadeIn",
+      "Exit": "FadeOut"
+    },
+    "Checkbox": {
+      "Sounds": {
+        "Change": "Resources://Sound/Tick.snd"
+      }
+    },
+    "Muted": {
+      "Base": "Label",
+      "Size": 14,
+      "Tint": "#99A3B8"
+    },
+    "Rare": {
+      "Base": "Label",
+      "Size": 13,
+      "Tint": "Gold"
+    },
+    "Slots": {
+      "Gap": 6,
+      "Thumb": "Gold"
+    },
+    "Slots.Item": {
+      "Background": "Field",
+      "Border": "#3B404F",
+      "BorderWidth": 1,
+      "Radius": 4,
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Border": "Gold"
+        },
+        "Selected": {
+          "Background": "#2E6BDEA6",
+          "Border": "Gold"
+        },
+        "DropHover": {
+          "Border": "Gold",
+          "BorderWidth": 2,
+          "Glow": {
+            "Color": "#F0D98F80",
+            "Blur": 10
+          }
+        },
+        "Dragging": {
+          "Opacity": 0.35
+        }
+      }
+    },
+    "BagRow": {
+      "Radius": 4,
+      "Background": "Clear",
+      "Transition": 0.1,
+      "When": {
+        "DropHover": {
+          "Background": "#F0D98F40"
+        },
+        "Dragging": {
+          "Opacity": 0.35
+        }
+      }
+    },
+    "Slots.Count": {
+      "Base": "Label",
+      "Size": 16,
+      "Tint": "#FFFFFF",
+      "Alignment": "Center"
+    },
+    "Slots.Badge": {
+      "Background": "#E84D3D",
+      "Radius": 6,
+      "Width": 12,
+      "Height": 12
+    },
+    "Combobox.Popup": {
+      "Sounds": {
+        "Open": "Resources://Sound/Open.snd",
+        "Close": "Resources://Sound/Close.snd"
+      }
+    },
+    "Window": {
+      "Sounds": {
+        "Open": "Resources://Sound/Open.snd",
+        "Close": "Resources://Sound/Close.snd"
+      }
+    },
+    "Tooltip.Title": {
+      "Base": "Label",
+      "Size": 15,
+      "Tint": "Gold"
+    },
+    "Menu": {
+      "Sounds": {
+        "Open": "Resources://Sound/Open.snd",
+        "Close": "Resources://Sound/Close.snd"
+      }
+    },
+    "Menu.Item": {
+      "Sounds": {
+        "Click": "Resources://Sound/Click.snd"
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "Colors": {
+    "Edge": "#4D5466"
+  },
+  "Animations": {
+    "FadeIn": {
+      "Duration": 0.15,
+      "Easing": "OutQuad",
+      "Keys": [
+        {
+          "At": 0,
+          "Opacity": 0
+        },
+        {
+          "At": 1,
+          "Opacity": 1
+        }
+      ]
+    },
+    "FadeOut": {
+      "Duration": 0.12,
+      "Easing": "InQuad",
+      "Keys": [
+        {
+          "At": 0,
+          "Opacity": 1
+        },
+        {
+          "At": 1,
+          "Opacity": 0
+        }
+      ]
+    }
+  },
+  "Styles": {
+    "Ghost": {
+      "Opacity": 0.85,
+      "Shadow": {
+        "Color": "#00000073",
+        "Offset": [
+          0,
+          6
+        ],
+        "Blur": 14
+      }
+    },
+    "Tooltip": {
+      "Background": "#0F121AF5",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 5,
+      "Padding": [
+        8,
+        5
+      ],
+      "Gap": 4,
+      "Shadow": {
+        "Color": "#00000073",
+        "Offset": [
+          0,
+          4
+        ],
+        "Blur": 10
+      },
+      "Enter": "FadeIn",
+      "Exit": "FadeOut"
+    },
+    "Tooltip.Label": {
+      "Base": "Label",
+      "Size": 14
+    }
+  }
+}

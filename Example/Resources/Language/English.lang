@@ -1,0 +1,171 @@
+{
+    "Options": {
+        "Language": "Language",
+        "Scale":    "Interface scale, over the {Ui.Density:0}% the display asks for"
+    },
+    "Card": {
+        "About":   "A retained interface built from code, laid out by rows of a pane and drawn in a handful of batches. This paragraph is long on purpose, so it breaks into lines at the width of its card.",
+        "Vitals":  "Vitals",
+        "Health":  "Health {Player.Health:0} / {Player.HealthMax:0}",
+        "Mana":    "Mana {Player.Mana:0} / {Player.ManaMax:0}",
+        "Actions": "Actions",
+        "Attack":  "Attack",
+        "Flee":    "Flee",
+        "Cast":    "Cast"
+    },
+    "Chat": {
+        "Title":   "Chat",
+        "Sprites": "Sprites"
+    },
+    "Inventory": {
+        "Title": "Inventory ({Inventory})"
+    },
+    "Controls": {
+        "Title":     "Controls",
+        "Attack":    "Attack",
+        "AttackTip": "Strike the nearest foe",
+        "Defend":    "Defend",
+        "DefendTip": "Raise your shield until the next turn",
+        "Cast":      "Cast",
+        "CastTip":   "Not enough mana",
+        "Gate":      "Open Gate",
+        "Bag":       "Bag",
+        "BagTip":    "Drag items between the bag and the grid",
+        "Quit":      "Quit",
+        "ShowNames": "Show names",
+        "Loot":      "Loot automatically",
+        "Volume":    "Volume {Settings.Volume:0}%",
+        "VolumeTip": "Music and effects at {Settings.Volume:0}%",
+        "Quality":   "Quality"
+    },
+    "Quality": {
+        "Low":    "Low",
+        "Medium": "Medium",
+        "High":   "High",
+        "Ultra":  "Ultra",
+        "Custom": "Custom"
+    },
+    "Spells": {
+        "Title":    "Spells",
+        "Codex":    "Codex",
+        "CodexTip": "A long, wide read in a scroll viewer",
+        "Cast":     "Cast",
+        "Assign":   "Assign to bar",
+        "Slot1":    "Slot 1",
+        "Slot2":    "Slot 2",
+        "Slot3":    "Slot 3",
+        "Forget":   "Forget"
+    },
+    "Spell": {
+        "Fireball":  "Fireball",
+        "FrostNova": "Frost Nova",
+        "Heal":      "Heal",
+        "Blink":     "Blink",
+        "Missiles":  "Arcane Missiles",
+        "Shield":    "Shield",
+        "Lightning": "Lightning",
+        "Teleport":  "Teleport"
+    },
+    "Gallery": {
+        "Title":      "Character",
+        "Quest":      "Quest!",
+        "NameHint":   "Enter your name",
+        "ShowPurse":  "Show purse",
+        "Purse":      "{Player.Gold:0} gold",
+        "Easy":       "Easy",
+        "Normal":     "Normal",
+        "Hard":       "Hard",
+        "Advanced":   "Advanced",
+        "Permadeath": "Permadeath",
+        "Stats":      "Stats",
+        "Skills":     "Skills",
+        "Notes":      "Notes",
+        "StatsText":  "Level {Player.Level:0}, {Player.Gold:0} gold",
+        "SkillsText": "Swordplay, Archery",
+        "NotesText":  "Owes the guard 3 gold.",
+        "NotesHint":  "Write your notes",
+        "Epithet":    "{Player.Name}, Warden of the Northern Marches, Keeper of the Old Gate and Sworn Shield of the Realm"
+    },
+    "Bag": {
+        "Title":  "Bag ({Inventory} items)",
+        "Rare":   "rare",
+        "RowTip": "{Name}, {Count:0} in the bag",
+        "Rows":   "{Ui.Rows} rows built for {Inventory} records",
+        "Loot":   "Loot",
+        "Drop":   "Drop",
+        "Clear":  "Clear"
+    },
+    "Gate": {
+        "Title": "Open Gate",
+        "Text":  "A textured button: one door of the sheet, sliced in nine."
+    },
+    "Quit": {
+        "Title":   "Quit?",
+        "Message": "Leave the realm, {Player.Name}? Whatever was not saved is lost.",
+        "Quit":    "Quit",
+        "Stay":    "Stay"
+    },
+    "Codex": {
+        "Title":   "Codex",
+        "Help":    "Tab, shift and tab, and the arrows move the keyboard; enter tracks; page keys scroll.",
+        "Heading": "Beasts of the Northern Road",
+        "Track":   "Track",
+        "Top":     "Top",
+        "Close":   "Close"
+    },
+    "Danger": {
+        "Low":    "Low",
+        "Medium": "Medium",
+        "High":   "High",
+        "Deadly": "Deadly"
+    },
+    "Beast": {
+        "Wolf":     "Wolf",
+        "Wraith":   "Wraith",
+        "Troll":    "Troll",
+        "Boar":     "Boar",
+        "Harpy":    "Harpy",
+        "Basilisk": "Basilisk",
+        "Kobold":   "Kobold",
+        "Wyvern":   "Wyvern",
+        "Ghoul":    "Ghoul",
+        "Griffin":  "Griffin",
+        "Lich":     "Lich",
+        "Mimic":    "Mimic"
+    },
+    "Lore": {
+        "Wolf":     "Hunts in packs along the road; fire keeps it at bay.",
+        "Wraith":   "A cold shape in the fog that only silver touches.",
+        "Troll":    "Sleeps under bridges and turns to stone at dawn.",
+        "Boar":     "Charges anything that smells of iron.",
+        "Harpy":    "Steals shining things and drops them on travellers.",
+        "Basilisk": "Never meet its eyes; a mirror turns its gaze back.",
+        "Kobold":   "Sets traps in the mines and laughs from the dark.",
+        "Wyvern":   "Nests on the cliffs; its sting numbs for a day.",
+        "Ghoul":    "Haunts the old barrows and fears running water.",
+        "Griffin":  "Proud and loyal once tamed, which few have done.",
+        "Lich":     "Keeps its life in a jar hidden far from its tower.",
+        "Mimic":    "Looks like a chest. Count the hinges before you open it."
+    },
+    "Audio": {
+        "Title":   "Audio",
+        "Music":   "Music",
+        "Effects": "Effects",
+        "Voices":  "Voices",
+        "Apply":   "Apply"
+    },
+    "Editor": {
+        "Title":      "Editor",
+        "Open":       "Editor",
+        "OpenTip":    "A dock of panels: drag a tab out to float it, and a window onto a target to dock it",
+        "Scene":      "Scene",
+        "Properties": "Properties",
+        "Console":    "Console",
+        "Name":       "Name",
+        "Kind":       "Kind",
+        "Health":     "Health",
+        "Level":      "Level",
+        "Picked":     "Picked: {Editor.Picked}",
+        "Log":        "Drag the bars to share the room, double click one to fold a pane."
+    }
+}

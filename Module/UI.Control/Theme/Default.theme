@@ -1,0 +1,1268 @@
+{
+  "Fonts": {
+    "Body": null
+  },
+  "Colors": {
+    "Ink": "#D9DBE6",
+    "Gold": "#F0D98F",
+    "Field": "#1C2129",
+    "Edge": "#4D5466",
+    "Accent": "#2E6BDE",
+    "Raised": "#2E3645"
+  },
+  "Animations": {
+    "FadeIn": {
+      "Duration": 0.15,
+      "Easing": "OutQuad",
+      "Keys": [
+        {
+          "At": 0,
+          "Opacity": 0
+        },
+        {
+          "At": 1,
+          "Opacity": 1
+        }
+      ]
+    },
+    "FadeOut": {
+      "Duration": 0.12,
+      "Easing": "InQuad",
+      "Keys": [
+        {
+          "At": 0,
+          "Opacity": 1
+        },
+        {
+          "At": 1,
+          "Opacity": 0
+        }
+      ]
+    },
+    "Drop": {
+      "Duration": 0.16,
+      "Easing": "OutCubic",
+      "Keys": [
+        {
+          "At": 0,
+          "Opacity": 0,
+          "Translate": [
+            0,
+            -6
+          ]
+        },
+        {
+          "At": 1,
+          "Opacity": 1,
+          "Translate": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "Pop": {
+      "Duration": 0.18,
+      "Easing": "OutBack",
+      "Keys": [
+        {
+          "At": 0,
+          "Opacity": 0,
+          "Scale": 0.92
+        },
+        {
+          "At": 1,
+          "Opacity": 1,
+          "Scale": 1
+        }
+      ]
+    },
+    "Pulse": {
+      "Duration": 1.2,
+      "Repeat": 0,
+      "Easing": "InOutSine",
+      "Keys": [
+        {
+          "At": 0,
+          "Scale": 1
+        },
+        {
+          "At": 0.5,
+          "Scale": 1.06
+        },
+        {
+          "At": 1,
+          "Scale": 1
+        }
+      ]
+    },
+    "Spin": {
+      "Duration": 1,
+      "Repeat": 0,
+      "Easing": "Linear",
+      "Keys": [
+        {
+          "At": 0,
+          "Rotate": 0
+        },
+        {
+          "At": 1,
+          "Rotate": 360
+        }
+      ]
+    }
+  },
+  "Styles": {
+    "Label": {
+      "Font": "Body",
+      "Size": 16,
+      "Tint": "Ink"
+    },
+    "Title": {
+      "Base": "Label",
+      "Size": 22,
+      "Tint": "Gold"
+    },
+    "Card": {
+      "Background": "#FFFFFF0F",
+      "Border": "#3B404F",
+      "BorderWidth": 1,
+      "Radius": 10,
+      "Padding": 16,
+      "Gap": 10,
+      "Shadow": {
+        "Color": "#0000004D",
+        "Offset": [
+          0,
+          4
+        ],
+        "Blur": 12
+      }
+    },
+    "Button": {
+      "Background": "Raised",
+      "Radius": 6,
+      "Padding": [
+        12,
+        6
+      ],
+      "Shadow": {
+        "Color": "#00000059",
+        "Offset": [
+          0,
+          2
+        ],
+        "Blur": 6
+      },
+      "Transition": 0.12,
+      "When": {
+        "Hover": {
+          "Background": "#404A5E",
+          "Glow": {
+            "Color": [
+              "Gold",
+              0.18
+            ],
+            "Blur": 8
+          }
+        },
+        "Press": {
+          "Background": "#212633",
+          "Scale": 0.97
+        },
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        },
+        "Disabled": {
+          "Opacity": 0.45
+        }
+      }
+    },
+    "Button.Label": {
+      "Base": "Label",
+      "Size": 15,
+      "Tint": "#FFFFFF"
+    },
+    "Checkbox": {
+      "Gap": 8
+    },
+    "Checkbox.Box": {
+      "Width": 18,
+      "Height": 18,
+      "Background": "Field",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 4,
+      "Padding": 4,
+      "Transition": 0.12,
+      "When": {
+        "Hover": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        },
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Checkbox.Mark": {
+      "Background": "Gold",
+      "Radius": 2,
+      "Opacity": 0,
+      "Scale": 0.6,
+      "Transition": {
+        "Duration": 0.14,
+        "Easing": "OutBack"
+      },
+      "When": {
+        "Checked": {
+          "Opacity": 1,
+          "Scale": 1
+        }
+      }
+    },
+    "Checkbox.Label": {
+      "Base": "Label",
+      "Size": 15
+    },
+    "Slider": {
+      "Height": 6,
+      "Background": "Field",
+      "Radius": 3,
+      "Fill": "Accent"
+    },
+    "Slider.Thumb": {
+      "Width": 16,
+      "Height": 16,
+      "Radius": 8,
+      "Background": "#D1D6E6",
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF",
+          "Glow": {
+            "Color": [
+              "Gold",
+              0.35
+            ],
+            "Blur": 8,
+            "Spread": 1
+          }
+        },
+        "Press": {
+          "Background": "Gold"
+        },
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 2
+        }
+      }
+    },
+    "Listbox": {
+      "Background": "#0F121A",
+      "Radius": 6,
+      "Padding": 4,
+      "Gap": 2,
+      "Thumb": "Gold",
+      "Border": "#00000000",
+      "BorderWidth": 1,
+      "When": {
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "ListItem": {
+      "Padding": [
+        8,
+        4
+      ],
+      "Radius": 4,
+      "Background": "#00000000",
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF12"
+        },
+        "Marked": {
+          "Background": [
+            "Gold",
+            0.22
+          ]
+        },
+        "Selected": {
+          "Background": [
+            "Accent",
+            0.65
+          ]
+        },
+        "Disabled": {
+          "Opacity": 0.4,
+          "Background": "#00000000"
+        }
+      }
+    },
+    "ListItem.Label": {
+      "Base": "Label",
+      "Size": 14
+    },
+    "Repeater": {
+      "Background": "#0F121A",
+      "Radius": 6,
+      "Padding": 4,
+      "Gap": 2,
+      "Thumb": "Gold",
+      "Border": "#00000000",
+      "BorderWidth": 1,
+      "When": {
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Repeater.Item": {
+      "Base": "ListItem"
+    },
+    "Combobox": {
+      "Base": "Button",
+      "Gap": 8
+    },
+    "Combobox.Label": {
+      "Base": "Button.Label"
+    },
+    "Combobox.Arrow": {
+      "Base": "Button.Label",
+      "Tint": "#99A3B8"
+    },
+    "Combobox.Popup": {
+      "Background": "#14171FFA",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 6,
+      "Padding": 4,
+      "Shadow": {
+        "Color": "#00000073",
+        "Offset": [
+          0,
+          6
+        ],
+        "Blur": 16
+      },
+      "Enter": "Drop",
+      "Exit": "FadeOut"
+    },
+    "Combobox.List": {
+      "Base": "Listbox",
+      "Height": 120,
+      "Background": "#00000000",
+      "Padding": 0
+    },
+    "Radio": {
+      "Gap": 8
+    },
+    "Radio.Box": {
+      "Width": 18,
+      "Height": 18,
+      "Background": "Field",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 9,
+      "Padding": 4,
+      "Transition": 0.12,
+      "When": {
+        "Hover": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        },
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Radio.Mark": {
+      "Background": "Gold",
+      "Radius": 5,
+      "Opacity": 0,
+      "Scale": 0.6,
+      "Transition": {
+        "Duration": 0.14,
+        "Easing": "OutBack"
+      },
+      "When": {
+        "Checked": {
+          "Opacity": 1,
+          "Scale": 1
+        }
+      }
+    },
+    "Radio.Label": {
+      "Base": "Label",
+      "Size": 15
+    },
+    "Progress": {
+      "Height": 18,
+      "Background": "Field",
+      "Radius": 4,
+      "Fill": "Accent"
+    },
+    "Progress.Label": {
+      "Base": "Label",
+      "Size": 12,
+      "Tint": "Ink",
+      "Alignment": "Center"
+    },
+    "Tabs": {},
+    "Tabs.Header": {
+      "Gap": 2
+    },
+    "Tabs.Tab": {
+      "Base": "Button",
+      "Background": "#FFFFFF0A",
+      "Shadow": {},
+      "Gap": 6,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF1A"
+        },
+        "Selected": {
+          "Background": [
+            "Accent",
+            0.65
+          ]
+        }
+      }
+    },
+    "Tabs.Tab.Label": {
+      "Base": "Button.Label"
+    },
+    "Tabs.Close": {
+      "Background": "#00000000",
+      "Radius": 3,
+      "Padding": [
+        4,
+        0
+      ],
+      "Transition": 0.08,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF26"
+        },
+        "Press": {
+          "Background": "#FFFFFF40"
+        }
+      }
+    },
+    "Tabs.Close.Label": {
+      "Base": "Button.Label",
+      "Size": 12,
+      "Tint": "#C8CEDA"
+    },
+    "Tabs.Pages": {
+      "Padding": 8,
+      "Background": "Field",
+      "Radius": 6
+    },
+    "Expander": {
+      "Gap": 4
+    },
+    "Expander.Header": {
+      "Base": "Button",
+      "Gap": 8,
+      "Alignment": "Start"
+    },
+    "Expander.Header.Label": {
+      "Base": "Button.Label"
+    },
+    "Expander.Arrow": {
+      "Base": "Button.Label",
+      "Tint": "Gold"
+    },
+    "Expander.Content": {
+      "Padding": [
+        12,
+        4
+      ]
+    },
+    "Window": {
+      "Background": "#141720F2",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 8,
+      "Shadow": {
+        "Color": "#00000080",
+        "Offset": [
+          0,
+          8
+        ],
+        "Blur": 24
+      },
+      "Enter": "Pop",
+      "Exit": "FadeOut"
+    },
+    "Window.Bar": {
+      "Background": "#1F2430",
+      "Radius": 8,
+      "Padding": [
+        10,
+        6
+      ],
+      "Gap": 8
+    },
+    "Window.Title": {
+      "Base": "Title",
+      "Size": 18
+    },
+    "Window.Close": {
+      "Base": "Button",
+      "Padding": [
+        8,
+        2
+      ]
+    },
+    "Window.Close.Label": {
+      "Base": "Button.Label"
+    },
+    "Window.Content": {
+      "Padding": 12,
+      "Gap": 8
+    },
+    "Window.Edge": {},
+    "Window.Grip": {
+      "Background": "#FFFFFF14",
+      "Radius": 3,
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": [
+            "Gold",
+            0.45
+          ]
+        },
+        "Press": {
+          "Background": "Gold"
+        }
+      }
+    },
+    "Spinner": {
+      "Gap": 4,
+      "Background": "Field",
+      "Radius": 6,
+      "Padding": 2,
+      "When": {
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        },
+        "Disabled": {
+          "Opacity": 0.45
+        }
+      }
+    },
+    "Spinner.Decrease": {
+      "Base": "Button",
+      "Padding": [
+        8,
+        2
+      ]
+    },
+    "Spinner.Decrease.Label": {
+      "Base": "Button.Label"
+    },
+    "Spinner.Increase": {
+      "Base": "Button",
+      "Padding": [
+        8,
+        2
+      ]
+    },
+    "Spinner.Increase.Label": {
+      "Base": "Button.Label"
+    },
+    "Spinner.Label": {
+      "Base": "Label",
+      "Size": 15,
+      "Alignment": "Center"
+    },
+    "Textbox": {
+      "Background": "Field",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 4,
+      "Padding": [
+        8,
+        5
+      ],
+      "Transition": 0.12,
+      "When": {
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Textbox.Text": {
+      "Base": "Label",
+      "Size": 15
+    },
+    "Textbox.Hint": {
+      "Base": "Label",
+      "Size": 15,
+      "Tint": "#7A8294"
+    },
+    "Textbox.Caret": {
+      "Width": 2,
+      "Height": 16,
+      "Background": "Gold",
+      "Opacity": 0,
+      "When": {
+        "Focus": {
+          "Opacity": 1
+        }
+      }
+    },
+    "Textbox.Selection": {
+      "Background": [
+        "Accent",
+        0.45
+      ],
+      "Radius": 2
+    },
+    "Scalar": {
+      "Background": "Field",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 4,
+      "Transition": 0.12,
+      "When": {
+        "Hover": {
+          "Border": "#737D94",
+          "BorderWidth": 1
+        },
+        "Disabled": {
+          "Opacity": 0.45
+        }
+      }
+    },
+    "Scalar.Tag": {
+      "Base": "Label",
+      "Size": 13,
+      "Tint": "#FFFFFF",
+      "Background": "Raised",
+      "Radius": 3,
+      "Padding": [
+        6,
+        4
+      ]
+    },
+    "Scalar.Field": {
+      "Background": "#00000000",
+      "Border": "#00000000",
+      "BorderWidth": 1,
+      "Radius": 4,
+      "Padding": [
+        6,
+        3
+      ],
+      "Transition": 0.12,
+      "When": {
+        "Focus": {
+          "Background": "#0F121A",
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Scalar.Field.Text": {
+      "Base": "Textbox.Text"
+    },
+    "Scalar.Field.Hint": {
+      "Base": "Textbox.Hint"
+    },
+    "Scalar.Field.Caret": {
+      "Base": "Textbox.Caret"
+    },
+    "Scalar.Field.Selection": {
+      "Base": "Textbox.Selection"
+    },
+    "Axis.X": {
+      "Base": "Scalar.Tag",
+      "Background": "#C8463C"
+    },
+    "Axis.Y": {
+      "Base": "Scalar.Tag",
+      "Background": "#4FA34F"
+    },
+    "Axis.Z": {
+      "Base": "Scalar.Tag",
+      "Background": "#3C6EC8"
+    },
+    "Axis.W": {
+      "Base": "Scalar.Tag",
+      "Background": "#8C8C8C"
+    },
+    "Swatch": {
+      "Width": 40,
+      "Height": 22,
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 3
+    },
+    "Menu": {
+      "Background": "#14171FFA",
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 6,
+      "Padding": 4,
+      "Gap": 1,
+      "Shadow": {
+        "Color": "#00000073",
+        "Offset": [
+          0,
+          6
+        ],
+        "Blur": 16
+      },
+      "Enter": "Drop",
+      "Exit": "FadeOut"
+    },
+    "Menu.Item": {
+      "Padding": [
+        10,
+        4
+      ],
+      "Radius": 4,
+      "Gap": 18,
+      "Background": "#00000000",
+      "Transition": 0.08,
+      "When": {
+        "Hover": {
+          "Background": [
+            "Accent",
+            0.65
+          ]
+        },
+        "Selected": {
+          "Background": [
+            "Accent",
+            0.65
+          ]
+        },
+        "Disabled": {
+          "Opacity": 0.4,
+          "Background": "#00000000"
+        }
+      }
+    },
+    "Menu.Item.Label": {
+      "Base": "Label",
+      "Size": 14
+    },
+    "Menu.Shortcut": {
+      "Base": "Label",
+      "Size": 13,
+      "Tint": "#99A3B8"
+    },
+    "Menu.Arrow": {
+      "Base": "Label",
+      "Size": 13,
+      "Tint": "Gold"
+    },
+    "Menu.Separator": {
+      "Height": 1,
+      "Background": "Edge"
+    },
+    "Menu.Icon": {
+      "Base": "Label",
+      "Size": 14,
+      "Tint": "#99A3B8"
+    },
+    "Menu.Check": {
+      "Width": 14,
+      "Height": 14,
+      "Padding": 3,
+      "Radius": 3,
+      "Border": "Edge",
+      "BorderWidth": 1
+    },
+    "Menu.Check.Mark": {
+      "Background": "Gold",
+      "Radius": 1,
+      "Opacity": 0,
+      "Scale": 0.6,
+      "Transition": {
+        "Duration": 0.12,
+        "Easing": "OutBack"
+      },
+      "When": {
+        "Checked": {
+          "Opacity": 1,
+          "Scale": 1
+        }
+      }
+    },
+    "Menu.Heading": {
+      "Padding": [
+        10,
+        6,
+        10,
+        2
+      ]
+    },
+    "Menu.Heading.Label": {
+      "Base": "Label",
+      "Size": 12,
+      "Tint": "#99A3B8"
+    },
+    "Menubar": {
+      "Background": "#14171F",
+      "Padding": [
+        6,
+        2
+      ],
+      "Gap": 2
+    },
+    "Menubar.Title": {
+      "Padding": [
+        10,
+        4
+      ],
+      "Radius": 4,
+      "Background": "#00000000",
+      "Transition": 0.08,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF12"
+        },
+        "Selected": {
+          "Background": [
+            "Accent",
+            0.65
+          ]
+        },
+        "Disabled": {
+          "Opacity": 0.4,
+          "Background": "#00000000"
+        }
+      }
+    },
+    "Menubar.Title.Label": {
+      "Base": "Label",
+      "Size": 14
+    },
+    "Menubar.Trail": {
+      "Gap": 12
+    },
+    "Dropdown": {
+      "Base": "Button",
+      "Gap": 8
+    },
+    "Dropdown.Label": {
+      "Base": "Button.Label"
+    },
+    "Dropdown.Arrow": {
+      "Base": "Button.Label",
+      "Tint": "#99A3B8"
+    },
+    "Dialog": {
+      "Base": "Window",
+      "Width": 380
+    },
+    "Dialog.Bar": {
+      "Base": "Window.Bar"
+    },
+    "Dialog.Title": {
+      "Base": "Window.Title"
+    },
+    "Dialog.Close": {
+      "Base": "Window.Close"
+    },
+    "Dialog.Close.Label": {
+      "Base": "Window.Close.Label"
+    },
+    "Dialog.Content": {
+      "Base": "Window.Content",
+      "Gap": 14
+    },
+    "Dialog.Body": {
+      "Gap": 8
+    },
+    "Dialog.Message": {
+      "Base": "Label",
+      "Size": 15
+    },
+    "Dialog.Buttons": {
+      "Gap": 8
+    },
+    "Dialog.Button": {
+      "Base": "Button"
+    },
+    "Dialog.Button.Label": {
+      "Base": "Button.Label"
+    },
+    "Dialog.Default": {
+      "Base": "Button",
+      "Background": "Accent",
+      "When": {
+        "Hover": {
+          "Background": "#4585F2"
+        }
+      }
+    },
+    "Dialog.Default.Label": {
+      "Base": "Button.Label"
+    },
+    "Modal.Backdrop": {
+      "Background": "#0000008C",
+      "Enter": "FadeIn",
+      "Exit": "FadeOut"
+    },
+    "Scrollbar": {
+      "Background": "#FFFFFF0A",
+      "Radius": 6,
+      "Padding": 2
+    },
+    "Scrollbar.Thumb": {
+      "Background": "Edge",
+      "Radius": 4,
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": "#737D94"
+        },
+        "Press": {
+          "Background": "Gold"
+        }
+      }
+    },
+    "Scroller": {
+      "Background": "#0F121A",
+      "Radius": 6,
+      "Border": "#00000000",
+      "BorderWidth": 1,
+      "Padding": 1,
+      "When": {
+        "Focus": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Scroller.Content": {
+      "Padding": 8,
+      "Gap": 6
+    },
+    "Scroller.Bar": {
+      "Base": "Scrollbar",
+      "Background": "#00000000"
+    },
+    "Scroller.Bar.Thumb": {
+      "Base": "Scrollbar.Thumb"
+    },
+    "Splitter": {},
+    "Splitter.Pane": {
+      "Gap": 6
+    },
+    "Splitter.Bar": {
+      "Background": "#FFFFFF0D",
+      "Radius": 3,
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": [
+            "Gold",
+            0.35
+          ]
+        },
+        "Press": {
+          "Background": "Gold"
+        }
+      }
+    },
+    "Grid": {
+      "Background": "#0F121A",
+      "Radius": 6,
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Padding": 1
+    },
+    "Grid.Viewer": {
+      "Base": "Scroller",
+      "Background": "#00000000",
+      "Radius": 0,
+      "Border": "#00000000",
+      "BorderWidth": 0,
+      "Padding": 0
+    },
+    "Grid.Viewer.Content": {
+      "Padding": 0,
+      "Gap": 0
+    },
+    "Grid.Viewer.Bar": {
+      "Base": "Scroller.Bar"
+    },
+    "Grid.Viewer.Bar.Thumb": {
+      "Base": "Scroller.Bar.Thumb"
+    },
+    "Grid.Header": {
+      "Background": "Raised"
+    },
+    "Grid.Heading": {
+      "Padding": [
+        8,
+        5
+      ],
+      "Gap": 4,
+      "Background": "#00000000",
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF0F"
+        },
+        "Press": {
+          "Background": "#FFFFFF1A"
+        }
+      }
+    },
+    "Grid.Heading.Label": {
+      "Base": "Label",
+      "Size": 14,
+      "Tint": "Gold"
+    },
+    "Grid.Sort": {
+      "Base": "Label",
+      "Size": 12,
+      "Tint": "Gold",
+      "Rotate": -90,
+      "Transition": 0.12,
+      "When": {
+        "Checked": {
+          "Rotate": 90
+        }
+      }
+    },
+    "Grid.Grip": {
+      "Background": "#FFFFFF14",
+      "Transition": 0.1,
+      "When": {
+        "Hover": {
+          "Background": [
+            "Gold",
+            0.35
+          ]
+        },
+        "Press": {
+          "Background": "Gold"
+        }
+      }
+    },
+    "Grid.List": {
+      "Base": "Repeater",
+      "Background": "#00000000",
+      "Radius": 0,
+      "Padding": 0,
+      "Gap": 0,
+      "When": {
+        "Focus": {
+          "Border": "#00000000",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Grid.List.Item": {
+      "Base": "ListItem",
+      "Padding": 0,
+      "Radius": 0,
+      "When": {
+        "Hover": {
+          "Background": "#FFFFFF0D"
+        },
+        "Marked": {
+          "Background": [
+            "Gold",
+            0.22
+          ]
+        },
+        "Selected": {
+          "Background": [
+            "Accent",
+            0.65
+          ]
+        }
+      }
+    },
+    "Grid.Cell": {
+      "Padding": [
+        8,
+        3
+      ]
+    },
+    "Grid.Cell.Label": {
+      "Base": "Label",
+      "Size": 14
+    },
+    "Outline": {
+      "Background": "#0F121A",
+      "Radius": 6,
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Padding": 1
+    },
+    "Outline.List": {
+      "Base": "Repeater",
+      "Background": "#00000000",
+      "Radius": 0,
+      "Padding": 3,
+      "Gap": 1,
+      "When": {
+        "Focus": {
+          "Border": "#00000000",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Outline.List.Item": {
+      "Base": "ListItem",
+      "Padding": [
+        4,
+        2,
+        6,
+        2
+      ],
+      "Gap": 2,
+      "When": {
+        "DropHover": {
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Outline.Marker": {
+      "Background": "Gold",
+      "Height": 2,
+      "Radius": 1
+    },
+    "Outline.Indent": {
+      "Width": 16
+    },
+    "Outline.Arrow": {
+      "Base": "Label",
+      "Size": 12,
+      "Tint": "Gold",
+      "Width": 16,
+      "Alignment": "Center",
+      "Rotate": 0,
+      "Transition": 0.12,
+      "When": {
+        "Checked": {
+          "Rotate": 90
+        },
+        "Hover": {
+          "Tint": "#FFFFFF"
+        },
+        "Disabled": {
+          "Opacity": 0
+        }
+      }
+    },
+    "Outline.Content": {
+      "Gap": 6
+    },
+    "Outline.Label": {
+      "Base": "Label",
+      "Size": 14
+    },
+    "Dock": {},
+    "Dock.Split": {
+      "Base": "Splitter"
+    },
+    "Dock.Split.Pane": {
+      "Base": "Splitter.Pane"
+    },
+    "Dock.Split.Bar": {
+      "Base": "Splitter.Bar"
+    },
+    "Dock.Region": {
+      "Base": "Tabs"
+    },
+    "Dock.Region.Header": {
+      "Base": "Tabs.Header"
+    },
+    "Dock.Region.Tab": {
+      "Base": "Tabs.Tab",
+      "Padding": [
+        10,
+        4
+      ],
+      "Radius": 4
+    },
+    "Dock.Region.Tab.Label": {
+      "Base": "Tabs.Tab.Label",
+      "Size": 13
+    },
+    "Dock.Region.Pages": {
+      "Base": "Tabs.Pages",
+      "Padding": 6
+    },
+    "Dock.Region.Page": {
+      "Gap": 6
+    },
+    "Dock.Panel": {
+      "Gap": 6
+    },
+    "Dock.Window": {
+      "Base": "Window"
+    },
+    "Dock.Window.Bar": {
+      "Base": "Window.Bar"
+    },
+    "Dock.Window.Title": {
+      "Base": "Window.Title",
+      "Size": 15
+    },
+    "Dock.Window.Close": {
+      "Base": "Window.Close"
+    },
+    "Dock.Window.Close.Label": {
+      "Base": "Window.Close.Label"
+    },
+    "Dock.Window.Content": {
+      "Base": "Window.Content",
+      "Padding": 8
+    },
+    "Dock.Overlay": {},
+    "Dock.Target": {
+      "Background": [
+        "Accent",
+        0.55
+      ],
+      "Border": "Edge",
+      "BorderWidth": 1,
+      "Radius": 6,
+      "Transition": 0.08,
+      "When": {
+        "DropHover": {
+          "Background": [
+            "Gold",
+            0.9
+          ],
+          "Border": "Gold",
+          "BorderWidth": 1
+        }
+      }
+    },
+    "Dock.Preview": {
+      "Background": [
+        "Gold",
+        0.14
+      ],
+      "Border": "Gold",
+      "BorderWidth": 1,
+      "Radius": 4
+    }
+  }
+}

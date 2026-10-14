@@ -1,0 +1,776 @@
+{
+  "Templates": {
+    "Heading": {
+      "Widget": "Label",
+      "Style": "Title"
+    },
+    "Setting": {
+      "Parameters": {
+        "Caption": "Unnamed",
+        "Start": 0.5
+      },
+      "Flow": "Row",
+      "Align": "Center",
+      "Gap": 12,
+      "Children": [
+        {
+          "Widget": "Label",
+          "Text": "$Caption",
+          "Width": 70
+        },
+        {
+          "Widget": "Slider",
+          "Value": "$Start",
+          "Grow": 1
+        }
+      ]
+    },
+    "Options": {
+      "Flow": "Row",
+      "Align": "Center",
+      "Gap": 8,
+      "Children": [
+        {
+          "Widget": "Combobox",
+          "Name": "Language",
+          "Width": 104,
+          "Action": "Language",
+          "Tooltip": "@Options.Language",
+          "Items": [
+            "English",
+            "Español"
+          ],
+          "Selected": 0
+        },
+        {
+          "Widget": "Combobox",
+          "Name": "Scale",
+          "Width": 84,
+          "Action": "Scale",
+          "Tooltip": "@Options.Scale",
+          "Items": [
+            "100%",
+            "125%",
+            "150%"
+          ],
+          "Selected": 0
+        }
+      ]
+    },
+    "Controls": {
+      "Layer": "Window",
+      "Style": "Card",
+      "Placement": "Absolute",
+      "Left": 24,
+      "Top": 408,
+      "Width": 844,
+      "Flow": "Row",
+      "Gap": 24,
+      "Children": [
+        {
+          "Gap": 12,
+          "Grow": 1,
+          "Children": [
+            {
+              "Widget": "Heading",
+              "Text": "@Controls.Title"
+            },
+            {
+              "Flow": "Row",
+              "Gap": 8,
+              "Children": [
+                {
+                  "Widget": "Button",
+                  "Text": "@Controls.Attack",
+                  "Action": "Attack",
+                  "Tooltip": "@Controls.AttackTip"
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Controls.Defend",
+                  "Action": "Defend",
+                  "Tooltip": "@Controls.DefendTip"
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Controls.Cast",
+                  "Disabled": true,
+                  "Tooltip": "@Controls.CastTip"
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Controls.Gate",
+                  "Style": "Framed",
+                  "Action": "Gate",
+                  "Tooltip": "GateTip"
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Controls.Bag",
+                  "Action": "Bag",
+                  "Tooltip": "@Controls.BagTip"
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Editor.Open",
+                  "Action": "Editor",
+                  "Tooltip": "@Editor.OpenTip"
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Controls.Quit",
+                  "Action": "AskQuit"
+                }
+              ]
+            },
+            {
+              "Widget": "Checkbox",
+              "Text": "@Controls.ShowNames",
+              "Checked": "{Settings.ShowNames}",
+              "Action": "ShowNames"
+            },
+            {
+              "Widget": "Checkbox",
+              "Text": "@Controls.Loot",
+              "Checked": "{Settings.Loot}",
+              "Action": "Loot"
+            },
+            {
+              "Widget": "Label",
+              "Text": "@Controls.Volume"
+            },
+            {
+              "Widget": "Slider",
+              "Value": "{Settings.Volume}",
+              "Maximum": 100,
+              "Tooltip": "@Controls.VolumeTip"
+            }
+          ]
+        },
+        {
+          "Gap": 12,
+          "Width": 300,
+          "Children": [
+            {
+              "Flow": "Row",
+              "Align": "Center",
+              "Children": [
+                {
+                  "Widget": "Heading",
+                  "Text": "@Spells.Title",
+                  "Grow": 1
+                },
+                {
+                  "Widget": "Button",
+                  "Text": "@Spells.Codex",
+                  "Action": "Codex",
+                  "Tooltip": "@Spells.CodexTip"
+                }
+              ]
+            },
+            {
+              "Widget": "Listbox",
+              "Height": 130,
+              "Action": "Spell",
+              "Items": [
+                "@Spell.Fireball",
+                "@Spell.FrostNova",
+                "@Spell.Heal",
+                "@Spell.Blink",
+                "@Spell.Missiles",
+                "@Spell.Shield",
+                "@Spell.Lightning",
+                "@Spell.Teleport"
+              ],
+              "ContextMenu": [
+                {
+                  "Text": "@Spells.Cast",
+                  "Action": "CastSpell",
+                  "Shortcut": "Enter"
+                },
+                {
+                  "Text": "@Spells.Assign",
+                  "Items": [
+                    {
+                      "Text": "@Spells.Slot1",
+                      "Action": "Assign1",
+                      "Shortcut": "1"
+                    },
+                    {
+                      "Text": "@Spells.Slot2",
+                      "Action": "Assign2",
+                      "Shortcut": "2"
+                    },
+                    {
+                      "Text": "@Spells.Slot3",
+                      "Action": "Assign3",
+                      "Shortcut": "3"
+                    }
+                  ]
+                },
+                "-",
+                {
+                  "Text": "@Spells.Forget",
+                  "Shortcut": "Del",
+                  "Disabled": true
+                }
+              ]
+            },
+            {
+              "Widget": "Label",
+              "Text": "@Controls.Quality"
+            },
+            {
+              "Widget": "Combobox",
+              "Action": "Quality",
+              "Selected": "{Settings.Quality}",
+              "Items": [
+                "@Quality.Low",
+                "@Quality.Medium",
+                "@Quality.High",
+                "@Quality.Ultra",
+                "@Quality.Custom"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Gallery": {
+      "Layer": "Window",
+      "Style": "Card",
+      "Placement": "Absolute",
+      "Left": 900,
+      "Top": 290,
+      "Width": 356,
+      "Gap": 10,
+      "Children": [
+        {
+          "Flow": "Row",
+          "Align": "Center",
+          "Children": [
+            {
+              "Widget": "Heading",
+              "Text": "@Gallery.Title",
+              "Grow": 1
+            },
+            {
+              "Widget": "Button",
+              "Text": "@Gallery.Quest",
+              "Style": "Featured",
+              "Action": "Quest"
+            }
+          ]
+        },
+        {
+          "Widget": "Textbox",
+          "Name": "PlayerName",
+          "Hint": "@Gallery.NameHint",
+          "Limit": 16,
+          "Text": "{Player.Name}"
+        },
+        {
+          "Widget": "Label",
+          "Style": "Muted",
+          "Text": "@Gallery.Epithet",
+          "Overflow": "Ellipsis"
+        },
+        {
+          "Flow": "Row",
+          "Align": "Center",
+          "Gap": 10,
+          "Children": [
+            {
+              "Widget": "Spinner",
+              "Name": "Level",
+              "Width": 120,
+              "Value": "{Player.Level}",
+              "Minimum": 1,
+              "Maximum": 60,
+              "Action": "Level"
+            },
+            {
+              "Widget": "Progress",
+              "Name": "Experience",
+              "Value": "{Player.Experience}",
+              "Grow": 1
+            }
+          ]
+        },
+        {
+          "Flow": "Row",
+          "Align": "Center",
+          "Gap": 10,
+          "Children": [
+            {
+              "Widget": "Checkbox",
+              "Text": "@Gallery.ShowPurse",
+              "Checked": "{Ui.ShowPurse}"
+            },
+            {
+              "Widget": "Label",
+              "Style": "Purse",
+              "Text": "@Gallery.Purse",
+              "Hidden": "{!Ui.ShowPurse}"
+            }
+          ]
+        },
+        {
+          "Flow": "Row",
+          "Gap": 14,
+          "Children": [
+            {
+              "Widget": "Radio",
+              "Text": "@Gallery.Easy",
+              "Checked": "{Settings.Easy}"
+            },
+            {
+              "Widget": "Radio",
+              "Text": "@Gallery.Normal",
+              "Checked": "{Settings.Normal}"
+            },
+            {
+              "Widget": "Radio",
+              "Text": "@Gallery.Hard",
+              "Checked": "{Settings.Hard}"
+            }
+          ]
+        },
+        {
+          "Widget": "Expander",
+          "Title": "@Gallery.Advanced",
+          "Children": [
+            {
+              "Widget": "Checkbox",
+              "Text": "@Gallery.Permadeath"
+            }
+          ]
+        },
+        {
+          "Widget": "Tabs",
+          "Height": 120,
+          "Selected": 2,
+          "Tabs": [
+            {
+              "Title": "@Gallery.Stats",
+              "Children": [
+                {
+                  "Widget": "Label",
+                  "Text": "@Gallery.StatsText"
+                }
+              ]
+            },
+            {
+              "Title": "@Gallery.Skills",
+              "Children": [
+                {
+                  "Widget": "Label",
+                  "Text": "@Gallery.SkillsText"
+                }
+              ]
+            },
+            {
+              "Title": "@Gallery.Notes",
+              "Children": [
+                {
+                  "Widget": "Textbox",
+                  "Name": "Notes",
+                  "Multiline": true,
+                  "Height": 72,
+                  "Hint": "@Gallery.NotesHint",
+                  "Text": "{Player.Notes}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "InventoryRow": {
+      "Style": "BagRow",
+      "Flow": "Row",
+      "Align": "Center",
+      "Gap": 8,
+      "Drag": "{Name}",
+      "DragKind": "Item",
+      "Drop": "Item",
+      "Tooltip": "@Bag.RowTip",
+      "Children": [
+        {
+          "Widget": "Label",
+          "Text": "{Name}",
+          "Grow": 1
+        },
+        {
+          "Widget": "Label",
+          "Style": "Rare",
+          "Text": "@Bag.Rare",
+          "Hidden": "{!Rare}"
+        },
+        {
+          "Widget": "Label",
+          "Style": "Muted",
+          "Text": "x{Count:0}"
+        }
+      ]
+    },
+    "Bag": {
+      "Widget": "Window",
+      "Title": "@Bag.Title",
+      "Left": 420,
+      "Top": 60,
+      "Width": 330,
+      "Children": [
+        {
+          "Widget": "Repeater",
+          "Name": "Items",
+          "Height": 230,
+          "Items": "{Inventory}",
+          "ItemTemplate": "InventoryRow",
+          "Selected": "{Ui.Picked}",
+          "Action": "Pick"
+        },
+        {
+          "Widget": "Label",
+          "Style": "Muted",
+          "Text": "@Bag.Rows"
+        },
+        {
+          "Flow": "Row",
+          "Gap": 8,
+          "Children": [
+            {
+              "Widget": "Button",
+              "Text": "@Bag.Loot",
+              "Action": "Gain"
+            },
+            {
+              "Widget": "Button",
+              "Text": "@Bag.Drop",
+              "Action": "Drop"
+            },
+            {
+              "Widget": "Button",
+              "Text": "@Bag.Clear",
+              "Action": "Clear"
+            }
+          ]
+        }
+      ]
+    },
+    "GateTip": {
+      "Gap": 2,
+      "Width": 220,
+      "Children": [
+        {
+          "Widget": "Label",
+          "Style": "Tooltip.Title",
+          "Text": "@Gate.Title"
+        },
+        {
+          "Widget": "Label",
+          "Style": "Tooltip.Label",
+          "Text": "@Gate.Text"
+        }
+      ]
+    },
+    "QuitDialog": {
+      "Widget": "Dialog",
+      "Title": "@Quit.Title",
+      "Message": "@Quit.Message",
+      "Buttons": [
+        {
+          "Text": "@Quit.Quit",
+          "Action": "Quit",
+          "Default": true
+        },
+        {
+          "Text": "@Quit.Stay",
+          "Action": "Stay",
+          "Cancel": true
+        }
+      ]
+    },
+    "Beast": {
+      "Parameters": {
+        "Kind": "Unknown",
+        "Lore": "",
+        "Danger": "@Danger.Low"
+      },
+      "Flow": "Row",
+      "Align": "Center",
+      "Gap": 10,
+      "Children": [
+        {
+          "Widget": "Label",
+          "Text": "$Kind",
+          "Width": 100
+        },
+        {
+          "Widget": "Label",
+          "Style": "Muted",
+          "Text": "$Lore",
+          "Width": 300
+        },
+        {
+          "Widget": "Label",
+          "Style": "Rare",
+          "Text": "$Danger",
+          "Width": 60
+        },
+        {
+          "Widget": "Button",
+          "Text": "@Codex.Track",
+          "Action": "Track"
+        }
+      ]
+    },
+    "Codex": {
+      "Widget": "Window",
+      "Title": "@Codex.Title",
+      "Left": 380,
+      "Top": 40,
+      "Width": 420,
+      "Children": [
+        {
+          "Widget": "Label",
+          "Style": "Muted",
+          "Text": "@Codex.Help"
+        },
+        {
+          "Widget": "Scroller",
+          "Name": "Pages",
+          "Height": 250,
+          "Children": [
+            {
+              "Widget": "Label",
+              "Style": "Title",
+              "Text": "@Codex.Heading"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Wolf",
+              "Lore": "@Lore.Wolf",
+              "Danger": "@Danger.Low"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Wraith",
+              "Lore": "@Lore.Wraith",
+              "Danger": "@Danger.High"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Troll",
+              "Lore": "@Lore.Troll",
+              "Danger": "@Danger.High"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Boar",
+              "Lore": "@Lore.Boar",
+              "Danger": "@Danger.Low"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Harpy",
+              "Lore": "@Lore.Harpy",
+              "Danger": "@Danger.Medium"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Basilisk",
+              "Lore": "@Lore.Basilisk",
+              "Danger": "@Danger.Deadly"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Kobold",
+              "Lore": "@Lore.Kobold",
+              "Danger": "@Danger.Low"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Wyvern",
+              "Lore": "@Lore.Wyvern",
+              "Danger": "@Danger.High"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Ghoul",
+              "Lore": "@Lore.Ghoul",
+              "Danger": "@Danger.Medium"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Griffin",
+              "Lore": "@Lore.Griffin",
+              "Danger": "@Danger.Medium"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Lich",
+              "Lore": "@Lore.Lich",
+              "Danger": "@Danger.Deadly"
+            },
+            {
+              "Widget": "Beast",
+              "Kind": "@Beast.Mimic",
+              "Lore": "@Lore.Mimic",
+              "Danger": "@Danger.Medium"
+            }
+          ]
+        },
+        {
+          "Flow": "Row",
+          "Gap": 8,
+          "Children": [
+            {
+              "Widget": "Button",
+              "Text": "@Codex.Top",
+              "Action": "CodexTop"
+            },
+            {
+              "Widget": "Button",
+              "Text": "@Codex.Close",
+              "Action": "Codex"
+            }
+          ]
+        }
+      ]
+    },
+    "Editor": {
+      "Widget": "Window",
+      "Title": "@Editor.Title",
+      "Left": 60,
+      "Top": 40,
+      "Width": 800,
+      "Children": [
+        {
+          "Widget": "Dock",
+          "Name": "Dock",
+          "Height": 430,
+          "Sizes": [
+            220,
+            0,
+            0,
+            100
+          ],
+          "Panels": [
+            {
+              "Name": "Scene",
+              "Title": "@Editor.Scene",
+              "Side": "Left",
+              "Children": [
+                {
+                  "Widget": "Outline",
+                  "Name": "Tree",
+                  "Items": "{Scene}",
+                  "Height": 330,
+                  "Selected": "{Editor.Picked}"
+                }
+              ]
+            },
+            {
+              "Name": "Properties",
+              "Title": "@Editor.Properties",
+              "Children": [
+                {
+                  "Widget": "Grid",
+                  "Name": "Entities",
+                  "Items": "{Entities}",
+                  "Height": 330,
+                  "Multiple": true,
+                  "Sort": "Name",
+                  "Columns": [
+                    {
+                      "Title": "@Editor.Name",
+                      "Key": "Name"
+                    },
+                    {
+                      "Title": "@Editor.Kind",
+                      "Key": "Kind",
+                      "Width": 100
+                    },
+                    {
+                      "Title": "@Editor.Level",
+                      "Key": "Level",
+                      "Width": 70,
+                      "Align": "End"
+                    },
+                    {
+                      "Title": "@Editor.Health",
+                      "Key": "Health",
+                      "Width": 80,
+                      "Align": "End"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Name": "Console",
+              "Title": "@Editor.Console",
+              "Side": "Bottom",
+              "Children": [
+                {
+                  "Widget": "Splitter",
+                  "Height": 56,
+                  "Panes": [
+                    {
+                      "Size": 380,
+                      "Children": [
+                        {
+                          "Widget": "Label",
+                          "Style": "Muted",
+                          "Text": "@Editor.Log"
+                        }
+                      ]
+                    },
+                    {
+                      "Children": [
+                        {
+                          "Widget": "Label",
+                          "Style": "Muted",
+                          "Text": "@Editor.Picked"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Audio": {
+      "Widget": "Window",
+      "Title": "@Audio.Title",
+      "Left": 560,
+      "Top": 120,
+      "Width": 300,
+      "Children": [
+        {
+          "Widget": "Setting",
+          "Caption": "@Audio.Music",
+          "Start": "{Audio.Music}"
+        },
+        {
+          "Widget": "Setting",
+          "Caption": "@Audio.Effects",
+          "Start": "{Audio.Effects}"
+        },
+        {
+          "Widget": "Setting",
+          "Caption": "@Audio.Voices"
+        },
+        {
+          "Widget": "Button",
+          "Text": "@Audio.Apply",
+          "Action": "Apply"
+        }
+      ]
+    }
+  }
+}

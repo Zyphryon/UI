@@ -1,0 +1,171 @@
+{
+    "Options": {
+        "Language": "Idioma",
+        "Scale":    "Escala de la interfaz, sobre el {Ui.Density:0}% que pide la pantalla"
+    },
+    "Card": {
+        "About":   "Una interfaz retenida construida desde código, dispuesta por filas de un panel y dibujada en un puñado de lotes. Este párrafo es largo a propósito, para que se parta en líneas al ancho de su tarjeta.",
+        "Vitals":  "Vitales",
+        "Health":  "Salud {Player.Health:0} / {Player.HealthMax:0}",
+        "Mana":    "Maná {Player.Mana:0} / {Player.ManaMax:0}",
+        "Actions": "Acciones",
+        "Attack":  "Atacar  ",
+        "Flee":    "Huir",
+        "Cast":    "Lanzar"
+    },
+    "Chat": {
+        "Title":   "Charla",
+        "Sprites": "Sprites"
+    },
+    "Inventory": {
+        "Title": "Inventario ({Inventory})"
+    },
+    "Controls": {
+        "Title":     "Controles",
+        "Attack":    "Atacar",
+        "AttackTip": "Golpea al enemigo más cercano",
+        "Defend":    "Defender",
+        "DefendTip": "Alza el escudo hasta el próximo turno",
+        "Cast":      "Lanzar",
+        "CastTip":   "No hay maná suficiente",
+        "Gate":      "Abrir",
+        "Bag":       "Bolsa",
+        "BagTip":    "Arrastra objetos entre la bolsa y la cuadrícula",
+        "Quit":      "Salir",
+        "ShowNames": "Mostrar nombres",
+        "Loot":      "Saquear solo",
+        "Volume":    "Volumen {Settings.Volume:0}%",
+        "VolumeTip": "Música y efectos al {Settings.Volume:0}%",
+        "Quality":   "Calidad"
+    },
+    "Quality": {
+        "Low":    "Baja",
+        "Medium": "Media",
+        "High":   "Alta",
+        "Ultra":  "Ultra",
+        "Custom": "A medida"
+    },
+    "Spells": {
+        "Title":    "Hechizos",
+        "Codex":    "Códice",
+        "CodexTip": "Una lectura larga y ancha en un visor con barras",
+        "Cast":     "Lanzar",
+        "Assign":   "Asignar a la barra",
+        "Slot1":    "Casilla 1",
+        "Slot2":    "Casilla 2",
+        "Slot3":    "Casilla 3",
+        "Forget":   "Olvidar"
+    },
+    "Spell": {
+        "Fireball":  "Bola de fuego",
+        "FrostNova": "Nova de escarcha",
+        "Heal":      "Curar",
+        "Blink":     "Traslación",
+        "Missiles":  "Misiles arcanos",
+        "Shield":    "Escudo",
+        "Lightning": "Relámpago",
+        "Teleport":  "Teletransporte"
+    },
+    "Gallery": {
+        "Title":      "Personaje",
+        "Quest":      "¡Misión!",
+        "NameHint":   "Escribe tu nombre",
+        "ShowPurse":  "Ver bolsa",
+        "Purse":      "{Player.Gold:0} de oro",
+        "Easy":       "Fácil",
+        "Normal":     "Normal",
+        "Hard":       "Difícil",
+        "Advanced":   "Avanzado",
+        "Permadeath": "Muerte permanente",
+        "Stats":      "Datos",
+        "Skills":     "Artes",
+        "Notes":      "Notas",
+        "StatsText":  "Nivel {Player.Level:0}, {Player.Gold:0} de oro",
+        "SkillsText": "Esgrima, tiro con arco",
+        "NotesText":  "Le debe 3 de oro al guardia.",
+        "NotesHint":  "Escribe tus notas",
+        "Epithet":    "{Player.Name}, Guardián de las Marcas del Norte, Custodio de la Vieja Puerta y Escudo Jurado del Reino"
+    },
+    "Bag": {
+        "Title":  "Bolsa ({Inventory} objetos)",
+        "Rare":   "raro",
+        "RowTip": "{Name}, {Count:0} en la bolsa",
+        "Rows":   "{Ui.Rows} filas hechas para {Inventory} registros",
+        "Loot":   "Saquear",
+        "Drop":   "Soltar",
+        "Clear":  "Vaciar"
+    },
+    "Gate": {
+        "Title": "Abrir la puerta",
+        "Text":  "Un botón con textura: una puerta de la hoja, cortada en nueve."
+    },
+    "Quit": {
+        "Title":   "¿Salir?",
+        "Message": "¿Dejar el reino, {Player.Name}? Lo que no se guardó se pierde.",
+        "Quit":    "Salir",
+        "Stay":    "Quedarse"
+    },
+    "Codex": {
+        "Title":   "Códice",
+        "Help":    "Tab, mayúsculas y tab, y las flechas mueven el teclado; intro rastrea; las teclas de página desplazan.",
+        "Heading": "Bestias del Camino del Norte",
+        "Track":   "Rastrear",
+        "Top":     "Arriba",
+        "Close":   "Cerrar"
+    },
+    "Danger": {
+        "Low":    "Bajo",
+        "Medium": "Medio",
+        "High":   "Alto",
+        "Deadly": "Mortal"
+    },
+    "Beast": {
+        "Wolf":     "Lobo",
+        "Wraith":   "Espectro",
+        "Troll":    "Trol",
+        "Boar":     "Jabalí",
+        "Harpy":    "Arpía",
+        "Basilisk": "Basilisco",
+        "Kobold":   "Kóbold",
+        "Wyvern":   "Guiverno",
+        "Ghoul":    "Necrófago",
+        "Griffin":  "Grifo",
+        "Lich":     "Liche",
+        "Mimic":    "Mímico"
+    },
+    "Lore": {
+        "Wolf":     "Caza en manada junto al camino; el fuego lo mantiene a raya.",
+        "Wraith":   "Una forma fría en la niebla que solo la plata toca.",
+        "Troll":    "Duerme bajo los puentes y se vuelve piedra al alba.",
+        "Boar":     "Embiste todo lo que huela a hierro.",
+        "Harpy":    "Roba cosas brillantes y las deja caer sobre los viajeros.",
+        "Basilisk": "Nunca le mires a los ojos; un espejo le devuelve la mirada.",
+        "Kobold":   "Pone trampas en las minas y se ríe desde la oscuridad.",
+        "Wyvern":   "Anida en los acantilados; su aguijón adormece un día entero.",
+        "Ghoul":    "Ronda los viejos túmulos y teme el agua que corre.",
+        "Griffin":  "Orgulloso y leal una vez domado, cosa que pocos lograron.",
+        "Lich":     "Guarda su vida en un tarro escondido lejos de su torre.",
+        "Mimic":    "Parece un cofre. Cuenta las bisagras antes de abrirlo."
+    },
+    "Audio": {
+        "Title":   "Sonido",
+        "Music":   "Música",
+        "Effects": "Efectos",
+        "Voices":  "Voces",
+        "Apply":   "Aplicar"
+    },
+    "Editor": {
+        "Title":      "Editor",
+        "Open":       "Editor",
+        "OpenTip":    "Un muelle de paneles: arrastra una pestaña para soltarla, y una ventana sobre un destino para acoplarla",
+        "Scene":      "Escena",
+        "Properties": "Propiedades",
+        "Console":    "Consola",
+        "Name":       "Nombre",
+        "Kind":       "Tipo",
+        "Health":     "Salud",
+        "Level":      "Nivel",
+        "Picked":     "Elegido: {Editor.Picked}",
+        "Log":        "Arrastra las barras para repartir el espacio, doble clic en una para plegar un panel."
+    }
+}
