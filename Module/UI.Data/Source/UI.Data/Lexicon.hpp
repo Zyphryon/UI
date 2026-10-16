@@ -30,6 +30,14 @@ namespace ZyPlugin::UI
         /// \return `true` if it was read, `false` otherwise.
         Bool Read(Text Language, Text Source, Ref<Str> Error);
 
+        /// \brief Reads a table into a language, adding its keys to those it had and replacing any it gives again.
+        ///
+        /// \param Language The name of the language, as `English`.
+        /// \param Source   The text of the table, a JSON object of texts and objects of more keys.
+        /// \param Error    The receiver of why the table cannot be read.
+        /// \return `true` if it was read, `false` otherwise, leaving the language as it was.
+        Bool Merge(Text Language, Text Source, Ref<Str> Error);
+
         /// \brief Gives a key of a language its text, or replaces the text it had.
         ///
         /// \param Language The name of the language, as `English`.
@@ -95,7 +103,13 @@ namespace ZyPlugin::UI
         /// \return The table of the language, empty when it is new.
         Ref<Phrases> Open(Text Language);
 
-    private:
+        /// \brief Reads the text of a table into its texts, every one checked before the table is handed back.
+        ///
+        /// \param Source The text of the table, a JSON object of texts and objects of more keys.
+        /// \param Output The receiver of the texts, added to those it held.
+        /// \param Error  The receiver of why the table cannot be read.
+        /// \return `true` if the table is an object of texts and objects, `false` otherwise.
+        static Bool Parse(Text Source, Ref<Phrases> Output, Ref<Str> Error);
 
         /// \brief Gathers the keys of an object of a table and of every object inside it.
         ///

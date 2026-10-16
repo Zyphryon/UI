@@ -33,29 +33,36 @@ namespace ZyPlugin::UI
 
     Bool Lexicon::Read(Text Language, Text Source, Ref<Str> Error)
     {
-        JsonValue Document;
-
-        if (JsonError Problem; !JsonDocument::Parse(Source, Document, Problem))
-        {
-            Error.Format<"{0}">(Problem);
-            return false;
-        }
-
-        if (!Document.IsObject())
-        {
-            Error.Format<"the table is not an object">();
-            return false;
-        }
-
         // Every value is checked before any is kept, so a table with a mistake in it leaves the one in use alone.
         Phrases Fresh;
 
-        if (!Gather(Text(), Document, Fresh, Error))
+        if (!Parse(Source, Fresh, Error))
         {
             return false;
         }
 
         Open(Language) = Move(Fresh);
+        return true;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Lexicon::Merge(Text Language, Text Source, Ref<Str> Error)
+    {
+        Phrases Fresh;
+
+        if (!Parse(Source, Fresh, Error))
+        {
+            return false;
+        }
+
+        Ref<Phrases> Table = Open(Language);
+
+        Fresh.ForEach([&Table](ConstRef<Digest> Key, ConstRef<Str> Value)
+        {
+            Table.Assign(Key, Value);
+        });
         return true;
     }
 
@@ -138,6 +145,27 @@ namespace ZyPlugin::UI
             ++mVersion;
         }
         return mTables.FindOrInsert(Digest(Name));
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Lexicon::Parse(Text Source, Ref<Phrases> Output, Ref<Str> Error)
+    {
+        JsonValue Document;
+
+        if (JsonError Problem; !JsonDocument::Parse(Source, Document, Problem))
+        {
+            Error.Format<"{0}">(Problem);
+            return false;
+        }
+
+        if (!Document.IsObject())
+        {
+            Error.Format<"the table is not an object">();
+            return false;
+        }
+        return Gather(Text(), Document, Output, Error);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
