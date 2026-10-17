@@ -12,7 +12,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.26)
 ## Project
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-PROJECT(ZyPlugin_UI VERSION 1.0.0 LANGUAGES CXX)
+PROJECT(ZyUI VERSION 1.0.0 LANGUAGES CXX)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ## Plugins
@@ -48,11 +48,11 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Module/UI.Control)
 ADD_LIBRARY(${PROJECT_NAME} INTERFACE)
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} INTERFACE
-        "ZyPlugin_UI_Core"
-        "ZyPlugin_UI_Data"
-        "ZyPlugin_UI_Markup"
-        "ZyPlugin_UI_Gesture"
-        "ZyPlugin_UI_Control")
+        "ZyUI_Core"
+        "ZyUI_Data"
+        "ZyUI_Markup"
+        "ZyUI_Gesture"
+        "ZyUI_Control")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ## Example

@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "ZyPlugin_UI_Example.Embedded.hpp"
+#include "ZyUI_Example.Embedded.hpp"
 #include <UI.Control/Module.hpp>
 #include <UI.Control/Widget/Common.hpp>
 #include <UI.Control/Widget/Dialog.hpp>

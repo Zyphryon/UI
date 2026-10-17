@@ -13,24 +13,24 @@ engine's own graphics draw it.
 
 ## Getting started
 
-Add the repository to your CMake project and link `ZyPlugin_UI`:
+Add the repository to your CMake project and link `ZyUI`:
 
 ```cmake
 FetchContent_Declare(ZyUI GIT_REPOSITORY https://github.com/Zyphryon/UI GIT_TAG main)
 FetchContent_MakeAvailable(ZyUI)
 
-TARGET_LINK_LIBRARIES(MyGame PRIVATE ZyPlugin_UI)
+TARGET_LINK_LIBRARIES(MyGame PRIVATE ZyUI)
 ```
 
-`ZyPlugin_UI` gathers five libraries, which can also be linked on their own:
+`ZyUI` gathers five libraries, which can also be linked on their own:
 
 | Library | Gives | Leave out when |
 |---------|-------|----------------|
-| `ZyPlugin_UI_Core` | The interface, styles, layout, drawing and input. | — |
-| `ZyPlugin_UI_Data` | Models, bindings and languages. | binding nothing, in one language |
-| `ZyPlugin_UI_Markup` | Themes and layouts read from files. | building the interface in code |
-| `ZyPlugin_UI_Gesture` | Drag and drop, tooltips and context menus. | needing none of them |
-| `ZyPlugin_UI_Control` | The widget library and its default theme. | bringing widgets of your own |
+| `ZyUI_Core` | The interface, styles, layout, drawing and input. | — |
+| `ZyUI_Data` | Models, bindings and languages. | binding nothing, in one language |
+| `ZyUI_Markup` | Themes and layouts read from files. | building the interface in code |
+| `ZyUI_Gesture` | Drag and drop, tooltips and context menus. | needing none of them |
+| `ZyUI_Control` | The widget library and its default theme. | bringing widgets of your own |
 
 A frame reads a layout, spawns a window and drives the interface:
 

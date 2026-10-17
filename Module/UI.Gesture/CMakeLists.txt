@@ -12,7 +12,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.26)
 ## Project
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-PROJECT(ZyPlugin_UI_Gesture VERSION 1.0.0 LANGUAGES CXX)
+PROJECT(ZyUI_Gesture VERSION 1.0.0 LANGUAGES CXX)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ## Target
@@ -20,7 +20,7 @@ PROJECT(ZyPlugin_UI_Gesture VERSION 1.0.0 LANGUAGES CXX)
 
 ZyAddTarget(${PROJECT_NAME} STATIC)
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC "ZyPlugin_UI_Markup")
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC "ZyUI_Markup")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ## Theme
