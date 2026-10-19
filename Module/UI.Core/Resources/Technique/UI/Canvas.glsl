@@ -51,6 +51,9 @@ layout(std140, binding = 3) uniform cb_Instance
 // Set when a texture shows its colour alone, its alpha taken as whole.
 #define UI_OPAQUE   32768u
 
+// Set when a texture holds its colour already scaled by its alpha.
+#define UI_PREMULTIPLIED 4096u
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Colour
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -400,9 +403,12 @@ void main()
     }
 
     // A plain box covers the whole of its quad, so only one with a shaped edge works out its distance.
+    float Cover = 1.0;
+
     if (Cut != UI_PLAIN)
     {
-        Result.a *= Coverage(Cut);
+        Cover     = Coverage(Cut);
+        Result.a *= Cover;
     }
 
 #if   defined(ENABLE_SRGB_ENCODE)
@@ -417,6 +423,7 @@ void main()
     }
 #endif // ENABLE_SRGB_ENCODE
 
+    Result.rgb *= ((Code & UI_PREMULTIPLIED) != 0u) ? v_Color.a * Cover : Result.a;
     out_Color = Result;
 }
 

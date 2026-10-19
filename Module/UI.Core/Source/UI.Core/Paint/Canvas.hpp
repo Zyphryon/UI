@@ -153,66 +153,72 @@ namespace ZyPlugin::UI
             static constexpr UInt16 kNone = 0xFFFF;
 
             /// The parts drawn anew every frame, in the order they were drawn.
-            Sequence<Live>      Lives;
+            Sequence<Live>            Lives;
 
             /// The quads recorded, in the order they were drawn.
-            Sequence<Step>      Steps;
+            Sequence<Step>            Steps;
 
             /// The transforms the quads were drawn under, each once in a row.
-            Sequence<Matrix3x2> Turns;
+            Sequence<Matrix3x2>       Turns;
 
             /// The glyph materials the quads read, each once in a row.
             Sequence<Array<Byte, 48>> Materials;
 
             /// The scale the pane was drawn at, which must stand again for the tape to be replayed.
-            Real32              Scale = 0.0f;
+            Real32                    Scale   = 0.0f;
 
             /// The clip the pane was drawn under, which must stand again for the tape to be replayed.
-            Rect                Clip;
+            Rect                      Clip;
 
             /// The opacity the part was drawn at, which must stand again for the tape to be replayed.
-            Real32              Opacity = 1.0f;
+            Real32                    Opacity = 1.0f;
 
             /// The transform the part was drawn under, which must stand again for the tape to be replayed.
-            Matrix3x2           Turn;
+            Matrix3x2                 Turn;
 
             /// `true` when the part was drawn under a transform.
-            Bool                Turned  = false;
+            Bool                      Turned  = false;
 
             /// `true` when the tape holds the pane as it was last drawn, and nothing in it draws anew each frame.
-            Bool                Valid = false;
+            Bool                      Valid   = false;
         };
 
         /// \brief Represents a texture of the graphics service drawn as it stands, as a target or an array slice.
         struct Surface final
         {
             /// The texture, as the graphics service made it, or nought for none.
-            ZyGraphic::Object        Handle = 0;
+            ZyGraphic::Object        Handle         = 0;
 
             /// The shape of the texture, where an array is read at its \ref Layer and any other as a plain texture.
-            ZyGraphic::TextureLayout Layout = ZyGraphic::TextureLayout::Texture2D;
+            ZyGraphic::TextureLayout Layout         = ZyGraphic::TextureLayout::Texture2D;
 
             /// The slice of an array read.
-            UInt16                   Layer  = 0;
+            UInt16                   Layer          = 0;
 
             /// How it is read between its texels.
-            Filter                   Filter = Filter::Linear;
+            Filter                   Filter         = Filter::Linear;
 
             /// `true` to show its colour alone with its alpha taken as whole, as a target whose alpha holds data.
-            Bool                     Opaque = false;
+            Bool                     Opaque         = false;
+
+            /// `true` to read its colour as already scaled by its alpha, as a target that light was added onto.
+            Bool                     Premultiplied  = false;
 
             /// `true` to read it upside down, its last row at the top.
-            Bool                     Flip   = false;
+            Bool                     Flip           = false;
         };
 
         /// The bit of a quad's code set when its colour runs from its tint to its other colour across the box.
-        static constexpr UInt16 kGradient  = 16;
+        static constexpr UInt16 kGradient      = 16;
 
         /// The bit of a quad's code set when the texture it reads shows its colour alone, its alpha taken as whole.
-        static constexpr UInt16 kOpaque    = 0x8000;
+        static constexpr UInt16 kOpaque        = 0x8000;
+
+        /// The bit of a quad's code set when the texture it reads holds its colour already scaled by its alpha.
+        static constexpr UInt16 kPremultiplied = 0x1000;
 
         /// The bit a quad's code holds its \ref Form from.
-        static constexpr UInt16 kFormShift = 13;
+        static constexpr UInt16 kFormShift     = 13;
 
     public:
 
@@ -647,7 +653,7 @@ namespace ZyPlugin::UI
         static constexpr UInt32 kMaterials  = 256;
 
         /// The transforms one block holds, the first always the identity, as the shader declares its array.
-        static constexpr UInt32 kTransforms = 256;
+        static constexpr UInt32 kTransforms = 128;
 
         /// The pixels a middle must cover before the three more quads that split it off cost less than shading it.
         static constexpr Real32 kLarge      = 16384.0f;

@@ -1,7 +1,7 @@
 {
     "Properties": {
         "Blend": {
-            "SrcColor": "SrcAlpha",
+            "SrcColor": "One",
             "DstColor": "OneMinusSrcAlpha",
             "SrcAlpha": "One",
             "DstAlpha": "OneMinusSrcAlpha"
@@ -38,7 +38,7 @@
         ]
     },
     "Program": {
-        "Defines": ["UI_SUBPIXEL=0.125", "UI_MATERIALS=256", "UI_TRANSFORMS=256"],
+        "Defines": ["UI_SUBPIXEL=0.125", "UI_MATERIALS=256", "UI_TRANSFORMS=128"],
         "Shaders": {
             "GLSL": [
                 { "Path": "Canvas.glsl", "Stage": "Vertex"   },

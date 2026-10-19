@@ -55,6 +55,9 @@ cbuffer cb_Instance : register(b3)
 // Set when a texture shows its colour alone, its alpha taken as whole.
 #define UI_OPAQUE   32768u
 
+// Set when a texture holds its colour already scaled by its alpha.
+#define UI_PREMULTIPLIED 4096u
+
 struct vs_Input
 {
     float4 Rect    : SLOT0;  // the part drawn in pixels before the transform, a line's points, a figure's first two
@@ -413,10 +416,13 @@ float4 main(ps_Input Input) : SV_Target
     }
 
     // A plain box covers the whole of its quad, so only one with a shaped edge works out its distance.
+    float Cover = 1.0;
+
     [branch]
     if (Cut != UI_PLAIN)
     {
-        Result.a *= Coverage(Input, Cut);
+        Cover     = Coverage(Input, Cut);
+        Result.a *= Cover;
     }
 
 #if   defined(ENABLE_SRGB_ENCODE)
@@ -431,6 +437,7 @@ float4 main(ps_Input Input) : SV_Target
     }
 #endif // ENABLE_SRGB_ENCODE
 
+    Result.rgb *= (Code & UI_PREMULTIPLIED) ? Input.Color.a * Cover : Result.a;
     return Result;
 }
 

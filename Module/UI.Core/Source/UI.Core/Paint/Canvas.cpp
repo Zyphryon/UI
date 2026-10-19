@@ -1417,6 +1417,11 @@ namespace ZyPlugin::UI
         {
             Shape[3] |= kOpaque;
         }
+
+        if (Texture.Premultiplied)
+        {
+            Shape[3] |= kPremultiplied;
+        }
         return Shape;
     }
 
@@ -1703,7 +1708,7 @@ namespace ZyPlugin::UI
             Ref<Quad> Drawn = mQuads[mCount++];
             Drawn = Step.Drawn;
             Drawn.Shape    = Shape;
-            Drawn.Shape[3] = static_cast<UInt16>((Shape[3] & ~(0xFFu << 5)) | (mSlot << 5));
+            Drawn.Shape[3] = static_cast<UInt16>((Shape[3] & ~((kTransforms - 1) << 5)) | (mSlot << 5));
         }
 
         Relive(From.Steps.GetSize());
