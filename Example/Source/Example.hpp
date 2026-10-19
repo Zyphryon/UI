@@ -61,11 +61,16 @@ namespace ZyPlugin::UI
         /// \see Kernel::OnConfigure(Ref<ZyRuntime::Startup>)
         void OnConfigure(Ref<ZyRuntime::Startup> Startup) override
         {
-            Startup.SetWindowTitle("Zyphryon UI");
-            Startup.SetWindowWidth(1280);
-            Startup.SetWindowHeight(720);
+            ZyRuntime::Startup::Window Window = Startup.GetWindow();
+            Window.Title  = "Zyphryon UI";
+            Window.Width  = 1280;
+            Window.Height = 720;
+            Startup.SetWindow(Window);
+
             // A plain target blends as the colours are written, with no conversion on the way.
-            Startup.SetGraphicsColorFormat(ZyGraphic::TextureFormat::RGBA8UIntNorm);
+            ZyRuntime::Startup::Graphic Graphic = Startup.GetGraphic();
+            Graphic.ColorFormat = ZyGraphic::TextureFormat::RGBA8UIntNorm;
+            Startup.SetGraphic(Graphic);
         }
 
         /// \see Kernel::OnInitialize()
