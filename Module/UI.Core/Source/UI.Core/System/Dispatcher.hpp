@@ -66,6 +66,9 @@ namespace ZyPlugin::UI
         /// \param Action The name of the action whose code is dropped.
         void Unbind(Text Action);
 
+        /// \brief Stops running code on the events of the controls naming any action.
+        void UnbindAll();
+
         /// \brief Runs a shortcut's code, or else the code bound to its action, as its key goes down.
         ///
         /// \param Entry   The shortcut whose code or action runs.

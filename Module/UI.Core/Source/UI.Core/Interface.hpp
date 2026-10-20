@@ -262,6 +262,9 @@ namespace ZyPlugin::UI
         /// \param Action The name of the action.
         void Unbind(Text Action);
 
+        /// \brief Stops running code on the events of the controls naming any action.
+        void UnbindAll();
+
         /// \brief Runs code when a control naming an action is clicked.
         ///
         /// \param Action The name of the action, which replaces whatever code it ran before.
