@@ -108,5 +108,6 @@ namespace ZyPlugin::UI
 
         Owner.SetState(Target, State::Hidden, false);
         Owner.Raise(Target);
+        Owner.Confine(Target);
     }
 }
