@@ -106,17 +106,22 @@ namespace ZyPlugin::UI
         // The light squares fill the box, so only the dark ones are drawn over it, each cut to the box at its edges.
         Board.DrawRect(Frame, Color(0.8f, 0.8f, 0.8f, Element.Opacity), Element.Radius);
 
+        const Rect  Inner = Frame.Expand(-Element.Radius * 0.29289322f);
         const Color Dark(0.5f, 0.5f, 0.5f, Element.Opacity);
         UInt32      Row = 0;
 
         for (Real32 Top = Frame.GetMinimumY(); Top < Frame.GetMaximumY(); Top += Cell, ++Row)
         {
-            const Real32 Bottom = Min(Top + Cell, Frame.GetMaximumY());
-
-            for (Real32 Left = Frame.GetMinimumX() + ((Row & 1) == 0 ? Cell : 0.0f); Left < Frame.GetMaximumX();
-                 Left += Cell * 2.0f)
+            const Real32 Extra = ((Row & 1) == 0 ? Cell : 0.0f);
+            
+            for (Real32 Left = Frame.GetMinimumX() + Extra; Left < Frame.GetMaximumX(); Left += Cell * 2.0f)
             {
-                Board.DrawRect(Rect(Left, Top, Min(Left + Cell, Frame.GetMaximumX()), Bottom), Dark);
+                const Rect Tile = Rect::Intersection(Rect(Left, Top, Left + Cell, Top + Cell), Inner); 
+                
+                if (!Tile.IsEmpty())
+                {
+                    Board.DrawRect(Tile, Dark);
+                }
             }
         }
 
