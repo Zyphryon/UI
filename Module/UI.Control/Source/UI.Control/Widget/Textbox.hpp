@@ -62,6 +62,12 @@ namespace ZyPlugin::UI
 
         /// `true` when typing and pasting keep only digits, minus signs and points.
         Bool   Numeric   = false;
+
+        /// `true` when the field shows a mask for each character, and holds the text it masks in \ref Secret.
+        Bool   Password  = false;
+
+        /// The text a password field holds, which its own text shows only as a mask.
+        Str    Secret;
     };
 
     /// \brief Represents a text field of one or several lines of typed text, with a caret, a selection and a hint.
@@ -83,7 +89,7 @@ namespace ZyPlugin::UI
         /// \return The text field, which reports \ref Signal::kChange on every edit made in it.
         static Element Create(Element Parent, Text Content = Text(), Text Hint = Text(), Text Style = "Textbox");
 
-        /// \brief Creates a text field from a node with `Text`, `Hint`, `Limit`, `Multiline`, `ReadOnly`, `Numeric`.
+        /// \brief Creates a text field from a node with `Text`, `Hint`, `Limit`, `Multiline`, `ReadOnly`, `Numeric`, `Password`.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
@@ -127,12 +133,24 @@ namespace ZyPlugin::UI
         /// \param Enabled The flag, `true` to drop every other character typed or pasted, `false` to take any.
         static void SetNumeric(Element Target, Bool Enabled);
 
+        /// \brief Sets whether a text field shows each character as a mask, holding the text it masks apart.
+        ///
+        /// \param Target  The text field to change.
+        /// \param Enabled The flag, `true` to show a mask for each character, `false` to show the text.
+        static void SetPassword(Element Target, Bool Enabled);
+
         /// \brief Selects part of the text of a text field, or places its caret.
         ///
         /// \param Target The text field whose selection is set.
         /// \param Anchor The end of the selection that stays, as a byte of the text.
         /// \param Caret  The end the caret stands at, as a byte of the text; the same as the anchor selects nothing.
         static void Select(Element Target, UInt32 Anchor, UInt32 Caret);
+
+        /// \brief Gets the mask a password shows for a text, one asterisk for each byte of it.
+        ///
+        /// \param Content The text to mask.
+        /// \return The mask, as many asterisks as the text has bytes, so its caret and selection line up with the text's.
+        static Str Mask(Text Content);
 
         /// \brief Gets the place the caret of a text field stands at.
         ///
@@ -266,6 +284,12 @@ namespace ZyPlugin::UI
         ///
         /// \param Target The text field to refresh.
         static void Refresh(Element Target);
+
+        /// \brief Gets the text a field shows, which for a password field is its mask.
+        ///
+        /// \param Target The text field to read.
+        /// \return The text as drawn, valid until the field is next edited.
+        static Text GetShown(Element Target);
 
         /// \brief Gets the bytes the selection of a text field covers, held within its text.
         ///

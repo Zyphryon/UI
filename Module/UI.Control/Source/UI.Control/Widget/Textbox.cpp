@@ -100,6 +100,7 @@ namespace ZyPlugin::UI
         Data->Limit    = static_cast<UInt32>(Max(Markup::GetNumber(Node, "Limit"), 0.0f));
         Data->ReadOnly = Markup::GetBool(Node, "ReadOnly");
         Data->Numeric  = Markup::GetBool(Node, "Numeric");
+        SetPassword(Result, Markup::GetBool(Node, "Password"));
         SetMultiline(Result, Markup::GetBool(Node, "Multiline"));
 
         Reader.Bind(Result, Node, "Text", Binder::PutText<&Textbox::SetText>(),
@@ -118,9 +119,19 @@ namespace ZyPlugin::UI
             return;
         }
 
-        Label::SetText(Target.GetFirst(), Content);
+        const Ptr<Entry> Data = Target.Get<Entry>();
 
-        if (const Ptr<Entry> Data = Target.Get<Entry>())
+        if (Data && Data->Password)
+        {
+            Data->Secret = Content;
+            Label::SetText(Target.GetFirst(), Mask(Content));
+        }
+        else
+        {
+            Label::SetText(Target.GetFirst(), Content);
+        }
+
+        if (Data)
         {
             Data->Caret  = static_cast<UInt32>(Content.GetSize());
             Data->Anchor = Data->Caret;
@@ -140,8 +151,13 @@ namespace ZyPlugin::UI
 
     Text Textbox::GetText(Element Target)
     {
-        const ConstPtr<Caption> Source = Target.GetFirst().Get<Caption>();
-        return Source ? Text(Source->Content) : Text();
+        const ConstPtr<Entry> Data = Target.Get<Entry>();
+
+        if (Data && Data->Password)
+        {
+            return Data->Secret;
+        }
+        return GetShown(Target);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -207,6 +223,37 @@ namespace ZyPlugin::UI
         {
             Data->Numeric = Enabled;
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Textbox::SetPassword(Element Target, Bool Enabled)
+    {
+        const Ptr<Entry> Data = Target.Get<Entry>();
+
+        if (!Data || Data->Password == Enabled)
+        {
+            return;
+        }
+
+        // The text is read before the flag changes, so it is held apart or shown again from the same place.
+        const Text Content = GetText(Target);
+
+        Data->Password = Enabled;
+        Data->Secret   = Content;
+        Label::SetText(Target.GetFirst(), Enabled ? Text(Mask(Content)) : Content);
+        Refresh(Target);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Str Textbox::Mask(Text Content)
+    {
+        Str Result;
+        Result.Append('*', Content.GetSize());
+        return Result;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -357,7 +404,7 @@ namespace ZyPlugin::UI
             return Moved;
         }
 
-        const Text           Content   = GetText(Target);
+        const Text           Content   = GetShown(Target);
         const Rect           Frame     = Target.GetFrame();
         const Vector2        Corner    = Frame.GetPosition();
         const AnyRange<UInt> Selection = GetSelection(* Data, Content.GetSize());
@@ -541,13 +588,13 @@ namespace ZyPlugin::UI
             }
             return Words;
         case ZyInput::Key::C:
-            if (Words && !Selection.IsFixed())
+            if (Words && !Selection.IsFixed() && !Data->Password)
             {
                 Owner.Copy(GetSelected(Target));
             }
             return Words;
         case ZyInput::Key::X:
-            if (Words && !Selection.IsFixed())
+            if (Words && !Selection.IsFixed() && !Data->Password)
             {
                 Owner.Copy(GetSelected(Target));
                 Edited = Replace(Target, Text());
@@ -739,14 +786,19 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // The text is edited where it stands, so only the change is written.
-        Ref<Str> Kept = Target.GetFirst().Edit<Caption>()->Content;
+        // The text is edited where it stands, so only the change is written, a password's in the text it masks.
+        Ref<Str> Kept = Data->Password ? Data->Secret : Target.GetFirst().Edit<Caption>()->Content;
 
         if (!Selection.IsFixed())
         {
             Kept.Remove(Selection.GetMinimum(), Selection.GetLength());
         }
         Kept.Insert(Selection.GetMinimum(), Content);
+
+        if (Data->Password)
+        {
+            Target.GetFirst().Edit<Caption>()->Content = Mask(Data->Secret);
+        }
 
         Data->Caret  = static_cast<UInt32>(Selection.GetMinimum() + Content.GetSize());
         Data->Anchor = Data->Caret;
@@ -778,7 +830,7 @@ namespace ZyPlugin::UI
     void Textbox::Step(Ref<Interface> Owner, Element Target, SInt32 Lines, Bool Extend)
     {
         const Ptr<Entry> Data    = Target.Get<Entry>();
-        const Text       Content = GetText(Target);
+        const Text       Content = GetShown(Target);
         Block            Shape;
 
         if (!Survey(Owner, Target, Shape))
@@ -828,7 +880,7 @@ namespace ZyPlugin::UI
     {
         const ConstPtr<Entry> Data    = Target.Get<Entry>();
         const Element         Shown   = Target.GetFirst();
-        const Text            Content = GetText(Target);
+        const Text            Content = GetShown(Target);
 
         // An empty field shows its hint in place of its text, so the caret stands where the hint starts.
         const Element           Holder = Content.IsEmpty() ? Shown.GetNext().GetNext() : Shown;
@@ -861,7 +913,7 @@ namespace ZyPlugin::UI
     UInt Textbox::Locate(Ref<Interface> Owner, Element Target, Vector2 Point)
     {
         Block Shape;
-        return Survey(Owner, Target, Shape) ? Ruler::Find(Shape, GetText(Target), Point) : GetCaret(Target);
+        return Survey(Owner, Target, Shape) ? Ruler::Find(Shape, GetShown(Target), Point) : GetCaret(Target);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -920,6 +972,15 @@ namespace ZyPlugin::UI
         // The text and the hint take turns in the same place, so the hint lays out exactly where the text will.
         Show(Shown, !Empty);
         Show(Hint, Empty);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Text Textbox::GetShown(Element Target)
+    {
+        const ConstPtr<Caption> Source = Target.GetFirst().Get<Caption>();
+        return Source ? Text(Source->Content) : Text();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
