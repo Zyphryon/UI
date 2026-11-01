@@ -544,7 +544,18 @@ namespace ZyPlugin::UI
 
         if (!Popup::IsOpen(Owner, Submenu))
         {
+            // An item in the window's right half opens its submenu to the left, so the submenu stays in view.
+            const Rect Frame = Owner.GetFrame(Item);
+            const Bool Left  = Frame.GetMinimumX() > Owner.GetSize().GetX() * 0.5f;
+
             Popup::Show(Owner, Submenu, Item, false);
+
+            if (Left)
+            {
+                Ref<Box> Shape = Owner.EditBox(Submenu);
+                Shape.Left  = Length();
+                Shape.Right = Length::Pixels(Owner.GetSize().GetX() - Frame.GetMinimumX() + 2.0f);
+            }
             Owner.Confine(Submenu);
         }
 
