@@ -158,7 +158,10 @@ namespace ZyPlugin::UI
         /// \brief Dresses every element wearing a style from a theme, which must outlive the interface's use of it.
         ///
         /// \param Source The theme, or `nullptr` to dress nothing.
-        void SetTheme(ConstPtr<Theme> Source);
+        ZY_INLINE void SetTheme(ConstPtr<Theme> Source)
+        {
+            mDresser.SetTheme(Source);
+        }
 
         /// \brief Gets the theme every element wearing a style is dressed from.
         ///

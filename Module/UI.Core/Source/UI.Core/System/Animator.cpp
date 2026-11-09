@@ -19,6 +19,7 @@
 #include "UI.Core/Facet/Visual/Effect.hpp"
 #include "UI.Core/Facet/Visual/Look.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
+#include "UI.Core/Interface.hpp"
 #include "UI.Core/Pane.hpp"
 #include "UI.Core/Style/Animation.hpp"
 #include "UI.Core/Style/Appearance.hpp"
@@ -36,9 +37,8 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Animator::Animator(Ref<Tree> Owner)
-        : mTree  { Owner },
-          mTheme { nullptr },
+    Animator::Animator(Ref<Interface> Owner)
+        : mOwner { Owner },
           mClock { 0.0 }
     {
         // The interface's own facets wear a skin in this order, a module's after them.
@@ -55,17 +55,9 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Animator::SetTheme(ConstPtr<Theme> Source)
-    {
-        mTheme = Source;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     void Animator::Stir(Ref<Pane> Target, UInt32 Row, ConstRef<Skin> Values, Ref<Motion> State, Bool Dressed)
     {
-        const Handle Element = mTree.GetHandle(Target.Slots[Row]);
+        const Handle Element = mOwner.GetHandle(Target.Slots[Row]);
 
         Lay(State.Goal, Values);
 
@@ -150,19 +142,11 @@ namespace ZyPlugin::UI
 
         mMoving.RemoveFastSomeIf([this](Handle Element)
         {
-            const Ptr<Motion> State = mTree.Get<Motion>(Element);
+            const Ptr<Motion> State = mOwner.Get<Motion>(Element);
 
-            if (State && !mTree.IsPending(Element))
+            if (State && Advance(Element, * State))
             {
-                const Bool Going = Advance(Element, * State);
-
-                // A pane holding what moved is drawn anew, rather than replayed as it was.
-                mTree.Mark(Element, Dirty::Paint);
-
-                if (Going)
-                {
-                    return false;
-                }
+                return false;
             }
 
             // One let go holds its clocks where they stand, so listed again it plays on rather than skipping ahead.
@@ -188,7 +172,7 @@ namespace ZyPlugin::UI
         {
             if (!Each.Capture.IsEmpty())
             {
-                Each.Capture(mTree, Slot, Result);
+                Each.Capture(mOwner, Slot, Result);
             }
         }
         return Result;
@@ -203,11 +187,12 @@ namespace ZyPlugin::UI
         {
             if (!Each.Apply.IsEmpty())
             {
-                Each.Apply(mTree, Element, Values, Given);
+                Each.Apply(mOwner, Element, Values, Given);
             }
         }
 
-        mTree.Mark(Element, Dirty::Paint);
+        // A pane holding what was written is drawn anew, rather than replayed as it was.
+        mOwner.Mark(Element, Dirty::Paint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -219,7 +204,7 @@ namespace ZyPlugin::UI
 
         for (ConstRef<Applier> Each : mAppliers)
         {
-            if (!Each.Fitting.IsEmpty() && Each.Fitting(mTree, Element, Values))
+            if (!Each.Fitting.IsEmpty() && Each.Fitting(mOwner, Element, Values))
             {
                 Sized = true;
             }
@@ -246,7 +231,7 @@ namespace ZyPlugin::UI
         }
 
         // Hidden, it still stands while it plays its way out, though the pointer passes through it.
-        const ConstPtr<Motion> State = mTree.Peek<Motion>(Target.Slots[Row]);
+        const ConstPtr<Motion> State = mOwner.Peek<Motion>(Target.Slots[Row]);
         return State && State->Leaving;
     }
 
@@ -285,7 +270,7 @@ namespace ZyPlugin::UI
             if (State.Leaving)
             {
                 State.Leaving = false;
-                mTree.Mark(Element, Dirty::Measure);
+                mOwner.Mark(Element, Dirty::Measure);
             }
             State.Once = 0;
         }
@@ -405,7 +390,8 @@ namespace ZyPlugin::UI
 
     ConstPtr<Animation> Animator::Seek(UInt64 Name) const
     {
-        return (mTheme && Name != 0) ? mTheme->FindAnimation(Name) : nullptr;
+        const ConstPtr<Theme> Source = mOwner.GetTheme();
+        return (Source && Name != 0) ? Source->FindAnimation(Name) : nullptr;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

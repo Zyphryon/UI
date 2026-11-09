@@ -45,6 +45,8 @@ namespace ZyPlugin::UI
     void Dresser::SetTheme(ConstPtr<Theme> Source)
     {
         mTheme   = Source;
+
+        // Taken as a version behind, so the next update dresses whatever wore the last theme in this one.
         mVersion = Source ? Source->GetVersion() - 1 : 0;
     }
 

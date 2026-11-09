@@ -16,7 +16,6 @@
 #include "UI.Core/Handle.hpp"
 #include "UI.Core/Shortcut.hpp"
 #include "UI.Core/Style/Style.hpp"
-#include "UI.Core/Style/Theme.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -38,11 +37,6 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner The interface whose events it sends, which handlers are handed, and which must outlive it.
         Dispatcher(Ref<Interface> Owner);
-
-        /// \brief Sets the theme whose styles name the sounds played.
-        ///
-        /// \param Source The theme, or `nullptr` to play none.
-        void SetTheme(ConstPtr<Theme> Source);
 
         /// \brief Sends an event to its target, and up through every control holding it until one stops it.
         ///
@@ -149,7 +143,6 @@ namespace ZyPlugin::UI
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Ref<Interface>         mOwner;
-        ConstPtr<Theme>        mTheme;
         Table<Digest, Handler> mActions;
         SoundHook              mSoundHook;
         Handle                 mBackdrop;

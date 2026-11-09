@@ -31,17 +31,8 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     Dispatcher::Dispatcher(Ref<Interface> Owner)
-        : mOwner { Owner },
-          mTheme { nullptr }
+        : mOwner { Owner }
     {
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Dispatcher::SetTheme(ConstPtr<Theme> Source)
-    {
-        mTheme = Source;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -167,13 +158,15 @@ namespace ZyPlugin::UI
 
     void Dispatcher::Sound(Handle Element, Cue Moment)
     {
-        if (mSoundHook.IsEmpty() || !mTheme || !mOwner.IsAlive(Element))
+        const ConstPtr<Theme> Source = mOwner.GetTheme();
+
+        if (mSoundHook.IsEmpty() || !Source || !mOwner.IsAlive(Element))
         {
             return;
         }
 
         // Copied, since the hook may change the theme and drop the text it was handed.
-        const Str Address(mTheme->FindSound(mOwner.GetStyle(Element), Moment));
+        const Str Address(Source->FindSound(mOwner.GetStyle(Element), Moment));
 
         if (!Address.IsEmpty())
         {

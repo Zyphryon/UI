@@ -18,7 +18,6 @@
 #include "UI.Core/Style/Animation.hpp"
 #include "UI.Core/Style/Appearance.hpp"
 #include "UI.Core/Style/Skin.hpp"
-#include "UI.Core/Style/Theme.hpp"
 #include "UI.Core/Tree.hpp"
 #include "UI.Core/Types.hpp"
 
@@ -28,6 +27,8 @@
 
 namespace ZyPlugin::UI
 {
+    class Interface;
+
     /// \brief Represents what moves the values of the elements of a tree, through their transitions and animations.
     class Animator final
     {
@@ -57,15 +58,10 @@ namespace ZyPlugin::UI
 
     public:
 
-        /// \brief Constructs an animator moving nothing, over the elements of a tree.
+        /// \brief Constructs an animator moving nothing, over the elements of an interface.
         ///
-        /// \param Owner The tree whose elements it moves, which must outlive it.
-        Animator(Ref<Tree> Owner);
-
-        /// \brief Sets the theme whose animations the elements play.
-        ///
-        /// \param Source The theme, or `nullptr` to play none.
-        void SetTheme(ConstPtr<Theme> Source);
+        /// \param Owner The interface whose elements it moves, which must outlive it.
+        Animator(Ref<Interface> Owner);
 
         /// \brief Starts, retargets or stops what an element moves through after a skin was worked out for it.
         ///
@@ -348,8 +344,7 @@ namespace ZyPlugin::UI
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Ref<Tree>            mTree;
-        ConstPtr<Theme>      mTheme;
+        Ref<Interface>       mOwner;
         Real64               mClock;
         Sequence<Handle>     mMoving;
         Sequence<Appearance> mLifted;
