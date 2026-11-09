@@ -37,9 +37,9 @@ namespace ZyPlugin::UI
     void Tooltip::SetText(Element Target, Text Content)
     {
         Ref<Hint> Found = Target.Obtain<Hint>();
-        Found.Content = Content;
-        Found.Fill    = Filler::Create<&Tooltip::Write>();
-        Found.Reader  = nullptr;
+        Found.Content       = Content;
+        Found.Fill          = Filler::Create<&Tooltip::Write>();
+        Found.Recipe.Reader = nullptr;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -48,8 +48,8 @@ namespace ZyPlugin::UI
     void Tooltip::SetTemplate(Element Target, Filler Fill)
     {
         Ref<Hint> Found = Target.Obtain<Hint>();
-        Found.Fill   = Move(Fill);
-        Found.Reader = nullptr;
+        Found.Fill          = Move(Fill);
+        Found.Recipe.Reader = nullptr;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -58,13 +58,8 @@ namespace ZyPlugin::UI
     void Tooltip::SetTemplate(Element Target, Ref<Markup> Reader, Text Template)
     {
         Ref<Hint> Found = Target.Obtain<Hint>();
-        Found.Fill     = Filler::Create<&Tooltip::Spawn>();
-        Found.Reader   = AddressOf(Reader);
-        Found.Template = Template;
-
-        // Named in a row of a list, it is made later reading the row's record.
-        Found.Scope = Reader.GetScope();
-        Binder::Locate(Found.Scope, Found.Within);
+        Found.Fill = Filler::Create<&Tooltip::Spawn>();
+        Found.Recipe.Capture(Reader, Template);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -125,7 +120,7 @@ namespace ZyPlugin::UI
     Ptr<Path> Tooltip::GetWithin(Element Target)
     {
         const Ptr<Hint> Tip = Target.Get<Hint>();
-        return Tip ? AddressOf(Tip->Within) : nullptr;
+        return Tip ? AddressOf(Tip->Recipe.Within) : nullptr;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -197,21 +192,13 @@ namespace ZyPlugin::UI
 
     void Tooltip::Spawn(Element Holder, Element Source)
     {
-        const ConstPtr<Hint> Found = Source.Get<Hint>();
-
-        if (!Found || !Found->Reader)
-        {
-            return;
-        }
-
         // Copied, since the template may give tooltips too and move the store under this one.
-        const Str  Template(Found->Template);
-        const Str  Scope(Found->Scope);
-        const Path Within = Found->Within;
+        const ConstPtr<Hint> Found  = Source.Get<Hint>();
+        const Markup::Recipe Recipe = Found ? Found->Recipe : Markup::Recipe();
 
-        if (!Found->Reader->Spawn(Holder, Template, Scope, Within).IsAlive())
+        if (Recipe.Reader && !Recipe.Make(Holder).IsAlive())
         {
-            LOG_W("The tooltip template '{0}' makes nothing, so the tooltip shows empty", Text(Template));
+            LOG_W("The tooltip template '{0}' makes nothing, so the tooltip shows empty", Text(Recipe.Template));
         }
     }
 

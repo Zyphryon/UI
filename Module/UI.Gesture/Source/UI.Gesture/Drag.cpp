@@ -79,13 +79,8 @@ namespace ZyPlugin::UI
     void Drag::SetGhost(Element Target, Ref<Markup> Reader, Text Template)
     {
         Ref<Draggable> Source = Target.Obtain<Draggable>();
-        Source.Ghost    = Filler::Create<&Drag::Spawn>();
-        Source.Reader   = AddressOf(Reader);
-        Source.Template = Template;
-
-        // Named in a row of a list, it is made later reading the row's record.
-        Source.Scope = Reader.GetScope();
-        Binder::Locate(Source.Scope, Source.Within);
+        Source.Ghost = Filler::Create<&Drag::Spawn>();
+        Source.Recipe.Capture(Reader, Template);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -181,7 +176,7 @@ namespace ZyPlugin::UI
     Ptr<Path> Drag::GetWithin(Element Target)
     {
         const Ptr<Draggable> Source = Target.Get<Draggable>();
-        return Source ? AddressOf(Source->Within) : nullptr;
+        return Source ? AddressOf(Source->Recipe.Within) : nullptr;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -274,21 +269,13 @@ namespace ZyPlugin::UI
 
     void Drag::Spawn(Element Holder, Element Source)
     {
-        const ConstPtr<Draggable> Found = Source.Get<Draggable>();
-
-        if (!Found || !Found->Reader)
-        {
-            return;
-        }
-
         // Copied, since making the ghost may make sources too and move the store under this one.
-        const Str  Template(Found->Template);
-        const Str  Scope(Found->Scope);
-        const Path Within = Found->Within;
+        const ConstPtr<Draggable> Found  = Source.Get<Draggable>();
+        const Markup::Recipe      Recipe = Found ? Found->Recipe : Markup::Recipe();
 
-        if (!Found->Reader->Spawn(Holder, Template, Scope, Within).IsAlive())
+        if (Recipe.Reader && !Recipe.Make(Holder).IsAlive())
         {
-            LOG_W("The ghost template '{0}' makes nothing, so the drag carries an empty ghost", Text(Template));
+            LOG_W("The ghost template '{0}' makes nothing, so the drag carries an empty ghost", Text(Recipe.Template));
         }
     }
 

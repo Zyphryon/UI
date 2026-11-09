@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "UI.Core/Types.hpp"
-#include "UI.Data/Path.hpp"
 #include "UI.Gesture/Filler.hpp"
 #include "UI.Markup/Markup.hpp"
 
@@ -33,21 +32,12 @@ namespace ZyPlugin::UI
         static constexpr Bool  kInteractive = true;
 
         /// The text shown when no filler is given.
-        Str         Content;
+        Str            Content;
 
         /// The code filling the tooltip, or empty to show the text.
-        Filler      Fill;
+        Filler         Fill;
 
-        /// The markup making the tooltip from a template, or `nullptr` for none.
-        Ptr<Markup> Reader = nullptr;
-
-        /// The name of the template the tooltip is made from.
-        Str         Template;
-
-        /// The record the template reads from, as the markup's scope named it when the template was given.
-        Str         Scope;
-
-        /// The steps of that record, moved with them when its row is handed to another record.
-        Path        Within;
+        /// The template the tooltip is made from and the record it reads, naming no markup for none.
+        Markup::Recipe Recipe;
     };
 }

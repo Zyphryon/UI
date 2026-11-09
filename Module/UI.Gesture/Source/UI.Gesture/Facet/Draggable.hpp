@@ -14,7 +14,6 @@
 
 #include "UI.Core/Types.hpp"
 #include "UI.Data/Datum.hpp"
-#include "UI.Data/Path.hpp"
 #include "UI.Gesture/Filler.hpp"
 #include "UI.Markup/Markup.hpp"
 
@@ -34,24 +33,15 @@ namespace ZyPlugin::UI
         static constexpr Bool  kInteractive = true;
 
         /// The identifier of the kind of thing it is, which targets accept it by, or zero for none.
-        UInt64      Kind   = 0;
+        UInt64         Kind = 0;
 
         /// The value it carries, as an item's name, for whatever it is dropped on to read.
-        Datum       Payload;
+        Datum          Payload;
 
         /// The code filling the ghost, or empty to carry a copy of the element.
-        Filler      Ghost;
+        Filler         Ghost;
 
-        /// The markup making the ghost from a template, or `nullptr` for none.
-        Ptr<Markup> Reader = nullptr;
-
-        /// The name of the template the ghost is made from.
-        Str         Template;
-
-        /// The record the template reads from, as the markup's scope named it when the template was given.
-        Str         Scope;
-
-        /// The steps of that record, moved with them when its row is handed to another record.
-        Path        Within;
+        /// The template the ghost is made from and the record it reads, naming no markup for none.
+        Markup::Recipe Recipe;
     };
 }

@@ -37,6 +37,45 @@ namespace ZyPlugin::UI
         /// \brief Represents the code reading a field any node may give into the element created from it.
         using Field   = Delegate<void(Ref<Markup>, Element, ConstRef<JsonValue>)>;
 
+        /// \brief Represents a template made later, as a tooltip or a drag's ghost, reading the record it was named in.
+        struct Recipe final
+        {
+            /// The markup making the template, or `nullptr` for none.
+            Ptr<Markup> Reader = nullptr;
+
+            /// The name of the template made.
+            Str         Template;
+
+            /// The record the template reads from, as the markup's scope named it when the template was given.
+            Str         Scope;
+
+            /// The steps of that record, moved with them when its row is handed to another record.
+            Path        Within;
+
+            /// \brief Names the template to make, reading the record the markup's scope names now.
+            ///
+            /// \param Source The markup knowing the template, which must outlive the recipe.
+            /// \param Name   The name of the template.
+            ZY_INLINE void Capture(Ref<Markup> Source, Text Name)
+            {
+                Reader   = AddressOf(Source);
+                Template = Name;
+
+                // Named in a row of a list, it is made later reading the row's record.
+                Scope = Source.GetScope();
+                Binder::Locate(Scope, Within);
+            }
+
+            /// \brief Makes the template under an element, reading the record its row shows by now.
+            ///
+            /// \param Holder The element to hold the template's root.
+            /// \return The template's root, or one naming nothing when no markup or no template of the name is known.
+            ZY_INLINE Element Make(Element Holder) const
+            {
+                return Reader ? Reader->Spawn(Holder, Template, Scope, Within) : Element();
+            }
+        };
+
     public:
 
         /// \brief Constructs a markup knowing no template and no widget but a plain `Panel`.
