@@ -739,8 +739,8 @@ namespace ZyPlugin::UI
             /// The typeface the line is set in.
             ConstPtr<ZyRender::Font> Font  = nullptr;
 
-            /// The outline the line is drawn with, its lengths already scaled.
-            ZyRender::FontEffect     Effect;
+            /// The material the line's glyphs read, its lengths already scaled and its range set as a page is met.
+            Material                 Effect;
 
             /// The left of the line and its baseline, in the units drawn in.
             Vector2                  Origin;
@@ -958,13 +958,6 @@ namespace ZyPlugin::UI
         ///
         /// \return The transform's place in its block, nought for none.
         UInt32 ObtainTransform();
-
-        /// \brief Finds the material a glyph run reads, adding it when no recent one matches.
-        ///
-        /// \param Range  The width of the atlas's distance range, in texture coordinates.
-        /// \param Effect The outline the text is drawn with.
-        /// \return The material's place in its block.
-        UInt32 ObtainMaterial(Vector2 Range, ConstRef<ZyRender::FontEffect> Effect);
 
     public:
 

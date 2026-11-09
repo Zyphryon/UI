@@ -1024,11 +1024,11 @@ namespace ZyPlugin::UI
 
             if (Ready)
             {
-                const Real32  Distance = Font->GetMetrics().Distance;
-                const Vector2 Range(Distance / Atlas->GetWidth(), Distance / Atlas->GetHeight());
+                const Real32 Distance = Font->GetMetrics().Distance;
 
-                Shape[1] = static_cast<UInt16>(Owner->ObtainMaterial(Range, Effect));
-                Ready    = Owner->Open(Paint::Glyph, Atlas->GetHandle());
+                Effect.Range = Vector2(Distance / Atlas->GetWidth(), Distance / Atlas->GetHeight());
+                Shape[1]     = static_cast<UInt16>(Owner->AdoptMaterial(Effect));
+                Ready        = Owner->Open(Paint::Glyph, Atlas->GetHandle());
             }
         }
 
@@ -1065,9 +1065,15 @@ namespace ZyPlugin::UI
         return Run {
             .Owner  = this,
             .Font   = AddressOf(Font),
-            .Effect = ZyRender::FontEffect(Effect.GetOutsetColor(), Effect.GetOutsetOffset() * mScale,
-                Effect.GetOutsetWidthRelative(), Effect.GetOutsetWidthAbsolute() * mScale, Effect.GetOutsetBlur(),
-                Effect.GetInsetRoundness(), Effect.GetInsetThreshold()),
+            .Effect = Material {
+                .Tint      = Effect.GetOutsetColor().ToRGBA8(),
+                .Offset    = Effect.GetOutsetOffset() * mScale,
+                .Width     = Effect.GetOutsetWidthRelative(),
+                .Bias      = Effect.GetOutsetWidthAbsolute() * mScale,
+                .Blur      = Effect.GetOutsetBlur(),
+                .Roundness = Effect.GetInsetRoundness(),
+                .Threshold = Effect.GetInsetThreshold()
+            },
             .Origin = Vector2(Origin.GetX(), Origin.GetY() + Font.GetMetrics().Ascender * Size),
             .Size   = Size,
             .Tint   = Tint.ToRGBA8(),
@@ -1485,29 +1491,6 @@ namespace ZyPlugin::UI
 
         mSlot = static_cast<UInt32>(mAffines.GetSize() - 1) % kTransforms;
         return mSlot;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    UInt32 Canvas::ObtainMaterial(Vector2 Range, ConstRef<ZyRender::FontEffect> Effect)
-    {
-        const IntColor8 Outset = Effect.GetOutsetColor();
-
-        const Material Wanted {
-            .Range     = Range,
-            .Padding   = Vector2(),
-            .Tint      = Outset.ToRGBA8(),
-            .Offset    = Effect.GetOutsetOffset(),
-            .Width     = Effect.GetOutsetWidthRelative(),
-            .Bias      = Effect.GetOutsetWidthAbsolute(),
-            .Blur      = Effect.GetOutsetBlur(),
-            .Roundness = Effect.GetInsetRoundness(),
-            .Threshold = Effect.GetInsetThreshold(),
-            .Tail      = 0
-        };
-
-        return AdoptMaterial(Wanted);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
