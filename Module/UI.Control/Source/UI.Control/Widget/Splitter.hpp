@@ -25,20 +25,35 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Represents the state of a splitter, with the least size of each pane and the size each folded one had.
+    /// \brief Represents the room a pane of a splitter keeps, which its box is laid out from.
+    struct Quota final
+    {
+        /// The size it keeps along the splitter's axis, in pixels or as a share, or unset to share what is left.
+        Length Size;
+
+        /// The least size it is laid out at along the splitter's axis, in pixels.
+        Real32 Minimum = 0.0f;
+
+        /// `true` while it stands folded away to nothing, keeping the size it opens at, `false` while it is open.
+        Bool   Folded  = false;
+
+        /// \brief Checks whether the pane shares what is left, rather than keeping a size or standing folded.
+        ///
+        /// \return `true` if it does, `false` otherwise.
+        ZY_INLINE Bool IsSharing() const
+        {
+            return !Folded && Size.IsAuto();
+        }
+    };
+
+    /// \brief Represents the state of a splitter, with the room each pane keeps and the hold the pointer has on a bar.
     struct Split final
     {
         /// What a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
-        /// The least size of each pane along the splitter's axis, in pixels, in order.
-        Sequence<Real32> Minimums;
-
-        /// The size each pane had before folding, nought for one sharing what is left and below nought while open.
-        Sequence<Real32> Folded;
-
-        /// The share of the room each pane keeps, over nought through one, or nought for a size or what is left.
-        Sequence<Real32> Shares;
+        /// The room each pane keeps, in the order the panes stand.
+        Sequence<Quota>  Quotas;
 
         /// How far into the bar held the press landed, along the axis, in pixels.
         Real32           Grab = 0.0f;
@@ -231,11 +246,12 @@ namespace ZyPlugin::UI
         /// \param Size  The size along the splitter's axis, in pixels.
         static void Resize(Element Root, UInt32 Index, Real32 Size);
 
-        /// \brief Lays a pane out to keep a share of the splitter's room.
+        /// \brief Gives a pane the size it keeps, opening it when folded, and lays it out at it.
         ///
-        /// \param Pane  The pane to lay out.
-        /// \param Share The share, over nought through one.
-        static void Spread(Element Pane, Real32 Share);
+        /// \param Pane The pane to lay out.
+        /// \param Kept The room the pane keeps, whose size is set.
+        /// \param Size The size in pixels, held to its least, or as a share, where any other shares what is left.
+        static void Keep(Element Pane, Ref<Quota> Kept, Length Size);
 
         /// \brief Gets the room the splitter shares out among its panes, the room a share is measured against.
         ///
@@ -251,18 +267,11 @@ namespace ZyPlugin::UI
         /// \param After  The variable receiving the index of the nearest shown pane after it, or below nought for none.
         static void Flank(Element Root, Element Bar, Ref<SInt32> Before, Ref<SInt32> After);
 
-        /// \brief Lays a pane out to keep a size, or to share what is left.
+        /// \brief Lays a pane out from the room it keeps, at nothing while folded.
         ///
-        /// \param Pane    The pane to lay out.
-        /// \param Size    The size, in pixels, or nought to share what is left.
-        /// \param Minimum The least size it is laid out at, in pixels.
-        static void Shape(Element Pane, Real32 Size, Real32 Minimum);
-
-        /// \brief Checks whether a pane shares what is left rather than keeping a size.
-        ///
-        /// \param Pane The pane to check.
-        /// \return `true` if it does, `false` otherwise.
-        static Bool IsSharing(Element Pane);
+        /// \param Pane The pane to lay out.
+        /// \param Kept The room the pane keeps.
+        static void Lay(Element Pane, ConstRef<Quota> Kept);
 
         /// \brief Checks whether a child of a splitter is one of its bars rather than one of its panes.
         ///

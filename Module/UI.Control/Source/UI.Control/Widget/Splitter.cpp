@@ -137,24 +137,12 @@ namespace ZyPlugin::UI
             Shape.Shrink = 0.0f;
         }
 
-        // A share is kept as one, measured against the room; any other size is pixels, and none shares what is left.
-        const Bool    Spreads = Size.Measure == Length::Unit::Percent && Size.Value > 0.0f;
-        const Element Pane    = Panel::Create(Owner, Widget::Part(Style, "Pane"));
+        const Element Pane = Panel::Create(Owner, Widget::Part(Style, "Pane"));
         Pane.Add<Look>().Clip = true;
 
-        if (Spreads)
-        {
-            Spread(Pane, Size.Value);
-        }
-        else
-        {
-            Shape(Pane, Size.Measure == Length::Unit::Pixel ? Max(Size.Value, 0.0f) : 0.0f, Least);
-        }
-
-        Ref<Split> Own = * Owner.Get<Split>();
-        Own.Minimums.Append(Least);
-        Own.Folded.Append(-1.0f);
-        Own.Shares.Append(Spreads ? Size.Value : 0.0f);
+        Ref<Quota> Kept = Owner.Get<Split>()->Quotas.Append();
+        Kept.Minimum = Least;
+        Keep(Pane, Kept, Size);
         return Pane;
     }
 
@@ -219,11 +207,9 @@ namespace ZyPlugin::UI
         const Element    Pane = GetPane(Owner, Index);
         const Ptr<Split> Own  = Owner.Get<Split>();
 
-        if (Pane.IsAlive() && Own && Index < Own->Minimums.GetSize())
+        if (Pane.IsAlive() && Own && Index < Own->Quotas.GetSize())
         {
-            Own->Folded[Index] = -1.0f;
-            Own->Shares[Index] = 0.0f;
-            Shape(Pane, Max(Size, 0.0f), Own->Minimums[Index]);
+            Keep(Pane, Own->Quotas[Index], Length::Pixels(Size));
         }
     }
 
@@ -244,21 +230,9 @@ namespace ZyPlugin::UI
         const Element    Pane = GetPane(Owner, Index);
         const Ptr<Split> Own  = Owner.Get<Split>();
 
-        if (!Pane.IsAlive() || !Own || Index >= Own->Shares.GetSize())
+        if (Pane.IsAlive() && Own && Index < Own->Quotas.GetSize())
         {
-            return;
-        }
-
-        Own->Folded[Index] = -1.0f;
-        Own->Shares[Index] = Max(Share, 0.0f);
-
-        if (Share > 0.0f)
-        {
-            Spread(Pane, Share);
-        }
-        else
-        {
-            Shape(Pane, 0.0f, Own->Minimums[Index]);
+            Keep(Pane, Own->Quotas[Index], Length::Percent(Share));
         }
     }
 
@@ -267,8 +241,8 @@ namespace ZyPlugin::UI
 
     Real32 Splitter::GetShare(Element Owner, UInt32 Index)
     {
-        const ConstPtr<Split> Own = Owner.Get<Split>();
-        return Own && Index < Own->Shares.GetSize() ? Own->Shares[Index] : 0.0f;
+        const Length Kept = GetMeasure(Owner, Index);
+        return Kept.Measure == Length::Unit::Percent ? Kept.Value : 0.0f;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -279,22 +253,8 @@ namespace ZyPlugin::UI
         const Element         Pane = GetPane(Owner, Index);
         const ConstPtr<Split> Own  = Owner.Get<Split>();
 
-        if (!Pane.IsAlive() || !Own || Index >= Own->Shares.GetSize())
-        {
-            return Length::Auto();
-        }
-
-        if (Own->Shares[Index] > 0.0f)
-        {
-            return Length::Percent(Own->Shares[Index]);
-        }
-
         // A folded pane keeps the size it had in the fold, its box laid out at nothing meanwhile.
-        if (const Real32 Folded = Own->Folded[Index]; Folded >= 0.0f)
-        {
-            return Folded > 0.0f ? Length::Pixels(Folded) : Length::Auto();
-        }
-        return IsSharing(Pane) ? Length::Auto() : Length::Pixels(Owner.GetTree().GetBox(Pane.GetHandle()).Basis.Value);
+        return Pane.IsAlive() && Own && Index < Own->Quotas.GetSize() ? Own->Quotas[Index].Size : Length::Auto();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -332,36 +292,11 @@ namespace ZyPlugin::UI
         const Element    Pane = GetPane(Owner, Index);
         const Ptr<Split> Own  = Owner.Get<Split>();
 
-        if (!Pane.IsAlive() || !Own || Index >= Own->Folded.GetSize() || (Own->Folded[Index] >= 0.0f) == Folded)
+        // The size it keeps is left as it was, so it opens again as it folded.
+        if (Pane.IsAlive() && Own && Index < Own->Quotas.GetSize() && Own->Quotas[Index].Folded != Folded)
         {
-            return;
-        }
-
-        const Real32 Least = Own->Minimums[Index];
-
-        if (Folded)
-        {
-            // A pane sharing what is left opens sharing again; one keeping a size or a share opens at it.
-            const Real32 Kept = Owner.GetTree().GetBox(Pane.GetHandle()).Basis.Value;
-            Own->Folded[Index] = IsSharing(Pane) || Own->Shares[Index] > 0.0f ? 0.0f : Max(Kept, Least);
-
-            Ref<Box> Edit = Pane.EditBox();
-            Edit.Basis = Length::Pixels(0.0f);
-            Edit.Grow  = 0.0f;
-        }
-        else
-        {
-            const Real32 Size = Own->Folded[Index];
-            Own->Folded[Index] = -1.0f;
-
-            if (const Real32 Share = Own->Shares[Index]; Share > 0.0f)
-            {
-                Spread(Pane, Share);
-            }
-            else
-            {
-                Shape(Pane, Size, Least);
-            }
+            Own->Quotas[Index].Folded = Folded;
+            Lay(Pane, Own->Quotas[Index]);
         }
     }
 
@@ -371,7 +306,7 @@ namespace ZyPlugin::UI
     Bool Splitter::IsFolded(Element Owner, UInt32 Index)
     {
         const ConstPtr<Split> Own = Owner.Get<Split>();
-        return Own && Index < Own->Folded.GetSize() && Own->Folded[Index] >= 0.0f;
+        return Own && Index < Own->Quotas.GetSize() && Own->Quotas[Index].Folded;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -498,8 +433,8 @@ namespace ZyPlugin::UI
         // The bar follows the pointer, held where it was pressed, as far as both panes' least sizes allow.
         const Real32 Pointer = Toward(Root, Point);
         const Real32 Wanted  = Pointer - Own->Grab - Start(Root, Bar.GetFrame());
-        const Real32 Lowest  = Min(Own->Minimums[First] - Near, 0.0f);
-        const Real32 Highest = Max(Far - Own->Minimums[Second], 0.0f);
+        const Real32 Lowest  = Min(Own->Quotas[First].Minimum - Near, 0.0f);
+        const Real32 Highest = Max(Far - Own->Quotas[Second].Minimum, 0.0f);
         const Real32 Delta   = Clamp(Wanted, Lowest, Highest);
 
         if (Abs(Delta) < 0.5f)
@@ -507,12 +442,8 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        const Bool Sharing = IsSharing(Before);
-        const Bool Yields  = IsSharing(After);
-
-        // A pane dragged open from folded is open again.
-        Own->Folded[First]  = -1.0f;
-        Own->Folded[Second] = -1.0f;
+        const Bool Sharing = Own->Quotas[First].IsSharing();
+        const Bool Yields  = Own->Quotas[Second].IsSharing();
 
         // A pane keeping a size takes the room and a sharing one gives way; of two sharing, the first keeps it.
         if (!Sharing || Yields)
@@ -552,11 +483,11 @@ namespace ZyPlugin::UI
 
         const Element Before  = GetPane(Root, static_cast<UInt32>(First));
         const Element After   = GetPane(Root, static_cast<UInt32>(Second));
-        const Bool    Sharing = IsSharing(Before);
+        const Bool    Sharing = GetMeasure(Root, static_cast<UInt32>(First)).IsAuto();
 
         SInt32 Folded = First;
 
-        if (Sharing != IsSharing(After))
+        if (Sharing != GetMeasure(Root, static_cast<UInt32>(Second)).IsAuto())
         {
             Folded = Sharing ? Second : First;
         }
@@ -674,30 +605,36 @@ namespace ZyPlugin::UI
 
     void Splitter::Resize(Element Root, UInt32 Index, Real32 Size)
     {
-        const Ptr<Split> Own  = Root.Get<Split>();
-        const Element    Pane = GetPane(Root, Index);
-        const Real32     Room = GetRoom(Root);
+        Ref<Quota>   Kept    = Root.Get<Split>()->Quotas[Index];
+        const Real32 Room    = GetRoom(Root);
+        const Bool   Spreads = Kept.Size.Measure == Length::Unit::Percent && Room > 0.0f;
 
-        if (Own->Shares[Index] > 0.0f && Room > 0.0f)
-        {
-            Own->Shares[Index] = Size / Room;
-            Spread(Pane, Own->Shares[Index]);
-        }
-        else
-        {
-            Shape(Pane, Size, Own->Minimums[Index]);
-        }
+        Keep(GetPane(Root, Index), Kept, Spreads ? Length::Percent(Size / Room) : Length::Pixels(Size));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Splitter::Spread(Element Pane, Real32 Share)
+    void Splitter::Keep(Element Pane, Ref<Quota> Kept, Length Size)
     {
-        Ref<Box> Edit = Pane.EditBox();
-        Edit.Basis  = Length::Percent(Share);
-        Edit.Grow   = 0.0f;
-        Edit.Shrink = 0.0f;
+        // A share is kept as one, a size in pixels never under the pane's least, and anything else shares what is left.
+        const Bool Given = Size.Value > 0.0f;
+
+        if (Given && Size.Measure == Length::Unit::Percent)
+        {
+            Kept.Size = Size;
+        }
+        else if (Given && Size.Measure == Length::Unit::Pixel)
+        {
+            Kept.Size = Length::Pixels(Max(Size.Value, Kept.Minimum));
+        }
+        else
+        {
+            Kept.Size = Length::Auto();
+        }
+
+        Kept.Folded = false;
+        Lay(Pane, Kept);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -754,30 +691,21 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Splitter::Shape(Element Pane, Real32 Size, Real32 Minimum)
+    void Splitter::Lay(Element Pane, ConstRef<Quota> Kept)
     {
-        // Neither kind shrinks: one keeping a size keeps it, and one sharing what is left starts from its least size.
+        // A folded pane stands at nothing and one sharing what is left starts from its least size, neither shrinking.
         Ref<Box> Edit = Pane.EditBox();
         Edit.Shrink = 0.0f;
+        Edit.Grow   = Kept.IsSharing() ? 1.0f : 0.0f;
 
-        if (Size > 0.0f)
+        if (Kept.Folded)
         {
-            Edit.Basis = Length::Pixels(Max(Size, Minimum));
-            Edit.Grow  = 0.0f;
+            Edit.Basis = Length::Pixels(0.0f);
         }
         else
         {
-            Edit.Basis = Length::Pixels(Minimum);
-            Edit.Grow  = 1.0f;
+            Edit.Basis = Kept.IsSharing() ? Length::Pixels(Kept.Minimum) : Kept.Size;
         }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Splitter::IsSharing(Element Pane)
-    {
-        return Pane.GetTree().GetBox(Pane.GetHandle()).Grow > 0.0f;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
