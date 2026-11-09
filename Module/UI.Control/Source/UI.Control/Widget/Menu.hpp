@@ -41,9 +41,6 @@ namespace ZyPlugin::UI
         /// The item lit, by the keyboard or the pointer, or one naming nothing.
         Handle Active;
 
-        /// The item the pointer rested on at the last update, so the keyboard keeps what it lit until it moves.
-        Handle Hovered;
-
         /// The control that held the keyboard before the menu took it.
         Handle Return;
 
@@ -232,7 +229,7 @@ namespace ZyPlugin::UI
 
     private:
 
-        /// \brief Runs a menu, where opening takes the keyboard, a click on an item picks it, and keys move through it.
+        /// \brief Runs a menu, where opening takes the keyboard, hover lights an item, a click picks it, and keys move.
         ///
         /// \param Owner   The interface it stands in.
         /// \param Message The event reaching the menu.
@@ -255,13 +252,6 @@ namespace ZyPlugin::UI
         /// \param Self    The item the handler governs.
         /// \return `false` always, so the click goes on to the item's action and closes its menu.
         static Bool OnCheck(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
-
-        /// \brief Lights the item the pointer rests on, opening its submenu and closing the others, while open.
-        ///
-        /// \param Owner The interface it stands in.
-        /// \param Self  The menu the pointer moves over.
-        /// \return `true` if it opened or closed a submenu, `false` otherwise.
-        static Bool Track(Ref<Interface> Owner, Handle Self);
 
         /// \brief Picks an item, opening its submenu or closing every menu it was reached through.
         ///

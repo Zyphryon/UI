@@ -19,7 +19,6 @@
 #include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Facet/Layout/Virtual.hpp"
 #include "UI.Core/Handle.hpp"
 #include "UI.Core/Interface.hpp"
 #include "UI.Core/Tree.hpp"
@@ -44,7 +43,6 @@ namespace ZyPlugin::UI
 
         Widget::Govern(Result, Handler::Create<&Menu::OnEvent>(), true);
         Result.Add<Roster>().Style = Style;
-        Result.Add<Virtual>().Realize = Realizer::Create<&Menu::Track>();
         return Result;
     }
 
@@ -137,6 +135,9 @@ namespace ZyPlugin::UI
 
         Widget::Govern(Item, Handler(), false);
         Item.SetStyle(Face);
+
+        // The item tells of the pointer coming over it, which the menu lights it by.
+        Item.Get<Control>()->Hover = true;
 
         if (!Action.IsEmpty())
         {
@@ -315,7 +316,6 @@ namespace ZyPlugin::UI
         Collapse(Owner, Target, Handle());
 
         Light(Owner, Target, Handle());
-        Owner.Get<Roster>(Target)->Hovered = Handle();
 
         if (Popup::IsOpen(Owner, Target))
         {
@@ -370,6 +370,21 @@ namespace ZyPlugin::UI
 
             Light(Owner, Self, Handle());
             Owner.Focus(Self);
+            return true;
+        }
+
+        // An item's hover goes no further than its menu, where the pointer coming over one lights it.
+        const Bool Hover = Message.Kind == Signal::kEnter || Message.Kind == Signal::kMove
+            || Message.Kind == Signal::kLeave;
+
+        if (Hover && Owner.GetParent(Message.Target) == Self)
+        {
+            if (Message.Kind == Signal::kEnter && IsPickable(Owner, Message.Target))
+            {
+                Light(Owner, Self, Message.Target);
+                Collapse(Owner, Self, Message.Target);
+                Expand(Owner, Message.Target, false);
+            }
             return true;
         }
 
@@ -458,54 +473,6 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Menu::Track(Ref<Interface> Owner, Handle Self)
-    {
-        if (!Popup::IsOpen(Owner, Self) || Owner.IsPending(Self))
-        {
-            return false;
-        }
-
-        Handle Hovered;
-
-        for (Element Item = Element(Owner, Self).GetFirst(); Item.IsAlive(); Item = Item.GetNext())
-        {
-            if (Item.HasState(State::Hover) && IsPickable(Owner, Item.GetHandle()))
-            {
-                Hovered = Item.GetHandle();
-            }
-        }
-
-        // Only the pointer coming to rest on another item counts, so the keyboard keeps what it lit meanwhile.
-        const Ptr<Roster> Own = Owner.Get<Roster>(Self);
-
-        if (Hovered == Own->Hovered)
-        {
-            return false;
-        }
-
-        Own->Hovered = Hovered;
-
-        if (!Hovered.IsValid())
-        {
-            return false;
-        }
-
-        Light(Owner, Self, Hovered);
-
-        // Resting on an item opens its submenu, and closes the one another item opened.
-        Bool Changed = Collapse(Owner, Self, Hovered);
-
-        if (const ConstPtr<Branch> Inner = Owner.Get<Branch>(Hovered); Inner && !Popup::IsOpen(Owner, Inner->Submenu))
-        {
-            Expand(Owner, Hovered, false);
-            Changed = true;
-        }
-        return Changed;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     void Menu::Choose(Ref<Interface> Owner, Handle Self, Handle Item)
     {
         if (Owner.Has<Branch>(Item))
@@ -557,6 +524,9 @@ namespace ZyPlugin::UI
                 Shape.Right = Length::Pixels(Owner.GetSize().GetX() - Frame.GetMinimumX() + 2.0f);
             }
             Owner.Confine(Submenu);
+
+            // Closed by a press elsewhere, it kept the item it had lit, so it opens lighting none.
+            Light(Owner, Submenu, Handle());
         }
 
         Light(Owner, Parent, Item);
