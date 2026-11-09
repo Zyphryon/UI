@@ -59,10 +59,16 @@ namespace ZyPlugin::UI
     {
         const Handle Element = mOwner.GetHandle(Target.Slots[Row]);
 
-        Lay(State.Goal, Values);
+        // A skin giving what the last one gave starts no transition, and leaves one that runs to run on.
+        const Bool Changed = Lay(State.Goal, Values) != Skin::Field::None;
 
         // An element already shown moves from its own values to the new ones; one dressed the first time snaps.
-        if (Dressed && Values.Transition.Duration > 0.0f)
+        if (!Dressed || Values.Transition.Duration <= 0.0f)
+        {
+            State.Own      = State.Goal;
+            State.Shifting = false;
+        }
+        else if (Changed)
         {
             State.From     = State.Own;
             State.Clock    = Playback(Values.Transition.Duration);
@@ -74,11 +80,6 @@ namespace ZyPlugin::UI
 
             // Only what starts apart from where it ends is eased, the rest already standing at its end.
             State.Moving = Apart(State.From, State.Goal) & Motion::kMoving;
-        }
-        else
-        {
-            State.Own      = State.Goal;
-            State.Shifting = false;
         }
 
         // A new name starts the loop over, and none stops it.
