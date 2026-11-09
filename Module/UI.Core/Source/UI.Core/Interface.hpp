@@ -228,14 +228,20 @@ namespace ZyPlugin::UI
         ///
         /// \param Entry The shortcut.
         /// \param Owner The element keeping it, or one naming nothing to keep it for the interface.
-        void AddShortcut(ConstRef<Shortcut> Entry, Handle Owner = Handle());
+        ZY_INLINE void AddShortcut(ConstRef<Shortcut> Entry, Handle Owner = Handle())
+        {
+            mFocus.AddShortcut(Entry, Owner);
+        }
 
         /// \brief Removes every shortcut of a chord the interface or an element keeps.
         ///
         /// \param Key       The key of the chord.
         /// \param Modifiers The modifier keys of the chord.
         /// \param Owner     The element keeping them, or one naming nothing for the interface's own.
-        void RemoveShortcut(ZyInput::Key Key, ZyInput::Modifier Modifiers, Handle Owner = Handle());
+        ZY_INLINE void RemoveShortcut(ZyInput::Key Key, ZyInput::Modifier Modifiers, Handle Owner = Handle())
+        {
+            mFocus.RemoveShortcut(Key, Modifiers, Owner);
+        }
 
         /// \brief Hooks the interface to the input service, hearing the pointer and keyboard first.
         ///
@@ -252,74 +258,116 @@ namespace ZyPlugin::UI
         ///
         /// \param Message The event to send, naming the control it targets.
         /// \return `true` if a handler stopped it, `false` otherwise.
-        Bool Dispatch(ConstRef<Event> Message);
+        ZY_INLINE Bool Dispatch(ConstRef<Event> Message)
+        {
+            return mDispatcher.Dispatch(Message);
+        }
 
         /// \brief Runs code on the events of every control naming an action, after the control's observers.
         ///
         /// \param Action   The name of the action, which replaces whatever code it ran before.
         /// \param Callback The code, returning `true` to stop the event bubbling further.
-        void Bind(Text Action, Handler Callback);
+        ZY_INLINE void Bind(Text Action, Handler Callback)
+        {
+            mDispatcher.Bind(Action, ::Move(Callback));
+        }
 
         /// \brief Stops running code on the events of the controls naming an action.
         ///
         /// \param Action The name of the action.
-        void Unbind(Text Action);
+        ZY_INLINE void Unbind(Text Action)
+        {
+            mDispatcher.Unbind(Action);
+        }
 
         /// \brief Stops running code on the events of the controls naming any action.
-        void UnbindAll();
+        ZY_INLINE void UnbindAll()
+        {
+            mDispatcher.UnbindAll();
+        }
 
         /// \brief Runs code when a control naming an action is clicked.
         ///
         /// \param Action The name of the action, which replaces whatever code it ran before.
         /// \param Code   The code, handed the control clicked; the click bubbles on, so a menu holding it closes.
-        void OnClick(Text Action, Reaction Code);
+        ZY_INLINE void OnClick(Text Action, Reaction Code)
+        {
+            React(Action, Signal::kClick, ::Move(Code));
+        }
 
         /// \brief Runs code when a control naming an action reports a change of its own value, hearing no other event.
         ///
         /// \param Action The name of the action, which replaces whatever code it ran before.
         /// \param Code   The code, handed the control changed; the change bubbles on.
-        void OnChange(Text Action, Reaction Code);
+        ZY_INLINE void OnChange(Text Action, Reaction Code)
+        {
+            React(Action, Signal::kChange, ::Move(Code));
+        }
 
         /// \brief Hooks the code that plays the sounds styles name, as a control is hovered, pressed or a pane shown.
         ///
         /// \param Callback The code, or empty to play nothing.
-        void SetSoundHook(SoundHook Callback);
+        ZY_INLINE void SetSoundHook(SoundHook Callback)
+        {
+            mDispatcher.SetSoundHook(::Move(Callback));
+        }
 
         /// \brief Moves the keyboard to a control, or takes it away.
         ///
         /// \param Element The control, or one naming nothing.
-        void Focus(Handle Element);
+        ZY_INLINE void Focus(Handle Element)
+        {
+            mFocus.Set(Element);
+        }
 
         /// \brief Moves the keyboard to the next control in layout order, wrapping around, as the tab key does.
         ///
         /// \return `true` if a control took the keyboard, `false` otherwise.
-        Bool NextFocus();
+        ZY_INLINE Bool NextFocus()
+        {
+            return mFocus.NextFocus();
+        }
 
         /// \brief Moves the keyboard to the control before the one holding it, wrapping around, as shift and tab do.
         ///
         /// \return `true` if a control took the keyboard, `false` otherwise.
-        Bool PreviousFocus();
+        ZY_INLINE Bool PreviousFocus()
+        {
+            return mFocus.PreviousFocus();
+        }
 
         /// \brief Moves the keyboard toward the nearest control on screen one way, as an arrow key or a pad does.
         ///
         /// \param Way The way to move.
         /// \return `true` if a control took the move or the keyboard, `false` otherwise.
-        Bool Navigate(Heading Way);
+        ZY_INLINE Bool Navigate(Heading Way)
+        {
+            return mFocus.Navigate(Way);
+        }
 
         /// \brief Uses the control holding the keyboard as a click would, as enter, space or a pad's confirm do.
         ///
         /// \return `true` if a control holds the keyboard, `false` otherwise.
-        Bool Activate();
+        ZY_INLINE Bool Activate()
+        {
+            return mFocus.Activate();
+        }
 
         /// \brief Backs out as escape does, letting go of a drag or closing the popup or modal pane in front.
         ///
         /// \return `true` if anything heard it or closed, `false` otherwise.
-        Bool Cancel();
+        ZY_INLINE Bool Cancel()
+        {
+            return mFocus.Cancel();
+        }
 
         /// \brief Scrolls every scrolling element holding an element so the element stands in its view.
         ///
         /// \param Element The element to bring into view.
-        void Reveal(Handle Element);
+        ZY_INLINE void Reveal(Handle Element)
+        {
+            mFocus.Reveal(Element);
+        }
 
         /// \brief Gets the element the pointer rests on.
         ///
@@ -357,20 +405,29 @@ namespace ZyPlugin::UI
         ///
         /// \param Element The element measured from, as last laid out.
         /// \return The point, in units of the interface.
-        Vector2 GetPointer(Handle Element) const;
+        ZY_INLINE Vector2 GetPointer(Handle Element) const
+        {
+            return mPointer.GetPosition() - GetFrame(Element).GetPosition();
+        }
 
         /// \brief Opens a popup at a point, over every pane of its band and kept on screen, telling it its subject.
         ///
         /// \param Popup   The root of the popup.
         /// \param At      The point its top left corner opens at, in pixels of the target.
         /// \param Subject The element it was opened over, or one naming nothing.
-        void Summon(Handle Popup, Vector2 At, Handle Subject = Handle());
+        ZY_INLINE void Summon(Handle Popup, Vector2 At, Handle Subject = Handle())
+        {
+            mPointer.Summon(Popup, At, Subject);
+        }
 
         /// \brief Keeps the root of a pane on screen, moving it back inside the target whenever it overruns an edge.
         ///
         /// \param Root The root, which must be placed by its distance from the target's top left corner.
         /// \param Gap  The gap it keeps from the pointer, standing above it instead of off the bottom, or nought.
-        void Confine(Handle Root, Real32 Gap = 0.0f);
+        ZY_INLINE void Confine(Handle Root, Real32 Gap = 0.0f)
+        {
+            mPointer.Confine(Root, Gap);
+        }
 
         /// \brief Gets the control the left button went down on and has not come up from yet.
         ///
@@ -392,7 +449,10 @@ namespace ZyPlugin::UI
         /// \brief Gets the root of the modal pane in front, which holds the pointer and the keyboard.
         ///
         /// \return The root, or one naming nothing while no modal pane is shown.
-        Handle GetModal() const;
+        ZY_INLINE Handle GetModal() const
+        {
+            return mDispatcher.GetModal();
+        }
 
         /// \brief Moves the pointer.
         ///
@@ -401,44 +461,65 @@ namespace ZyPlugin::UI
         /// \param DeltaX The horizontal movement since the last event, in pixels.
         /// \param DeltaY The vertical movement since the last event, in pixels.
         /// \return `true` if the pointer rests on the interface, `false` otherwise.
-        Bool OnMouseMove(Real32 X, Real32 Y, Real32 DeltaX, Real32 DeltaY);
+        ZY_INLINE Bool OnMouseMove(Real32 X, Real32 Y, Real32 DeltaX, Real32 DeltaY)
+        {
+            return mPointer.OnMouseMove(X, Y, DeltaX, DeltaY, mRatio);
+        }
 
         /// \brief Presses a pointer button, where the left one may start a drag and the right one opens a context menu.
         ///
         /// \param Button The button pressed.
         /// \return `true` if the press lands on the interface, `false` otherwise.
-        Bool OnMouseDown(ZyInput::Button Button);
+        ZY_INLINE Bool OnMouseDown(ZyInput::Button Button)
+        {
+            return mPointer.OnMouseDown(Button);
+        }
 
         /// \brief Releases a pointer button, clicking the control it went down on or dropping what the pointer carries.
         ///
         /// \param Button The button released.
         /// \return `true` if the press had landed on the interface, `false` otherwise.
-        Bool OnMouseUp(ZyInput::Button Button);
+        ZY_INLINE Bool OnMouseUp(ZyInput::Button Button)
+        {
+            return mPointer.OnMouseUp(Button);
+        }
 
         /// \brief Turns the wheel, scrolling the innermost scrolling element under the pointer, sideways with shift.
         ///
         /// \param DeltaX The horizontal turn, in notches.
         /// \param DeltaY The vertical turn, in notches.
         /// \return `true` if the pointer rests on the interface, `false` otherwise.
-        Bool OnMouseScroll(Real32 DeltaX, Real32 DeltaY);
+        ZY_INLINE Bool OnMouseScroll(Real32 DeltaX, Real32 DeltaY)
+        {
+            return mPointer.OnMouseScroll(DeltaX, DeltaY, HasBit(GetModifiers(), ZyInput::Modifier::Shift));
+        }
 
         /// \brief Presses a key, which the shortcuts hear first, then the control holding the keyboard.
         ///
         /// \param Key The key pressed.
         /// \return `true` if the key was taken or moved the keyboard, `false` otherwise.
-        Bool OnKeyDown(ZyInput::Key Key);
+        ZY_INLINE Bool OnKeyDown(ZyInput::Key Key)
+        {
+            return mFocus.OnKeyDown(Key, GetModifiers());
+        }
 
         /// \brief Repeats a key held down, which the control holding the keyboard hears as another press.
         ///
         /// \param Key The key held down.
         /// \return `true` if the key was taken or moved the keyboard, `false` otherwise.
-        Bool OnKeyRepeat(ZyInput::Key Key);
+        ZY_INLINE Bool OnKeyRepeat(ZyInput::Key Key)
+        {
+            return mFocus.OnKeyDown(Key, GetModifiers(), true);
+        }
 
         /// \brief Types text, which the control holding the keyboard hears, unless a modal pane stands over it.
         ///
         /// \param Content The text typed.
         /// \return `true` if a control or a modal pane holds the keyboard, `false` otherwise.
-        Bool OnKeyType(Text Content);
+        ZY_INLINE Bool OnKeyType(Text Content)
+        {
+            return mFocus.OnKeyType(Content);
+        }
 
         /// \brief Takes the display's scale the window now stands at, as when it moves to a monitor of another DPI.
         ///
