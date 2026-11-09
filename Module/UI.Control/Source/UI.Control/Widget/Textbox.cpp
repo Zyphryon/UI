@@ -94,9 +94,9 @@ namespace ZyPlugin::UI
             Markup::GetText(Node, "Style", "Textbox"));
 
         const Ptr<Entry> Data = Result.Get<Entry>();
-        Data->Limit    = static_cast<UInt32>(Max(Markup::GetNumber(Node, "Limit"), 0.0f));
-        Data->ReadOnly = Markup::GetBool(Node, "ReadOnly");
-        Data->Numeric  = Markup::GetBool(Node, "Numeric");
+        Data->Limit     = static_cast<UInt32>(Max(Markup::GetNumber(Node, "Limit"), 0.0f));
+        Data->Immutable = Markup::GetBool(Node, "Immutable");
+        Data->Numeric   = Markup::GetBool(Node, "Numeric");
         SetPassword(Result, Markup::GetBool(Node, "Password"));
         SetMultiline(Result, Markup::GetBool(Node, "Multiline"));
 
@@ -203,11 +203,11 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Textbox::SetReadOnly(Element Target, Bool Enabled)
+    void Textbox::SetImmutable(Element Target, Bool Enabled)
     {
         if (const Ptr<Entry> Data = Target.Get<Entry>())
         {
-            Data->ReadOnly = Enabled;
+            Data->Immutable = Enabled;
         }
     }
 
@@ -719,7 +719,7 @@ namespace ZyPlugin::UI
     {
         const ConstPtr<Entry> Data = Target.Get<Entry>();
 
-        if (Data->ReadOnly)
+        if (Data->Immutable)
         {
             return false;
         }
@@ -761,7 +761,7 @@ namespace ZyPlugin::UI
         const Ptr<Entry> Data    = Target.Get<Entry>();
         const Text       Content = GetText(Target);
 
-        if (Data->ReadOnly)
+        if (Data->Immutable)
         {
             return false;
         }
@@ -794,7 +794,7 @@ namespace ZyPlugin::UI
         const Ptr<Entry>     Data      = Target.Get<Entry>();
         const AnyRange<UInt> Selection = GetSelection(* Data, GetText(Target).GetSize());
 
-        if (Data->ReadOnly || (Selection.IsFixed() && Content.IsEmpty()))
+        if (Data->Immutable || (Selection.IsFixed() && Content.IsEmpty()))
         {
             return false;
         }

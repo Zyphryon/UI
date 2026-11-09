@@ -58,7 +58,7 @@ namespace ZyPlugin::UI
         Bool   Editing   = false;
 
         /// `true` when nothing typed, cut or pasted changes the text, which can still be selected and copied.
-        Bool   ReadOnly  = false;
+        Bool   Immutable = false;
 
         /// `true` when typing and pasting keep only digits, minus signs and points.
         Bool   Numeric   = false;
@@ -89,7 +89,7 @@ namespace ZyPlugin::UI
         /// \return The text field, which reports \ref Signal::kChange on every edit made in it.
         static Element Create(Element Parent, Text Content = Text(), Text Hint = Text(), Text Style = "Textbox");
 
-        /// \brief Creates a text field from a node with `Text`, `Hint`, `Limit`, `Multiline`, `ReadOnly`, `Numeric`, `Password`.
+        /// \brief Creates a text field from a node with `Text`, `Hint`, `Limit`, `Multiline`, `Immutable`, `Numeric`, `Password`.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
@@ -125,7 +125,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Target  The text field to change.
         /// \param Enabled The flag, `true` to keep typing, cutting and pasting from changing it, `false` to let them.
-        static void SetReadOnly(Element Target, Bool Enabled);
+        static void SetImmutable(Element Target, Bool Enabled);
 
         /// \brief Sets whether a text field takes only what writes a number, as digits, minus signs and points.
         ///

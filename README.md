@@ -480,7 +480,7 @@ scrolls any element named by its `Target`. A viewer must be given a height (200 
 | control and A, C, X, V | Select all, copy, cut, paste. |
 | a press, a drag | Places the caret or selects. Two presses select a word, three the whole text. |
 
-`"Multiline": true` breaks lines on enter and wraps to the width; `"ReadOnly": true` keeps the text from changing;
+`"Multiline": true` breaks lines on enter and wraps to the width; `"Immutable": true` keeps the text from changing;
 `"Numeric": true` accepts only digits, signs and points; `Limit` caps its length; `Hint` shows while it is empty. The
 selection wears `Textbox.Selection`.
 
