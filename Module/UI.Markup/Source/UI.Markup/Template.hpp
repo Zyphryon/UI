@@ -54,6 +54,16 @@ namespace ZyPlugin::UI
         /// \return The copy, ready to be built.
         static JsonValue Copy(ConstRef<JsonValue> Template, ConstRef<JsonValue> Node);
 
+        /// \brief Gets a template as a node using it makes it, copied only when a parameter or the node changes it.
+        ///
+        /// \param Template The template's root node.
+        /// \param Node     The node using it, or one that is not an object to take every default.
+        /// \param Output   Receives the copy, left as it was when none is made.
+        /// \return The template itself when a copy would change nothing, or the copy, ready to be built.
+        static ConstRef<JsonValue> Expand(ConstRef<JsonValue> Template,
+                                          ConstRef<JsonValue> Node,
+                                          Ref<JsonValue>      Output);
+
     private:
 
         /// The field of a template that holds its parameters.

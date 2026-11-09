@@ -133,7 +133,9 @@ namespace ZyPlugin::UI
             return Element();
         }
 
-        const JsonValue Expanded = UI::Template::Copy(* Found, JsonValue());
+        // A template no parameter changes is built as it was read, so most are never copied.
+        JsonValue           Copied;
+        ConstRef<JsonValue> Expanded = UI::Template::Expand(* Found, JsonValue(), Copied);
 
         // Only a named band is the pane's, since an `Image` root reads a number there as the slice it shows.
         Layer Band = mLayer;
@@ -188,7 +190,8 @@ namespace ZyPlugin::UI
             return Element();
         }
 
-        return Expand(Key, Parent, UI::Template::Copy(* Found, JsonValue()));
+        JsonValue Copied;
+        return Expand(Key, Parent, UI::Template::Expand(* Found, JsonValue(), Copied));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -241,7 +244,8 @@ namespace ZyPlugin::UI
         else if (const ConstPtr<JsonValue> Template = mTemplates.Find(Key); Template && !mTemplates.IsExpanding(Key))
         {
             // A template's fields start where it sets them, a parameter reaching only fields naming it, as `"$Title"`.
-            Result = Expand(Key, Parent, UI::Template::Copy(* Template, Node));
+            JsonValue Copied;
+            Result = Expand(Key, Parent, UI::Template::Expand(* Template, Node, Copied));
 
             // The node's own children are the caller's, so they are made once the template is done and may use it.
             if (Result.IsAlive())

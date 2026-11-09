@@ -72,7 +72,11 @@ namespace ZyPlugin::UI
             Result.GetObject().Extract(kParameters, Parameters);
         }
 
-        Substitute(Result, Parameters, Node);
+        // A template declaring no parameter names none, so its copy is not walked looking for them.
+        if (Parameters.IsObject() && !Parameters.GetObject().IsEmpty())
+        {
+            Substitute(Result, Parameters, Node);
+        }
 
         if (Node.IsObject())
         {
@@ -82,6 +86,33 @@ namespace ZyPlugin::UI
             });
         }
         return Result;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    ConstRef<JsonValue> Template::Expand(ConstRef<JsonValue> Template,
+                                         ConstRef<JsonValue> Node,
+                                         Ref<JsonValue>      Output)
+    {
+        // A template declaring no parameter, used by a node giving it no field, is built as it was read.
+        Bool Plain = Template.IsObject() && !Template.GetObject().Contains(kParameters);
+
+        if (Plain && Node.IsObject())
+        {
+            for (ConstRef<JsonValue::Object::Pair> Entry : Node.GetObject())
+            {
+                Plain = Plain && ConstSpan<Text>(kOwnFields).Contains(Entry.First);
+            }
+        }
+
+        if (Plain)
+        {
+            return Template;
+        }
+
+        Output = Copy(Template, Node);
+        return Output;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
