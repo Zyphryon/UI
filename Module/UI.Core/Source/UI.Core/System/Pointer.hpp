@@ -339,6 +339,14 @@ namespace ZyPlugin::UI
         /// \return The top of its room.
         Real32 GetRoomTop(Handle Element) const;
 
+        /// \brief Checks whether a point lies within an element's box, its corners rounded as they are drawn.
+        ///
+        /// \param Frame  The box, in pixels of the target.
+        /// \param Radius The radius its corners are rounded to, in pixels, held to half its shorter side.
+        /// \param Point  The point, in pixels of the target.
+        /// \return `true` if the point lies within, `false` if it misses the box or falls past a rounded corner.
+        static Bool Within(ConstRef<Rect> Frame, Real32 Radius, Vector2 Point);
+
     private:
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

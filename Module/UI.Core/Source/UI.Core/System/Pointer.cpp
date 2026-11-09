@@ -634,7 +634,7 @@ namespace ZyPlugin::UI
                 const UInt32         Slot  = Target.Slots[Row];
                 const ConstPtr<Look> Shade = mOwner.Peek<Look>(Slot);
                 const Bool           Cuts  = (Shade && Shade->Clip) || mOwner.Peek<Scroll>(Slot);
-                const Bool           Over  = Target.Frames[Row].Contains(Point);
+                const Bool           Over  = Within(Target.Frames[Row], Shade ? Shade->Radius : 0.0f, Point);
 
                 // Hidden or faded out, it is not there; cutting what it holds, nothing of it is outside its box.
                 if (Target.IsHidden(Row) || (Shade && Shade->Opacity <= 0.0f) || (Cuts && !Over))
@@ -877,5 +877,27 @@ namespace ZyPlugin::UI
     Real32 Pointer::GetRoomTop(Handle Element) const
     {
         return mOwner.GetFrame(Element).GetMinimumY() + mOwner.GetBox(Element).Padding.Top;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Pointer::Within(ConstRef<Rect> Frame, Real32 Radius, Vector2 Point)
+    {
+        const Real32 Round  = Min(Radius, Frame.GetWidth() * 0.5f, Frame.GetHeight() * 0.5f);
+        const Bool   Inside = Frame.Contains(Point);
+
+        if (!Inside || Round <= 0.0f)
+        {
+            return Inside;
+        }
+
+        // Within a corner's square, the point must also lie within the arc drawn there.
+        const Vector2 Inset(Round);
+        const Vector2 Near = Frame.GetPosition() + Inset;
+        const Vector2 Far  = Frame.GetPosition() + Frame.GetSize() - Inset;
+        const Real32  X    = Max(Near.GetX() - Point.GetX(), Point.GetX() - Far.GetX(), 0.0f);
+        const Real32  Y    = Max(Near.GetY() - Point.GetY(), Point.GetY() - Far.GetY(), 0.0f);
+        return X * X + Y * Y <= Round * Round;
     }
 }
