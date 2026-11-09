@@ -579,20 +579,11 @@ namespace ZyPlugin::UI
     {
         if (const Ptr<Look> Shade = Obtain<Look>(Owner, Element, HasAnyBit(Given, Motion::kShading)))
         {
-            const Bool Solid = Shade->Opacity >= 1.0f;
-            const Bool Fills = Shade->Background.IsOpaque();
-
             Shade->Background  = Values.Background;
             Shade->Border      = Values.Border;
             Shade->BorderWidth = Values.BorderWidth;
             Shade->Radius      = Values.Radius;
             Shade->Opacity     = Values.Opacity;
-
-            // What it hides of what holds it is worked out again only when it turns opaque or stops being so.
-            if (Solid != (Shade->Opacity >= 1.0f) || Fills != Shade->Background.IsOpaque())
-            {
-                Owner.Mark(Element, Dirty::Paint);
-            }
         }
     }
 
@@ -691,9 +682,6 @@ namespace ZyPlugin::UI
     {
         if (const Ptr<Effect> Extra = Obtain<Effect>(Owner, Element, HasAnyBit(Given, Motion::kEffects)))
         {
-            const Bool Moved = Extra->IsTransformed();
-            const Bool Fills = Extra->Fill.From.IsOpaque() && Extra->Fill.To.IsOpaque();
-
             Extra->Fill      = Values.Gradient;
             Extra->Shadow    = Values.Shadow;
             Extra->Glow      = Values.Glow;
@@ -701,12 +689,6 @@ namespace ZyPlugin::UI
             Extra->Scale     = Values.Scale;
             Extra->Rotate    = Values.Rotate;
             Extra->Translate = Values.Translate;
-
-            // What it hides of its holder is redone only when a transform starts or ends, or the fill opacity changes.
-            if (Moved != Extra->IsTransformed() || Fills != (Extra->Fill.From.IsOpaque() && Extra->Fill.To.IsOpaque()))
-            {
-                Owner.Mark(Element, Dirty::Paint);
-            }
         }
     }
 
