@@ -662,11 +662,16 @@ namespace ZyPlugin::UI
             }
 
             // What was found is hit only while something answering the pointer holds it, or the pane is passed through.
-            for (UInt32 Row = Found; Row != Pane::kNoParent; Row = Target.Parents[Row])
+            if (Found != Pane::kNoParent)
             {
-                if (mOwner.IsInteractive(Target.Slots[Row]))
+                const Handle Hit = mOwner.GetHandle(Target.Slots[Found]);
+
+                for (Handle Current = Hit; Current.IsValid(); Current = mOwner.GetParent(Current))
                 {
-                    return mOwner.GetHandle(Target.Slots[Found]);
+                    if (mOwner.IsInteractive(Current.GetSlot()))
+                    {
+                        return Hit;
+                    }
                 }
             }
 
