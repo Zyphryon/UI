@@ -157,9 +157,9 @@ namespace ZyPlugin::UI
         /// \param Self  The number field typed into.
         static void Read(Ref<Interface> Owner, Handle Self);
 
-        /// \brief Writes a number field's value into its text field with its decimals.
+        /// \brief Writes a number field's value into its text field with its decimals, once no typing waits there.
         ///
-        /// \param Target The number field to show.
+        /// \param Target The number field to show, left as typed while its text waits to be committed.
         static void Show(Element Target);
 
         /// \brief Selects the whole text of a number field's text field, so what is typed replaces the value.

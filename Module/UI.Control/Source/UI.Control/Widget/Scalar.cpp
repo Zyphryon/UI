@@ -88,11 +88,11 @@ namespace ZyPlugin::UI
     void Scalar::SetValue(Element Target, Real64 Value)
     {
         const Ptr<Quantity> Data = Target.Get<Quantity>();
-        Data->Value = Hold(* Data, Value);
 
-        // Text typed and not yet committed stays, and the value shows once the typing ends.
-        if (!Target.GetTree().Get<Entry>(Data->Field)->Editing)
+        // A value told again as it stands shows nothing anew, so a game may tell it every frame for free.
+        if (const Real64 Held = Hold(* Data, Value); Held != Data->Value)
         {
+            Data->Value = Held;
             Show(Target);
         }
     }
@@ -113,7 +113,8 @@ namespace ZyPlugin::UI
         const Ptr<Quantity> Data = Target.Get<Quantity>();
         Data->Minimum = Minimum;
         Data->Maximum = Maximum;
-        SetValue(Target, Data->Value);
+        Data->Value   = Hold(* Data, Data->Value);
+        Show(Target);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -138,7 +139,7 @@ namespace ZyPlugin::UI
     void Scalar::SetDecimals(Element Target, UInt32 Decimals)
     {
         Target.Get<Quantity>()->Decimals = Min(Decimals, kMaxDecimals);
-        SetValue(Target, GetValue(Target));
+        Show(Target);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -282,10 +283,15 @@ namespace ZyPlugin::UI
     void Scalar::Show(Element Target)
     {
         const ConstPtr<Quantity> Data = Target.Get<Quantity>();
+        const Element            Field(Target.GetTree(), Data->Field);
 
-        Str Shown;
-        Shown.AppendReal(Data->Value, Data->Decimals);
-        Textbox::SetText(Element(Target.GetTree(), Data->Field), Shown);
+        // Text typed and not yet committed stays, and the value shows once the typing ends.
+        if (!Field.Get<Entry>()->Editing)
+        {
+            Str Shown;
+            Shown.AppendReal(Data->Value, Data->Decimals);
+            Textbox::SetText(Field, Shown);
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
