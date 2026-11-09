@@ -593,6 +593,12 @@ namespace ZyPlugin::UI
 
     Bool Outline::OnRealize(Ref<Interface> Owner, Handle Self)
     {
+        // A tree view out of sight lays nothing out, and catches up with its list once it is shown.
+        if (!Owner.GetDispatcher().IsShown(Self))
+        {
+            return false;
+        }
+
         const Element        Root(Owner, Self);
         const Ptr<Hierarchy> Own   = Owner.Get<Hierarchy>(Self);
         const Ptr<Model>     Data  = Binder::GetModel(Owner);

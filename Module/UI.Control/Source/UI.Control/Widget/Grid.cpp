@@ -461,6 +461,12 @@ namespace ZyPlugin::UI
 
     Bool Grid::OnRealize(Ref<Interface> Owner, Handle Self)
     {
+        // A grid out of sight orders nothing, and catches up with its list once it is shown.
+        if (!Owner.GetDispatcher().IsShown(Self))
+        {
+            return false;
+        }
+
         const Element     Root(Owner, Self);
         const Ptr<Ledger> Own   = Owner.Get<Ledger>(Self);
         const Ptr<Model>  Data  = Binder::GetModel(Owner);
