@@ -661,8 +661,8 @@ namespace ZyPlugin::UI
         const Writer Write = Entry.Write;
         Datum        Value = Evaluate(Data, Entry);
 
-        // A value written `@Key` shows as the phrase the lexicon holds under the key, and `@@` as one at sign.
-        if (const Text Words = Value.GetText(); IsLocalized(Words))
+        // Only a value the model holds as `@Key` is read through the lexicon, and one held as `@@` loses an at sign.
+        if (const Text Words = Value.GetText(); IsWhole(Entry) && IsLocalized(Words))
         {
             Value = Datum(Words[1] == '@' ? Words.Slice(1) : Lookup(Target, Words.Slice(1)));
         }
