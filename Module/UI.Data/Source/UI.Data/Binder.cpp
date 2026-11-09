@@ -160,12 +160,16 @@ namespace ZyPlugin::UI
     {
         for (UInt Cursor = 0; Cursor < Source.GetSize(); ++Cursor)
         {
-            // A doubled brace is written out, so only a lone one opens a value.
-            if (Source[Cursor] == '{' && Cursor + 1 < Source.GetSize() && Source[Cursor + 1] == '{')
+            const Char Current = Source[Cursor];
+            const Bool Doubled = Cursor + 1 < Source.GetSize() && Source[Cursor + 1] == Current;
+
+            if (Current != '{' && Current != '}')
             {
-                ++Cursor;
+                continue;
             }
-            else if (Source[Cursor] == '{' && StrFind(Source.Slice(Cursor), '}') > 0)
+
+            // A doubled brace is written out as one, and a lone one names a value once another closes it.
+            if (Doubled || (Current == '{' && StrFind(Source.Slice(Cursor), '}') > 0))
             {
                 return true;
             }
@@ -404,9 +408,11 @@ namespace ZyPlugin::UI
             const Char Current = Source[Cursor];
             const Char Next    = Cursor + 1 < Source.GetSize() ? Source[Cursor + 1] : '\0';
 
+            // A doubled brace is written out as one, which a text naming no value is still bound for.
             if ((Current == '{' || Current == '}') && Next == Current)
             {
                 Literal.Append(Current);
+                Found   = true;
                 Cursor += 2;
                 continue;
             }

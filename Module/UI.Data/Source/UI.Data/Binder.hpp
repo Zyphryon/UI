@@ -98,9 +98,9 @@ namespace ZyPlugin::UI
         /// \param Target The element whose bindings are dropped, which may hold none.
         static void Detach(Element Target);
 
-        /// \brief Checks whether a text names a value in braces, and so binds.
+        /// \brief Checks whether a text names a value in braces or doubles a brace, and so binds.
         ///
-        /// \param Source The text looked through, where a doubled brace names nothing.
+        /// \param Source The text looked through.
         /// \return `true` if it does, `false` otherwise.
         static Bool IsBound(Text Source);
 
@@ -353,9 +353,9 @@ namespace ZyPlugin::UI
         ///
         /// \param Source The text of the binding, as `Gold: {Player.Gold:0}`.
         /// \param Scope  The path relative paths are read from, or empty for the root.
-        /// \param Plain  The flag, `true` to take a text naming no value as plain text, `false` to reject it.
+        /// \param Plain  `true` to take a text naming no value as plain text, `false` to reject one doubling no brace.
         /// \param Output The receiver of the pieces.
-        /// \return `true` if every value is named well and, unless \p Plain, at least one is, `false` otherwise.
+        /// \return `true` if every value is named well and the text is not rejected for naming none, `false` otherwise.
         static Bool Parse(Text Source, Text Scope, Bool Plain, Ref<Sequence<Piece>> Output);
 
         /// \brief Reads a lexicon text into its pieces, writing one that names a value badly out as it stands.
