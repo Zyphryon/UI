@@ -258,7 +258,7 @@ namespace ZyPlugin::UI
         /// \param Record The position of the record.
         static void ScrollTo(Element List, UInt32 Record);
 
-        /// \brief Shows records named one by one instead of a list's, counted alone, so never with \ref SetItems.
+        /// \brief Shows records named one by one, never with \ref SetItems, each pick following its record's new place.
         ///
         /// \param List    The item list to show the records in.
         /// \param Records The path of each record from the root, in order, as `Scene[0].Children[2]`.
@@ -458,11 +458,6 @@ namespace ZyPlugin::UI
         /// \param Toggle The flag, `true` to add the record to the pick or take it away, `false` to replace the pick.
         /// \param Extend The flag, `true` to pick every record from the anchor to it, `false` to pick only it.
         static void Gather(Ref<Interface> Owner, Element List, SInt32 Index, Bool Toggle, Bool Extend);
-
-        /// \brief Marks every row picked or not, as the records it shows are.
-        ///
-        /// \param List The list whose rows are marked.
-        static void Mark(Element List);
 
         /// \brief Works out where the rows stand, keeping what the keyboard and scrolling read of it.
         ///

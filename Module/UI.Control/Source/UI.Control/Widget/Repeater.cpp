@@ -223,7 +223,6 @@ namespace ZyPlugin::UI
         {
             Own->Picked.Append(static_cast<UInt32>(Own->Selected));
         }
-        Mark(List);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -371,10 +370,34 @@ namespace ZyPlugin::UI
             Binder::Locate(Records[Index], Paths[Index]);
         }
 
+        // A pick follows its record to where it stands now, one made past the records held before staying as made.
+        Sequence<UInt32> Picked;
+        SInt32           Head = -1;
+        SInt32           Last = -1;
+
+        for (const UInt32 Position : Own->Picked)
+        {
+            const SInt32 Found = Position < Own->Paths.GetSize()
+                ? static_cast<SInt32>(Paths.Find(Own->Paths[Position])) : static_cast<SInt32>(Position);
+
+            if (Found >= 0)
+            {
+                Picked.Append(static_cast<UInt32>(Found));
+                Head = static_cast<SInt32>(Position) == Own->Selected ? Found : Head;
+                Last = Found;
+            }
+        }
+        Picked.Sort();
+
         Own->Named   = true;
         Own->Count   = static_cast<UInt32>(Records.GetSize());
         Own->Records = Move(Records);
         Own->Paths   = Move(Paths);
+
+        // The pick made last stays the one the keyboard moves from, or the last one kept when its record is gone.
+        Own->Picked   = Move(Picked);
+        Own->Selected = Head >= 0 ? Head : Last;
+        Own->Anchor   = Head;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -462,7 +485,6 @@ namespace ZyPlugin::UI
                 Own->Selected = Picked.IsEmpty() ? -1 : static_cast<SInt32>(Picked[Min(Spot, Picked.GetSize() - 1)]);
             }
         }
-        Mark(List);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1030,7 +1052,6 @@ namespace ZyPlugin::UI
             Own->Picked.Sort();
             Own->Selected = Index;
             Own->Anchor   = Anchor;
-            Mark(List);
         }
         else
         {
@@ -1053,26 +1074,6 @@ namespace ZyPlugin::UI
         if (Moved)
         {
             Owner.Dispatch(Event(Signal::kChange, List.GetHandle()));
-        }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Repeater::Mark(Element List)
-    {
-        const ConstPtr<Items> Own = List.Get<Items>();
-
-        for (UInt Index = 0; Own && Index < Own->Cells.GetSize(); ++Index)
-        {
-            ConstRef<Cell> Entry  = Own->Cells[Index];
-            const Element  Row(List.GetTree(), Entry.Row);
-            const Bool     Chosen = Own->Picked.Contains(Entry.Record);
-
-            if (Row.IsAlive() && !Entry.Parked && Row.HasState(Widget::Selected()) != Chosen)
-            {
-                Row.SetState(Widget::Selected(), Chosen);
-            }
         }
     }
 

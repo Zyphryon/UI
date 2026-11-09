@@ -184,6 +184,9 @@ namespace ZyPlugin::UI
         {
             Own->Where.Steps.Clear();
         }
+
+        // The rows of the list shown before go with their order, so a pick made before the next names a record.
+        Repeater::SetRecords(GetList(Owner), Sequence<Str>());
         Repeater::SetIndex(GetList(Owner), -1);
     }
 
@@ -690,44 +693,23 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // What was picked stays picked wherever its record moved; before any order a row stood where its record does.
-        const Sequence<UInt32> Old    = Move(Own->Order);
-        const Sequence<UInt32> Picked = List.Get<Items>()->Picked;
-        const SInt32           Lead   = List.Get<Items>()->Selected;
-
-        Sequence<SInt32> Where;
-        Sequence<Str>    Scopes;
-        Where.Advance(Count);
+        // What was picked stays picked wherever its record moved, which the list sees to by the record's path.
+        const Bool    First = Own->Order.IsEmpty();
+        Sequence<Str> Scopes;
         Scopes.Advance(Count);
 
         for (UInt32 Index = 0; Index < Count; ++Index)
         {
-            Where[Order[Index]] = static_cast<SInt32>(Index);
             Scopes[Index].Format<"{0}[{1}]">(Text(Own->Base), Order[Index]);
         }
 
         Own->Order = Move(Order);
         Repeater::SetRecords(List, Move(Scopes));
 
-        const UInt32 Before = static_cast<UInt32>(Lead);
-        const UInt32 Record = Lead >= 0 && Before < Old.GetSize() ? Old[Before] : Before;
-        const SInt32 Head   = Lead >= 0 && Record < Count ? Where[Record] : -1;
-        Repeater::SetIndex(List, Head);
-
-        for (const UInt32 Position : Picked)
+        // Before any order a row stood where its record does, so a pick made then names its record.
+        if (First)
         {
-            const UInt32 Moved = Position < Old.GetSize() ? Old[Position] : Position;
-
-            if (Moved < Count)
-            {
-                Repeater::SetPicked(List, static_cast<UInt32>(Where[Moved]), true);
-            }
-        }
-
-        // The pick made last stays the one the keyboard moves from.
-        if (Head >= 0)
-        {
-            List.Get<Items>()->Selected = Head;
+            Select(Owner, Repeater::GetIndex(List));
         }
         return true;
     }

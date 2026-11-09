@@ -821,54 +821,18 @@ namespace ZyPlugin::UI
             return false;
         }
 
+        // What was picked stays picked while its record still has a row, which the list sees to by the record's path.
         if (Moved)
         {
-            // What was picked stays picked while its record still has a row.
-            Sequence<Str> Picked;
-            Str           Lead;
-
-            for (const UInt32 Position : Repeater::GetPicked(List))
-            {
-                Picked.Append(Own->Limbs[Position].Path);
-            }
-
-            if (const SInt32 Index = Repeater::GetIndex(List); Index >= 0)
-            {
-                Lead = Own->Limbs[Index].Path;
-            }
-
             Sequence<Str> Scopes;
 
             for (ConstRef<Limb> Entry : Limbs)
             {
                 Scopes.Append(Entry.Path);
             }
-
-            Own->Limbs = Move(Limbs);
             Repeater::SetRecords(List, Move(Scopes));
-
-            const Ptr<Hierarchy> Kept = Owner.Get<Hierarchy>();
-            const SInt32         Head = Lead.IsEmpty() ? -1 : Find(* Kept, Lead);
-            Repeater::SetIndex(List, Head);
-
-            for (ConstRef<Str> Path : Picked)
-            {
-                if (const SInt32 Found = Find(* Kept, Path); Found >= 0)
-                {
-                    Repeater::SetPicked(List, static_cast<UInt32>(Found), true);
-                }
-            }
-
-            // The pick made last stays the one the keyboard moves from.
-            if (Head >= 0)
-            {
-                List.Get<Items>()->Selected = Head;
-            }
         }
-        else
-        {
-            Own->Limbs = Move(Limbs);
-        }
+        Own->Limbs = Move(Limbs);
 
         // A record picked before it had a row is picked once it has one.
         if (const Ptr<Hierarchy> Kept = Owner.Get<Hierarchy>(); !Kept->Wanted.IsEmpty())
