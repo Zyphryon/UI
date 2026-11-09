@@ -26,6 +26,16 @@ namespace ZyPlugin::UI
         /// The steps, the last one naming the value.
         Sequence<Step> Steps;
 
+        /// \brief Checks whether two paths take the same steps.
+        ///
+        /// \param Other The path compared with this one.
+        /// \return `true` if they do, `false` otherwise.
+        ZY_INLINE Bool operator==(ConstRef<Path> Other) const
+        {
+            const UInt Size = Steps.GetSize();
+            return Size == Other.Steps.GetSize() && Compare(Steps.GetData(), Other.Steps.GetData(), Size);
+        }
+
         /// \brief Reads a path from its text.
         ///
         /// \param Source The text, as `Player.Gold` or `Party[2].Bag[0].Name`.

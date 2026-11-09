@@ -183,13 +183,6 @@ namespace ZyPlugin::UI
         /// \return `true` if the records are bound, `false` otherwise.
         static Bool Locate(Element Owner, UInt32 Record, Ref<Path> Output);
 
-        /// \brief Checks whether two paths name the same record.
-        ///
-        /// \param First  The path of one record.
-        /// \param Second The path of the other.
-        /// \return `true` if they take the same steps, `false` otherwise.
-        static Bool Same(ConstRef<Path> First, ConstRef<Path> Second);
-
         /// \brief Checks whether an item can be picked by the keyboard, as one that is neither hidden nor disabled.
         ///
         /// \param Item The item to check.

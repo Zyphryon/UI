@@ -883,6 +883,7 @@ namespace ZyPlugin::UI
         {
             ConstRef<Items>          Own     = * List.Get<Items>();
             ConstRef<Sequence<Cell>> Cells   = Own.Cells;
+            ConstRef<Dispatcher>     Router  = Owner.GetDispatcher();
             const Handle             Carried = Drag::GetDragged(Owner);
             const Handle             Pressed = Owner.GetPressed();
 
@@ -893,13 +894,13 @@ namespace ZyPlugin::UI
 
                 // A row of records named one by one still shows its record only while that record keeps its place.
                 const Bool Kept = !Own.Named
-                    || (Record < Own.Paths.GetSize() && Same(Cells[Index].Within, Own.Paths[Record]));
+                    || (Record < Own.Paths.GetSize() && Cells[Index].Within == Own.Paths[Record]);
 
                 if (!Cells[Index].Parked && Kept && Record >= Begin && Record < End && !Shown[Record - Begin])
                 {
                     Shown[Record - Begin] = true;
                 }
-                else if (Cells[Index].Parked || !(Holds(Owner, Row, Carried) || Holds(Owner, Row, Pressed)))
+                else if (Cells[Index].Parked || !(Router.IsWithin(Carried, Row) || Router.IsWithin(Pressed, Row)))
                 {
                     Free.Append(Index);
                 }
@@ -1254,7 +1255,7 @@ namespace ZyPlugin::UI
         {
             From.Steps.GetBack().Index = Record;
 
-            if (!Same(From, To))
+            if (From != To)
             {
                 Binder::Rescope(Row, From, To);
             }
@@ -1441,29 +1442,5 @@ namespace ZyPlugin::UI
     Bool Repeater::Same(ConstRef<Length> First, ConstRef<Length> Second)
     {
         return First.Measure == Second.Measure && Abs(First.Value - Second.Value) < 0.01f;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Repeater::Same(ConstRef<Path> First, ConstRef<Path> Second)
-    {
-        const UInt Size = First.Steps.GetSize();
-        return Size == Second.Steps.GetSize() && Compare(First.Steps.GetData(), Second.Steps.GetData(), Size);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Repeater::Holds(ConstRef<Tree> Owner, Handle Row, Handle Element)
-    {
-        for (Handle Current = Element; Owner.IsAlive(Current); Current = Owner.GetParent(Current))
-        {
-            if (Current == Row)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }

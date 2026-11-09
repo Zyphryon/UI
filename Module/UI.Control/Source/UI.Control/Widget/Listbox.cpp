@@ -414,7 +414,7 @@ namespace ZyPlugin::UI
             {
                 From.Steps.GetBack().Index = Record;
 
-                if (!Same(From, To))
+                if (From != To)
                 {
                     Binder::Rescope(Item, From, To);
                 }
@@ -452,26 +452,6 @@ namespace ZyPlugin::UI
         }
 
         Output.Steps.GetBack().Index = Record;
-        return true;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Listbox::Same(ConstRef<Path> First, ConstRef<Path> Second)
-    {
-        if (First.Steps.GetSize() != Second.Steps.GetSize())
-        {
-            return false;
-        }
-
-        for (UInt Index = 0; Index < First.Steps.GetSize(); ++Index)
-        {
-            if (!(First.Steps[Index] == Second.Steps[Index]))
-            {
-                return false;
-            }
-        }
         return true;
     }
 

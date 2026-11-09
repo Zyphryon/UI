@@ -529,20 +529,5 @@ namespace ZyPlugin::UI
         /// \param Second The length the row should stand at.
         /// \return `true` if they do, `false` otherwise.
         static Bool Same(ConstRef<Length> First, ConstRef<Length> Second);
-
-        /// \brief Checks whether two paths take the same steps.
-        ///
-        /// \param First  The path the row's bindings read.
-        /// \param Second The path they should read.
-        /// \return `true` if they do, `false` otherwise.
-        static Bool Same(ConstRef<Path> First, ConstRef<Path> Second);
-
-        /// \brief Checks whether an element stands in a row, or is it.
-        ///
-        /// \param Owner   The tree the row stands in.
-        /// \param Row     The row the element may stand in.
-        /// \param Element The element, or one naming nothing.
-        /// \return `true` if it does, `false` otherwise.
-        static Bool Holds(ConstRef<Tree> Owner, Handle Row, Handle Element);
     };
 }
