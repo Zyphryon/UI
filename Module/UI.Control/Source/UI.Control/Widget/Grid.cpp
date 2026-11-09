@@ -725,7 +725,7 @@ namespace ZyPlugin::UI
         const Element     List(Owned, Own->List);
         const Element     Content = Header.GetParent();
 
-        if (!Content.IsAlive() || Owned.IsPending(Content.GetHandle()))
+        if (!Content.IsAlive())
         {
             return false;
         }

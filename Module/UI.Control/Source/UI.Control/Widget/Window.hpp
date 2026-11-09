@@ -47,7 +47,7 @@ namespace ZyPlugin::UI
         /// The least size a sizing leaves the window, in pixels.
         Vector2 Minimum = Vector2(160.0f, 100.0f);
 
-        /// The label on its title bar, kept since a window made inside a walk cannot find it before the walk ends.
+        /// The label on its title bar.
         Handle  Title;
 
         /// The panel over the window holding the edges it is sized by, or one naming nothing until made resizable.

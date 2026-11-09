@@ -47,7 +47,7 @@ namespace ZyPlugin::UI
         {
         }
 
-        /// \brief Checks whether the element is alive, standing in the tree or waiting to.
+        /// \brief Checks whether the element is alive, as one made and not destroyed since.
         ///
         /// \return `true` if it is, `false` otherwise.
         ZY_INLINE Bool IsAlive() const
@@ -131,7 +131,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Name   The name it is found by, or empty for none.
         /// \param Before The child it goes before, or one naming nothing to make it the last.
-        /// \return The element, which stands in the tree once the running walk ends when there is one.
+        /// \return The element, which stands in the tree at once, even while a walk runs.
         ZY_INLINE Element Create(Text Name = Text(), Element Before = Element()) const
         {
             return Wrap(mTree->Create(mHandle, Identify(Name), Before.mHandle));

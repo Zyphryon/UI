@@ -117,7 +117,7 @@ namespace ZyPlugin::UI
         /// \return `true` if it does, `false` otherwise.
         Bool IsOpenedFrom(Handle Element, Handle Ancestor) const;
 
-        /// \brief Checks whether a control stands in the tree with nothing holding it, hidden or disabled.
+        /// \brief Checks whether a control is alive with nothing holding it, hidden or disabled.
         ///
         /// \param Element The control checked.
         /// \return `true` if it can, `false` otherwise.

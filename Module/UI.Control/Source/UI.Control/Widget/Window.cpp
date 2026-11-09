@@ -149,7 +149,6 @@ namespace ZyPlugin::UI
 
     void Window::SetTitle(Element Target, Text Title)
     {
-        // Found through the grip, since the bar of a window made inside a walk is not yet beneath the window.
         Label::SetText(Element(Target.GetTree(), Target.Get<Grip>()->Title), Title);
     }
 

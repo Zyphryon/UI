@@ -305,7 +305,7 @@ namespace ZyPlugin::UI
         /// \brief Checks whether a control asks to hear the pointer come over it, move and leave.
         ///
         /// \param Target The control the pointer came over, moved over or left.
-        /// \return `true` if it is alive, standing in the tree and asking, `false` otherwise.
+        /// \return `true` if it is alive and asking, `false` otherwise.
         Bool Hovers(Handle Target) const;
 
         /// \brief Tells a control asking for hover events that the pointer came over it, moved over it or left it.

@@ -68,7 +68,7 @@ namespace ZyPlugin::UI
         /// \param Parent The element to hold it, which must be alive.
         /// \param Name   The identifier it is found by, or zero for none.
         /// \param Before The child of the parent it goes before, or one naming nothing to make it the last.
-        /// \return The element, which stands in the tree once the running walk ends when there is one.
+        /// \return The element, which stands in the tree at once, even while a walk runs.
         Handle Create(Handle Parent, UInt64 Name = 0, Handle Before = Handle());
 
         /// \brief Destroys an element and everything it holds, closing the pane when it is a root.
@@ -83,7 +83,7 @@ namespace ZyPlugin::UI
         /// \param Before  The child of the parent it goes before, or one naming nothing to make it the last.
         void Move(Handle Element, Handle Parent, Handle Before = Handle());
 
-        /// \brief Checks whether an element is alive, standing in the tree or waiting to.
+        /// \brief Checks whether an element is alive, as one made and not destroyed since.
         ///
         /// \param Element The element asked about, which may be stale or name nothing.
         /// \return `true` if it is, `false` otherwise.
@@ -95,15 +95,6 @@ namespace ZyPlugin::UI
                 && Slot < mSlots.GetSize()
                 && mSlots[Slot].Pane != kFree
                 && mSlots[Slot].Generation == Element.GetGeneration();
-        }
-
-        /// \brief Checks whether an element waits for the running walk to end before it stands in the tree.
-        ///
-        /// \param Element The element asked about, which must be alive.
-        /// \return `true` if it does, `false` otherwise.
-        ZY_INLINE Bool IsPending(Handle Element) const
-        {
-            return mSlots[Element.GetSlot()].Row == kPending;
         }
 
         /// \brief Changes the identifier an element is found by.
@@ -118,7 +109,7 @@ namespace ZyPlugin::UI
         /// \return The identifier, or zero for none.
         ZY_INLINE UInt64 GetName(Handle Element) const
         {
-            return IsPending(Element) ? Sketch(Element).Name : Locate(Element).Names[mSlots[Element.GetSlot()].Row];
+            return Locate(Element).Names[mSlots[Element.GetSlot()].Row];
         }
 
         /// \brief Gets the element holding another.
@@ -147,7 +138,7 @@ namespace ZyPlugin::UI
 
         /// \brief Gets the root of the pane an element stands in.
         ///
-        /// \param Element The element whose root is asked for, which may be dead or waiting.
+        /// \param Element The element whose root is asked for, which may be dead.
         /// \return The root, or one naming nothing for a dead element.
         Handle GetRoot(Handle Element) const;
 
@@ -160,12 +151,12 @@ namespace ZyPlugin::UI
 
         /// \brief Hands every child of an element to a callback, in order.
         ///
-        /// \param Element  The element whose children are walked, where a dead or waiting one has none.
+        /// \param Element  The element whose children are walked, where a dead one has none.
         /// \param Callback The callable, taking each child.
         template<typename Callable>
         void Children(Handle Element, AnyRef<Callable> Callback) const
         {
-            if (!IsAlive(Element) || IsPending(Element))
+            if (!IsAlive(Element))
             {
                 return;
             }
@@ -202,7 +193,7 @@ namespace ZyPlugin::UI
         /// \return The states it is in, one bit each.
         ZY_INLINE State GetStates(Handle Element) const
         {
-            return IsPending(Element) ? Sketch(Element).States : Locate(Element).States[mSlots[Element.GetSlot()].Row];
+            return Locate(Element).States[mSlots[Element.GetSlot()].Row];
         }
 
         /// \brief Gets the facets an element holds.
@@ -274,7 +265,7 @@ namespace ZyPlugin::UI
 
         /// \brief Marks what of an element must be worked out again.
         ///
-        /// \param Element The element to mark, which must be alive, where a waiting one is worked out whole anyway.
+        /// \param Element The element to mark, which must be alive.
         /// \param Bits    The parts that must be worked out again.
         void Mark(Handle Element, Dirty Bits);
 
@@ -290,7 +281,7 @@ namespace ZyPlugin::UI
         /// \return The identifier of the style, or zero for none.
         ZY_INLINE UInt64 GetStyle(Handle Element) const
         {
-            return IsPending(Element) ? Sketch(Element).Style : Locate(Element).Styles[mSlots[Element.GetSlot()].Row];
+            return Locate(Element).Styles[mSlots[Element.GetSlot()].Row];
         }
 
         /// \brief Gets how an element takes its place and lays out what it holds, to change it.
@@ -305,13 +296,13 @@ namespace ZyPlugin::UI
         /// \return The box the layout reads the element's place and its children's from.
         ZY_INLINE ConstRef<Box> GetBox(Handle Element) const
         {
-            return IsPending(Element) ? Sketch(Element).Shape : Locate(Element).Boxes[mSlots[Element.GetSlot()].Row];
+            return Locate(Element).Boxes[mSlots[Element.GetSlot()].Row];
         }
 
         /// \brief Gets the box an element was last laid out in.
         ///
-        /// \param Element The element asked about, which must stand in the tree.
-        /// \return The box, in pixels of the target.
+        /// \param Element The element asked about, which must be alive.
+        /// \return The box, in pixels of the target, or an empty one until the element is first laid out.
         ZY_INLINE Rect GetFrame(Handle Element) const
         {
             return Locate(Element).Frames[mSlots[Element.GetSlot()].Row];
@@ -327,7 +318,7 @@ namespace ZyPlugin::UI
         {
             ZY_ASSERT(IsAlive(Element), "The element is not alive");
 
-            Touch<Type>(Element);
+            Mark(Element, Type::kMarks);
             mSlots[Element.GetSlot()].Facets.Set(Facets::Index<Type>());
             return Stock<Type>().Add(Element.GetSlot(), Forward<Arguments>(Parameters)...);
         }
@@ -354,7 +345,7 @@ namespace ZyPlugin::UI
 
             if (Found)
             {
-                Touch<Type>(Element);
+                Mark(Element, Type::kMarks);
             }
             return Found;
         }
@@ -402,7 +393,7 @@ namespace ZyPlugin::UI
         {
             ZY_ASSERT(Has<Type>(Element), "The element holds no such facet");
 
-            Touch<Type>(Element);
+            Mark(Element, Type::kMarks);
             mSlots[Element.GetSlot()].Facets.Reset(Facets::Index<Type>());
             mStores[Facets::Index<Type>()]->Remove(Element.GetSlot());
         }
@@ -430,7 +421,7 @@ namespace ZyPlugin::UI
             return static_cast<Ptr<Facet<Type>>>(mStores[Facets::Index<Type>()].Grab())->Find(Slot);
         }
 
-        /// \brief Marks a walk as started, holding back every change to the shape of the tree until it ends.
+        /// \brief Marks a walk as started, holding back every destruction and every move until it ends.
         ZY_INLINE void Enter()
         {
             ++mDepth;
@@ -475,7 +466,7 @@ namespace ZyPlugin::UI
 
         /// \brief Gets the row of its pane a slot's element stands at.
         ///
-        /// \param Slot The slot, which must hold a living element standing in the tree.
+        /// \param Slot The slot, which must hold a living element.
         /// \return The row, which moves whenever its pane changes shape.
         ZY_INLINE UInt32 GetRow(UInt32 Slot) const
         {
@@ -496,10 +487,10 @@ namespace ZyPlugin::UI
     private:
 
         /// The pane a free slot names, so a slot holding no element is told apart at once.
-        static constexpr UInt16 kFree    = 0xFFFF;
+        static constexpr UInt16 kFree = 0xFFFF;
 
-        /// The row an element names while it waits for the running walk to end.
-        static constexpr UInt32 kPending = 0xFFFFFFFF;
+        /// The slot naming nothing, as where the free slots end or the sibling an element placed last goes before.
+        static constexpr UInt32 kNone = 0xFFFFFFFF;
 
         /// \brief Represents where an element stands, and what of it outlives a shift of its pane.
         struct Slot final
@@ -507,8 +498,8 @@ namespace ZyPlugin::UI
             /// The generation of the slot, raised each time its element is destroyed.
             UInt32 Generation = 0;
 
-            /// The row of the element in its pane, \ref kPending while it waits, or the next free slot when free.
-            UInt32 Row        = kPending;
+            /// The row of the element in its pane, or the next free slot when free.
+            UInt32 Row        = kNone;
 
             /// The kinds of facet the element holds, one bit each.
             Mask   Facets;
@@ -520,7 +511,6 @@ namespace ZyPlugin::UI
         /// \brief Specifies a change to the shape of the tree held back until the running walk ends.
         enum class Operation : UInt8
         {
-            Create,      ///< Places an element made during the walk.
             Destroy,     ///< Destroys an element and everything it holds.
             Move,        ///< Moves an element under a parent, before a sibling.
         };
@@ -529,7 +519,7 @@ namespace ZyPlugin::UI
         struct Change final
         {
             /// What the change does to the element.
-            Operation Kind = Operation::Create;
+            Operation Kind = Operation::Destroy;
 
             /// The element the change is about.
             Handle    Element;
@@ -539,87 +529,26 @@ namespace ZyPlugin::UI
 
             /// The sibling it goes before, or one naming nothing to make it the last.
             Handle    Before;
-
-            /// The identifier a created element is found by.
-            UInt64    Name = 0;
         };
-
-        /// \brief Represents what an element made during a walk is given, written into its row once the walk ends.
-        struct Draft final
-        {
-            /// The identifier it is found by.
-            UInt64 Name   = 0;
-
-            /// The identifier of the style it wears.
-            UInt64 Style  = 0;
-
-            /// The states it is in.
-            State  States = State::None;
-
-            /// How it takes its place and lays out what it holds.
-            Box    Shape;
-        };
-
-        /// \brief Gets what an element made during the running walk was given.
-        ///
-        /// \param Element The element, which must be waiting to stand in the tree.
-        /// \return The draft its row is written from once the walk ends.
-        ZY_INLINE ConstRef<Draft> Sketch(Handle Element) const
-        {
-            return * mDrafts.Find(Element.GetSlot());
-        }
-
-        /// \brief Gets what an element made during the running walk was given, to change it.
-        ///
-        /// \param Element The element, which must be waiting to stand in the tree.
-        /// \return The draft its row is written from once the walk ends.
-        ZY_INLINE Ref<Draft> Sketch(Handle Element)
-        {
-            return * mDrafts.Find(Element.GetSlot());
-        }
-
-        /// \brief Finds the change that makes an element during the running walk.
-        ///
-        /// \param Element The element, which must be waiting to stand in the tree.
-        /// \return The index of the change among those held back.
-        UInt Pending(Handle Element) const;
-
-        /// \brief Gathers the children of an element made during the running walk, in the order they will stand.
-        ///
-        /// \param Parent The element, which must be waiting to stand in the tree.
-        /// \param Output The receiver of the children.
-        void Waiting(Handle Parent, Ref<Sequence<Handle>> Output) const;
 
         /// \brief Gets the pane an element stands in.
         ///
-        /// \param Element The element, which must stand in the tree.
+        /// \param Element The element, which must be alive.
         /// \return The pane, whose row for the element its slot names.
         ZY_INLINE ConstRef<Pane> Locate(Handle Element) const
         {
-            ZY_ASSERT(IsAlive(Element) && !IsPending(Element), "The element does not stand in the tree");
+            ZY_ASSERT(IsAlive(Element), "The element is not alive");
             return mPanes[mSlots[Element.GetSlot()].Pane];
         }
 
         /// \brief Gets the pane an element stands in, to change it.
         ///
-        /// \param Element The element, which must stand in the tree.
+        /// \param Element The element, which must be alive.
         /// \return The pane, whose row for the element its slot names.
         ZY_INLINE Ref<Pane> Locate(Handle Element)
         {
-            ZY_ASSERT(IsAlive(Element) && !IsPending(Element), "The element does not stand in the tree");
+            ZY_ASSERT(IsAlive(Element), "The element is not alive");
             return mPanes[mSlots[Element.GetSlot()].Pane];
-        }
-
-        /// \brief Marks what a change to a facet of an element must have worked out again, once it stands in the tree.
-        ///
-        /// \param Element The element whose facet changes, which must be alive.
-        template<IsFacet Type>
-        ZY_INLINE void Touch(Handle Element)
-        {
-            if (!IsPending(Element))
-            {
-                Mark(Element, Type::kMarks);
-            }
         }
 
         /// \brief Gets the store of a facet type, making it on first use.
@@ -648,11 +577,11 @@ namespace ZyPlugin::UI
         /// \param Slot The slot of the element that is gone.
         void Release(UInt32 Slot);
 
-        /// \brief Puts an element into its pane right away.
+        /// \brief Puts an element into its pane.
         ///
         /// \param Slot   The slot of the element, which names no row yet.
         /// \param Parent The slot of the parent, which stands in the same pane.
-        /// \param Before The slot of the sibling it goes before, or \ref kPending to make it the last.
+        /// \param Before The slot of the sibling it goes before, or \ref kNone to make it the last.
         /// \param Name   The identifier it is found by.
         void Place(UInt32 Slot, UInt32 Parent, UInt32 Before, UInt64 Name);
 
@@ -663,14 +592,14 @@ namespace ZyPlugin::UI
 
         /// \brief Moves an element right away.
         ///
-        /// \param Element The element to move, which must stand in the tree.
+        /// \param Element The element to move, which must be alive and not a root.
         /// \param Parent  The new parent, which must stand in the same pane.
         /// \param Before  The sibling it goes before, or one naming nothing to make it the last.
         void Shift(Handle Element, Handle Parent, Handle Before);
 
         /// \brief Moves an element right away under a parent standing in another pane.
         ///
-        /// \param Element The element to move, which must stand in the tree and not be a root.
+        /// \param Element The element to move, which must be alive and not a root.
         /// \param Parent  The new parent, which must stand in another pane.
         /// \param Before  The sibling it goes before, or one naming nothing to make it the last.
         void Transfer(Handle Element, Handle Parent, Handle Before);
@@ -719,7 +648,6 @@ namespace ZyPlugin::UI
         UInt32                           mRaise;
         Array<Unique<Store>, kMaxFacets> mStores;
         Sequence<Change>                 mChanges;
-        Table<UInt32, Draft>             mDrafts;
         UInt32                           mDepth;
         Sequence<Unique<Service>>        mServices;
     };

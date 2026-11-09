@@ -124,8 +124,8 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // An element just shown has no frame yet, so it is brought into view once the layout gives it one.
-        if (mTree.IsPending(Element))
+        // An element not laid out yet has no frame, so it is brought into view once the layout gives it one.
+        if (mTree.GetFrame(Element).IsEmpty())
         {
             mRevealed = Element;
             return;
@@ -173,13 +173,14 @@ namespace ZyPlugin::UI
 
     Bool Focus::Settle()
     {
-        if (!mRevealed.IsValid() || (mTree.IsAlive(mRevealed) && mTree.IsPending(mRevealed)))
+        if (!mRevealed.IsValid())
         {
             return false;
         }
 
-        const Handle Asked = Exchange(mRevealed, Handle());
-        Reveal(Asked);
+        // One the layout gave no frame, as while hidden, is asked for no more.
+        Reveal(mRevealed);
+        mRevealed = Handle();
         return true;
     }
 
@@ -501,7 +502,7 @@ namespace ZyPlugin::UI
 
     void Focus::Gather(Handle Root, Ref<Sequence<Handle>> Output) const
     {
-        if (!mTree.IsAlive(Root) || mTree.IsPending(Root))
+        if (!mTree.IsAlive(Root))
         {
             return;
         }
@@ -583,7 +584,7 @@ namespace ZyPlugin::UI
 
     Bool Focus::Travel(Heading Way)
     {
-        if (!mDispatcher.IsUsable(mFocused) || mTree.IsPending(mFocused))
+        if (!mDispatcher.IsUsable(mFocused) || mTree.GetFrame(mFocused).IsEmpty())
         {
             return Cycle(true);
         }
@@ -720,8 +721,7 @@ namespace ZyPlugin::UI
 
             const ConstPtr<Control> Found  = mTree.Get<Control>(Root);
             const Handle            Opener = Found ? Found->Owner : Handle();
-            const Bool              Living = mTree.IsAlive(mFocused) && !mTree.IsPending(mFocused);
-            const Bool              Inside = Living && mDispatcher.IsWithin(mFocused, Root);
+            const Bool              Inside = mDispatcher.IsWithin(mFocused, Root);
 
             mTree.SetState(Root, State::Hidden, true);
 

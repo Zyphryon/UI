@@ -326,7 +326,7 @@ namespace ZyPlugin::UI
             const Handle Element = mRealizing[Index];
             const ConstPtr<Virtual> Found = Get<Virtual>(Element);
 
-            if (Found && !Found->Realize.IsEmpty() && !IsPending(Element))
+            if (Found && !Found->Realize.IsEmpty())
             {
                 // Copied, since the code may add a facet of the kind and move the store under it.
                 const Realizer Code = Found->Realize;

@@ -85,7 +85,7 @@ namespace ZyPlugin::UI
 
         /// \brief Brings into view an element asked for before it was laid out, once a layout has placed it.
         ///
-        /// \return `true` when it was brought into view, `false` when none was waiting or it still waits.
+        /// \return `true` when one was waiting, `false` otherwise.
         Bool Settle();
 
         /// \brief Checks whether a text field holds the keyboard, as a control taking typed text does.

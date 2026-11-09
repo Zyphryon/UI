@@ -1085,10 +1085,9 @@ namespace ZyPlugin::UI
         Ref<Tree>        Owner = List.GetTree();
         const Ptr<Items> Own   = List.Get<Items>();
         ConstRef<Box>    Shape = Owner.GetBox(List.GetHandle());
-        const Rect       Frame = Owner.IsPending(List.GetHandle()) ? Rect::Zero() : List.GetFrame();
+        const Rect       Frame = List.GetFrame();
         const Element    Spacer(Owner, Own->Spacer);
-        const Real32     Wide  = Spacer.IsAlive() && !Owner.IsPending(Own->Spacer)
-            ? Spacer.GetFrame().GetWidth() : 0.0f;
+        const Real32     Wide  = Spacer.IsAlive() ? Spacer.GetFrame().GetWidth() : 0.0f;
 
         Grid Result;
         Result.Left   = Shape.Padding.Left;
@@ -1149,7 +1148,7 @@ namespace ZyPlugin::UI
         }
 
         // A row is measured once it was laid out, which a row made this frame has not been yet.
-        if (!Row.IsAlive() || Owner.IsPending(Row.GetHandle()) || Row.GetFrame().GetHeight() <= 0.0f)
+        if (!Row.IsAlive() || Row.GetFrame().GetHeight() <= 0.0f)
         {
             return;
         }

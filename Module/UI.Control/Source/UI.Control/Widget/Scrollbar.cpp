@@ -110,8 +110,8 @@ namespace ZyPlugin::UI
 
         Ref<Tree> Owner = Bar.GetTree();
 
-        // A name given in a layout is looked up once the bar stands in its pane, then kept as a handle.
-        if (!Owner.IsAlive(Own->Target) && Own->Name != 0 && !Owner.IsPending(Bar.GetHandle()))
+        // A name given in a layout is looked up until what it names is made, then kept as a handle.
+        if (!Owner.IsAlive(Own->Target) && Own->Name != 0)
         {
             const Element Found(Owner, Owner.Find(Owner.GetRoot(Bar.GetHandle()), Own->Name));
 
@@ -306,7 +306,7 @@ namespace ZyPlugin::UI
         const ConstPtr<Rail>   Own    = Bar.Get<Rail>();
         const ConstPtr<Scroll> Roll   = Target.Get<Scroll>();
 
-        if (!Own || !Target.IsAlive() || !Roll || Owner.IsPending(Target.GetHandle()))
+        if (!Own || !Target.IsAlive() || !Roll)
         {
             return false;
         }
@@ -425,13 +425,7 @@ namespace ZyPlugin::UI
 
     Rect Scrollbar::GetTrack(Element Bar)
     {
-        Ref<Tree> Owner = Bar.GetTree();
-
-        if (Owner.IsPending(Bar.GetHandle()))
-        {
-            return Rect::Zero();
-        }
-        return Owner.GetBox(Bar.GetHandle()).Padding.Inset(Bar.GetFrame());
+        return Bar.GetTree().GetBox(Bar.GetHandle()).Padding.Inset(Bar.GetFrame());
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

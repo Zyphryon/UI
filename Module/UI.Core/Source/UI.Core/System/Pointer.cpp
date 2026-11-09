@@ -196,7 +196,7 @@ namespace ZyPlugin::UI
         // Moving the focus runs code that may destroy what was pressed.
         Bool Stopped = false;
 
-        if (Target.IsValid() && mOwner.IsAlive(Target) && !mOwner.IsPending(Target))
+        if (Target.IsValid() && mOwner.IsAlive(Target))
         {
             // Only the left button lights a control; another holds and counts only on one taking every button.
             const Bool Left  = (Button == ZyInput::Button::Left);
@@ -442,7 +442,7 @@ namespace ZyPlugin::UI
 
         for (const Handle Left : mHovered)
         {
-            if (!mReached.Contains(Left) && mOwner.IsAlive(Left) && !mOwner.IsPending(Left))
+            if (!mReached.Contains(Left) && mOwner.IsAlive(Left))
             {
                 mOwner.SetState(Left, State::Hover, false);
             }
@@ -530,7 +530,7 @@ namespace ZyPlugin::UI
         {
             const Handle Root = Each.Root;
 
-            if (mOwner.IsPending(Root) || mOwner.HasState(Root, State::Hidden))
+            if (mOwner.HasState(Root, State::Hidden))
             {
                 continue;
             }
@@ -733,7 +733,7 @@ namespace ZyPlugin::UI
     Bool Pointer::Hovers(Handle Target) const
     {
         const ConstPtr<Control> Found = mOwner.Get<Control>(Target);
-        return Found && Found->Hover && !mOwner.IsPending(Target);
+        return Found && Found->Hover;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -148,7 +148,7 @@ namespace ZyPlugin::UI
 
         /// \brief Gives a tab button a close button after its title, or takes it away.
         ///
-        /// \param Tab      The tab button, which may still wait for the walk it was made in to end.
+        /// \param Tab      The tab button given the close button or losing it.
         /// \param Closable The flag, `true` to give it a close button, `false` to take the button away.
         /// \param Style    The name of the style the tab control wears.
         static void Equip(Element Tab, Bool Closable, Text Style);

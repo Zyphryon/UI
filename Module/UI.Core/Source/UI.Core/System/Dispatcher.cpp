@@ -289,7 +289,7 @@ namespace ZyPlugin::UI
                 return false;
             }
         }
-        return Element.IsValid() && !mOwner.IsPending(Element);
+        return Element.IsValid();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -26,7 +26,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     Tree::Tree()
-        : mFree  { kPending },
+        : mFree  { kNone },
           mRaise { 0 },
           mDepth { 0 }
     {
@@ -93,22 +93,12 @@ namespace ZyPlugin::UI
     Handle Tree::Create(Handle Parent, UInt64 Name, Handle Before)
     {
         ZY_ASSERT(IsAlive(Parent), "The parent is not alive");
+        ZY_ASSERT(!Before.IsValid() || GetParent(Before) == Parent,
+                  "An element can only go before a child of its parent");
 
         const UInt32 Slot = Allocate(mSlots[Parent.GetSlot()].Pane);
 
-        if (IsWalking())
-        {
-            mChanges.Append(Operation::Create, GetHandle(Slot), Parent, Before, Name);
-            mDrafts.Assign(Slot, Draft { Name });
-        }
-        else
-        {
-            ZY_ASSERT(!IsPending(Parent), "Only a walk makes elements beneath one that waits");
-            ZY_ASSERT(!Before.IsValid() || GetParent(Before) == Parent,
-                      "An element can only go before a child of its parent");
-
-            Place(Slot, Parent.GetSlot(), Before.IsValid() ? Before.GetSlot() : kPending, Name);
-        }
+        Place(Slot, Parent.GetSlot(), Before.IsValid() ? Before.GetSlot() : kNone, Name);
         return GetHandle(Slot);
     }
 
@@ -153,12 +143,6 @@ namespace ZyPlugin::UI
     {
         ZY_ASSERT(IsAlive(Element), "The element is not alive");
 
-        if (IsPending(Element))
-        {
-            Sketch(Element).Name = Name;
-            return;
-        }
-
         Locate(Element).Names[mSlots[Element.GetSlot()].Row] = Name;
     }
 
@@ -170,11 +154,6 @@ namespace ZyPlugin::UI
         if (!IsAlive(Element))
         {
             return Handle();
-        }
-
-        if (IsPending(Element))
-        {
-            return mChanges[Pending(Element)].Parent;
         }
 
         const UInt32 Parent = Locate(Element).Parents[mSlots[Element.GetSlot()].Row];
@@ -191,14 +170,6 @@ namespace ZyPlugin::UI
             return Handle();
         }
 
-        // What a waiting element holds waits too, in the order it will stand.
-        if (IsPending(Element))
-        {
-            Sequence<Handle> Children;
-            Waiting(Element, Children);
-            return Children.IsEmpty() ? Handle() : Children[0];
-        }
-
         ConstRef<Pane> Pane = Locate(Element);
         const UInt32   Row  = mSlots[Element.GetSlot()].Row;
 
@@ -213,25 +184,6 @@ namespace ZyPlugin::UI
         if (!IsAlive(Element))
         {
             return Handle();
-        }
-
-        // Only a waiting parent's children are found among the waiting; under a standing one they are not yet there.
-        if (IsPending(Element))
-        {
-            const Handle Parent = mChanges[Pending(Element)].Parent;
-
-            if (!IsAlive(Parent) || !IsPending(Parent))
-            {
-                return Handle();
-            }
-
-            Sequence<Handle> Children;
-            Waiting(Parent, Children);
-
-            const SInt Position = Children.Find(Element);
-            return Position >= 0 && static_cast<UInt>(Position) + 1 < Children.GetSize()
-                ? Children[Position + 1]
-                : Handle();
         }
 
         ConstRef<Pane> Pane   = Locate(Element);
@@ -270,11 +222,6 @@ namespace ZyPlugin::UI
 
     Handle Tree::GetRoot(Handle Element) const
     {
-        while (IsAlive(Element) && IsPending(Element))
-        {
-            Element = mChanges[Pending(Element)].Parent;
-        }
-
         return IsAlive(Element) ? GetHandle(Locate(Element).Slots[0]) : Handle();
     }
 
@@ -283,7 +230,7 @@ namespace ZyPlugin::UI
 
     Handle Tree::Find(Handle Scope, UInt64 Name) const
     {
-        if (!IsAlive(Scope) || IsPending(Scope))
+        if (!IsAlive(Scope))
         {
             return Handle();
         }
@@ -303,13 +250,6 @@ namespace ZyPlugin::UI
     void Tree::SetState(Handle Element, State Bits, Bool Enabled)
     {
         ZY_ASSERT(IsAlive(Element), "The element is not alive");
-
-        if (IsPending(Element))
-        {
-            Ref<State> Current = Sketch(Element).States;
-            Current = SetOrClearBit(Current, Bits, Enabled);
-            return;
-        }
 
         Ref<Pane>    Pane   = Locate(Element);
         const UInt32 Row    = mSlots[Element.GetSlot()].Row;
@@ -350,12 +290,6 @@ namespace ZyPlugin::UI
     {
         ZY_ASSERT(IsAlive(Element), "The element is not alive");
 
-        // A waiting element is worked out whole once it stands in the tree.
-        if (IsPending(Element))
-        {
-            return;
-        }
-
         Ref<Pane> Pane = Locate(Element);
         Pane.Marks[mSlots[Element.GetSlot()].Row] |= Bits;
 
@@ -383,12 +317,6 @@ namespace ZyPlugin::UI
     {
         ZY_ASSERT(IsAlive(Element), "The element is not alive");
 
-        if (IsPending(Element))
-        {
-            Sketch(Element).Style = Name;
-            return;
-        }
-
         Ref<Pane>    Pane = Locate(Element);
         const UInt32 Row  = mSlots[Element.GetSlot()].Row;
 
@@ -401,11 +329,6 @@ namespace ZyPlugin::UI
 
     Ref<Box> Tree::EditBox(Handle Element)
     {
-        if (IsPending(Element))
-        {
-            return Sketch(Element).Shape;
-        }
-
         Mark(Element, Dirty::Measure);
         return Locate(Element).Boxes[mSlots[Element.GetSlot()].Row];
     }
@@ -426,45 +349,11 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    UInt Tree::Pending(Handle Element) const
-    {
-        const SInt Found = mChanges.FindLast([Element](ConstRef<Change> Entry)
-        {
-            return Entry.Kind == Operation::Create && Entry.Element == Element;
-        });
-
-        ZY_ASSERT(Found >= 0, "A waiting element has no change making it");
-        return static_cast<UInt>(Found);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Tree::Waiting(Handle Parent, Ref<Sequence<Handle>> Output) const
-    {
-        // Placed as the walk's end places them: in the order made, each before the sibling it names once that stands.
-        for (UInt Index = Pending(Parent) + 1; Index < mChanges.GetSize(); ++Index)
-        {
-            ConstRef<Change> Entry = mChanges[Index];
-
-            if (Entry.Kind != Operation::Create || Entry.Parent != Parent || !IsAlive(Entry.Element))
-            {
-                continue;
-            }
-
-            const SInt Position = Entry.Before.IsValid() ? Output.Find(Entry.Before) : -1;
-            Output.Insert(Position >= 0 ? static_cast<UInt>(Position) : Output.GetSize(), Entry.Element);
-        }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     UInt32 Tree::Allocate(UInt16 Pane)
     {
         UInt32 Slot = mFree;
 
-        if (Slot != kPending)
+        if (Slot != kNone)
         {
             mFree = mSlots[Slot].Row;
         }
@@ -474,7 +363,7 @@ namespace ZyPlugin::UI
             mSlots.Append();
         }
 
-        mSlots[Slot].Row  = kPending;
+        mSlots[Slot].Row  = kNone;
         mSlots[Slot].Pane = Pane;
         mSlots[Slot].Facets.Reset();
         return Slot;
@@ -486,7 +375,6 @@ namespace ZyPlugin::UI
     void Tree::Release(UInt32 Slot)
     {
         Ref<Tree::Slot> Entry = mSlots[Slot];
-        mDrafts.Erase(Slot);
 
         Entry.Facets.ForEach([this, Slot](UInt Index)
         {
@@ -507,7 +395,7 @@ namespace ZyPlugin::UI
     {
         Ref<Pane>    Pane  = mPanes[mSlots[Parent].Pane];
         const UInt32 Above = mSlots[Parent].Row;
-        const UInt32 Row   = Before != kPending ? mSlots[Before].Row : Above + Pane.Spans[Above];
+        const UInt32 Row   = Before != kNone ? mSlots[Before].Row : Above + Pane.Spans[Above];
 
         Pane.Widen(Row, 1);
         Prime(Pane, Row, Slot, Parent, static_cast<UInt16>(Pane.Depths[Above] + 1), Name);
@@ -522,15 +410,7 @@ namespace ZyPlugin::UI
 
     void Tree::Erase(Handle Element)
     {
-        const UInt32 Slot = Element.GetSlot();
-
-        // One made during a walk and destroyed before it ended never stood anywhere.
-        if (IsPending(Element))
-        {
-            Release(Slot);
-            return;
-        }
-
+        const UInt32 Slot   = Element.GetSlot();
         const UInt16 Index  = mSlots[Slot].Pane;
         Ref<Pane>    Pane   = mPanes[Index];
         const UInt32 Row    = mSlots[Slot].Row;
@@ -709,35 +589,12 @@ namespace ZyPlugin::UI
 
             switch (Entry.Kind)
             {
-            case Operation::Create:
-            {
-                // A parent that died while the walk ran takes the element it was to hold with it.
-                if (!IsAlive(Entry.Parent) || IsPending(Entry.Parent))
-                {
-                    Release(Entry.Element.GetSlot());
-                    break;
-                }
-
-                const Bool  Stands = IsAlive(Entry.Before) && !IsPending(Entry.Before) &&
-                                     GetParent(Entry.Before) == Entry.Parent;
-                const Draft Given  = Sketch(Entry.Element);
-                Place(Entry.Element.GetSlot(), Entry.Parent.GetSlot(), Stands ? Entry.Before.GetSlot() : kPending,
-                      Given.Name);
-
-                Ref<Pane>    Pane = Locate(Entry.Element);
-                const UInt32 Row  = mSlots[Entry.Element.GetSlot()].Row;
-                Pane.Styles[Row] = Given.Style;
-                Pane.States[Row] = Given.States;
-                Pane.Boxes[Row]  = Given.Shape;
-                mDrafts.Erase(Entry.Element.GetSlot());
-                break;
-            }
             case Operation::Destroy:
                 Erase(Entry.Element);
                 break;
             case Operation::Move:
             {
-                if (IsPending(Entry.Element) || !IsAlive(Entry.Parent) || IsPending(Entry.Parent))
+                if (!IsAlive(Entry.Parent))
                 {
                     break;
                 }

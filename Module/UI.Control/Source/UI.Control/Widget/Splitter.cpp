@@ -219,7 +219,7 @@ namespace ZyPlugin::UI
     Real32 Splitter::GetSize(Element Owner, UInt32 Index)
     {
         const Element Pane = GetPane(Owner, Index);
-        return Pane.IsAlive() && !Owner.GetTree().IsPending(Pane.GetHandle()) ? Along(Owner, Pane.GetFrame()) : 0.0f;
+        return Pane.IsAlive() ? Along(Owner, Pane.GetFrame()) : 0.0f;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

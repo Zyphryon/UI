@@ -294,7 +294,7 @@ namespace ZyPlugin::UI
         const ConstPtr<Strip> Own = Owner.Get<Strip>(Self);
 
         // Nothing is followed while every menu is closed, which is all a bar costs an update then.
-        if (!Own || !Own->Open.IsValid() || Owner.IsPending(Self))
+        if (!Own || !Own->Open.IsValid())
         {
             return false;
         }

@@ -209,7 +209,7 @@ namespace ZyPlugin::UI
     {
         const Ptr<Session> Run = Owner.Find<Session>();
 
-        if (Run && Owner.IsAlive(Run->Pane) && Owner.Has<Hint>(Run->Shown) && !Owner.IsPending(Run->Shown))
+        if (Run && Owner.IsAlive(Run->Pane) && Owner.Has<Hint>(Run->Shown))
         {
             Fill(Owner, * Run, Run->Shown);
         }
@@ -262,12 +262,12 @@ namespace ZyPlugin::UI
         // A tooltip whose element went away, was hidden with its pane, or lost its tooltip, goes with it.
         const Bool Valid = Run.Shown.IsValid();
 
-        if (Valid && (!Owner.Has<Hint>(Run.Shown) || Owner.IsPending(Run.Shown) || !Route.IsShown(Run.Shown)))
+        if (Valid && (!Owner.Has<Hint>(Run.Shown) || !Route.IsShown(Run.Shown)))
         {
             Hush(Owner, Run);
         }
 
-        const Bool Waiting = Owner.Has<Hint>(Run.Hinted) && !Owner.IsPending(Run.Hinted) && Route.IsShown(Run.Hinted)
+        const Bool Waiting = Owner.Has<Hint>(Run.Hinted) && Route.IsShown(Run.Hinted)
             && Run.Hinted != Run.Hushed && Run.Hinted != Run.Shown && !Drag::GetDragged(Owner).IsValid()
             && !Owner.GetCursor().IsHeld();
 

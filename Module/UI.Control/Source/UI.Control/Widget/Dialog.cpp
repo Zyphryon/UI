@@ -182,8 +182,7 @@ namespace ZyPlugin::UI
         // The keyboard leaves with it, back to whoever held it before when that still can.
         if (Owner.GetRoot(Owner.GetFocused()) == Target)
         {
-            const Bool Usable = Owner.IsAlive(Return) && !Owner.IsPending(Return)
-                && !Owner.HasState(Return, State::Hidden);
+            const Bool Usable = Owner.IsAlive(Return) && !Owner.HasState(Return, State::Hidden);
             Owner.Focus(Usable ? Return : Handle());
         }
     }
@@ -253,7 +252,7 @@ namespace ZyPlugin::UI
     {
         const Ptr<Verdict> Own = Owner.Get<Verdict>(Self);
 
-        if (!Own || Own->Placed || Owner.IsPending(Self) || Owner.HasState(Self, State::Hidden))
+        if (!Own || Own->Placed || Owner.HasState(Self, State::Hidden))
         {
             return false;
         }

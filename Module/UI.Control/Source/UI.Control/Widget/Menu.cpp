@@ -627,7 +627,7 @@ namespace ZyPlugin::UI
         {
             Owner.Focus(Parent);
         }
-        else if (Owner.IsAlive(Return) && !Owner.IsPending(Return) && !Owner.HasState(Return, State::Hidden))
+        else if (Owner.IsAlive(Return) && !Owner.HasState(Return, State::Hidden))
         {
             Owner.Focus(Return);
         }
