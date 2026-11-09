@@ -157,9 +157,18 @@ namespace ZyPlugin::UI
 
             /// `true` when a child's reach changed.
             Bool Raised = false;
+
+            /// `true` when a child or a row it holds draws differently since the last paint, `false` otherwise.
+            Bool Marked = false;
         };
 
-        /// \brief Works out again the reach of every row drawing differently since the last paint.
+        /// The rows an element holds from which it bounds a part recorded and replayed whole.
+        static constexpr UInt32 kLarge  = 16;
+
+        /// The bit of a live part's tag set when the part is a row replayed from its own tape, not a sketch.
+        static constexpr UInt32 kNested = 0x80000000u;
+
+        /// \brief Works out again the reach of every row drawing differently, and voids the tape of all holding one.
         ///
         /// \param Target The pane whose reaches are worked out.
         void Trace(Ref<Pane> Target);
@@ -186,24 +195,14 @@ namespace ZyPlugin::UI
         /// \param Opacity The opacity of the element, together with everything holding it.
         void Render(Ref<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row, Real32 Opacity) const;
 
-        /// \brief Draws anew a part of a replayed pane that draws every frame, as a sketch, where it stood.
+        /// \brief Gets what a drawer is handed of an element, its cover left empty.
         ///
-        /// \param Canvas The canvas to draw through.
-        /// \param Target The pane being replayed, unchanged since it was recorded.
-        /// \param Part   The part the tape noted.
-        void Relive(Ref<Canvas> Canvas, ConstRef<Pane> Target, ConstRef<Canvas::Tape::Live> Part) const;
-
-        /// \brief Works out which rows hold a change in their subtree, before the marks telling it are cleared.
-        ///
-        /// \param Target The pane about to be walked.
-        void Survey(ConstRef<Pane> Target);
-
-        /// \brief Checks whether a row bounds a part recorded and replayed whole.
-        ///
-        /// \param Target The pane holding the row.
-        /// \param Row    The row.
-        /// \return `true` for the root, an element cutting what it holds to its box, or one holding many rows.
-        Bool IsBoundary(ConstRef<Pane> Target, UInt32 Row) const;
+        /// \param Target  The pane holding the element.
+        /// \param Row     The row of the element.
+        /// \param Opacity The opacity of the element, together with everything holding it.
+        /// \param Scale   The pixels of the target one unit covers, which the edges of its frame are moved onto.
+        /// \return The brush, holding the element's frame, look and effects.
+        Brush BrushOf(ConstRef<Pane> Target, UInt32 Row, Real32 Opacity, Real32 Scale) const;
 
         /// \brief Checks whether a boundary's tape draws it as walking it would now.
         ///
@@ -220,12 +219,6 @@ namespace ZyPlugin::UI
         /// \param Target The pane holding the row.
         /// \param Row    The row bounding the part.
         void Replay(Ref<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row) const;
-
-        /// \brief Draws a pane's rows in order, recording them into the pane's tape as the canvas draws them.
-        ///
-        /// \param Canvas The canvas to draw through.
-        /// \param Target The pane to draw.
-        void Walk(Ref<Canvas> Canvas, Ref<Pane> Target);
 
         /// \brief Works out, for every row of a pane, the largest box what it holds paints opaque, children first.
         ///
@@ -438,8 +431,6 @@ namespace ZyPlugin::UI
         Sequence<Scope>  mScopes;
         Sequence<Ripple> mRipples;
         Sequence<Bool>   mRaised;
-        Sequence<Bool>   mDirty;
-        Bool             mWhole;
         Sequence<Drawer> mDrawers;
     };
 }

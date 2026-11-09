@@ -42,8 +42,7 @@ namespace ZyPlugin::UI
     Painter::Painter(Ref<Tree> Owner, Ref<Animator> Animator, Ref<Layout> Layout)
         : mTree     { Owner },
           mAnimator { Animator },
-          mLayout   { Layout },
-          mWhole    { false }
+          mLayout   { Layout }
     {
         AddDrawer<Effect>(100, Draw::Create<&Painter::DrawHalos>());
         AddDrawer<Look>(200, Draw::Create<&Painter::DrawFill>(this));
@@ -62,129 +61,7 @@ namespace ZyPlugin::UI
 
     void Painter::Paint(Ref<Canvas> Canvas, Ref<Pane> Target)
     {
-        // What changed is told by the marks the walk clears, so the parts holding a change are found first.
-        Survey(Target);
-        Walk(Canvas, Target);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Painter::Survey(ConstRef<Pane> Target)
-    {
-        mWhole = Target.Moved;
-        mDirty.Clear();
-
-        if (mWhole || !Target.Touched)
-        {
-            return;
-        }
-
-        mDirty.Advance(Target.GetSize());
-
-        // Children stand after the row holding them, so walking backward hands every change up to what holds it.
-        for (UInt32 Row = Target.GetSize(); Row-- > 0;)
-        {
-            Bool Changed = HasBit(Target.Marks[Row], Dirty::Paint);
-
-            for (UInt32 Child = Row + 1, End = Row + Target.Spans[Row]; !Changed && Child < End;
-                 Child += Target.Spans[Child])
-            {
-                Changed = mDirty[Child];
-            }
-            mDirty[Row] = Changed;
-        }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Painter::IsBoundary(ConstRef<Pane> Target, UInt32 Row) const
-    {
-        constexpr UInt32 kLarge = 16;
-
-        if (Row == 0)
-        {
-            return true;
-        }
-
-        const UInt32         Slot  = Target.Slots[Row];
-        const ConstPtr<Look> Shade = mTree.Peek<Look>(Slot);
-        const Bool           Cuts  = (Shade && Shade->Clip) || mTree.Peek<Scroll>(Slot);
-
-        return Target.Spans[Row] > 1 && (Cuts || Target.Spans[Row] >= kLarge);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Painter::IsKept(ConstRef<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row, Real32 Opacity) const
-    {
-        ConstRef<Canvas::Tape>    Kept   = Target.Tapes[Row];
-        const ConstPtr<Matrix3x2> Turn   = Canvas.GetTransform();
-        const Bool                Moved  = mWhole || (Row < mDirty.GetSize() && mDirty[Row]);
-        const Bool                Placed = Kept.Scale == Canvas.GetScale() && Kept.Clip == Canvas.GetClip();
-        const Bool                Turned = Kept.Turned == (Turn != nullptr) && (!Turn || Kept.Turn == * Turn);
-
-        return Kept.Valid && !Moved && Placed && Turned && Kept.Opacity == Opacity;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Painter::Replay(Ref<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row) const
-    {
-        ZY_PROFILE_SCOPE("UI::Painter::Replay");
-
-        constexpr UInt32 kNested = 0x80000000u;
-
-        // A part replayed inside one being recorded is noted there, so replaying the outer one replays it too.
-        const Ptr<Canvas::Tape> Paused = Canvas.Pause(Row | kNested, Target.Tapes[Row].Opacity);
-
-        // A sketch draws anew every frame, and a part held inside replays from its own tape where it stood.
-        Canvas.Replay(Target.Tapes[Row], Delegate<void(ConstRef<Canvas::Tape::Live>)>::Create(
-            [this, &Canvas, &Target](ConstRef<Canvas::Tape::Live> Part)
-            {
-                if (Part.Tag & kNested)
-                {
-                    Replay(Canvas, Target, Part.Tag & ~kNested);
-                }
-                else
-                {
-                    Relive(Canvas, Target, Part);
-                }
-            }));
-
-        Canvas.Resume(Paused);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Painter::Relive(Ref<Canvas> Canvas, ConstRef<Pane> Target, ConstRef<Canvas::Tape::Live> Part) const
-    {
-        const UInt32 Row = Part.Tag;
-
-        Brush Element;
-        Element.Target  = AddressOf(Target);
-        Element.Row     = Row;
-        Element.Slot    = Target.Slots[Row];
-        Element.Frame   = SnapOf(Target.Frames[Row], Canvas.GetScale());
-        Element.Inner   = Target.Boxes[Row].Padding.Inset(Element.Frame);
-        Element.Opacity = Part.Opacity;
-        Element.Shade   = mTree.Peek<Look>(Element.Slot);
-        Element.Extra   = mTree.Peek<Effect>(Element.Slot);
-        Element.Radius  = Element.Shade ? Element.Shade->Radius : 0.0f;
-
-        DrawSketch(Canvas, Element);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Painter::Walk(Ref<Canvas> Canvas, Ref<Pane> Target)
-    {
-        ZY_PROFILE_SCOPE("UI::Painter::Walk");
+        ZY_PROFILE_SCOPE("UI::Painter::Paint");
 
         // What each row's children hide changes only with the pane, so it is worked out again only then.
         if (Target.Moved || Target.Touched)
@@ -241,9 +118,11 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // A part nothing changed in, drawn under what it was recorded under, is drawn from its tape whole.
-            const Bool Bounds = IsBoundary(Target, Row);
+            // The root bounds a part, as does an element cutting what it holds to its box or one holding many rows.
+            const Bool Clipped = Span > 1 && ((Shade && Shade->Clip) || mTree.Peek<Scroll>(Slot));
+            const Bool Bounds  = Row == 0 || Clipped || Span >= kLarge;
 
+            // A part nothing changed in, drawn under what it was recorded under, is drawn from its tape whole.
             if (Bounds && IsKept(Canvas, Target, Row, Opacity))
             {
                 Replay(Canvas, Target, Row);
@@ -256,7 +135,7 @@ namespace ZyPlugin::UI
 
             if (Bounds)
             {
-                Paused = Canvas.Pause(Row | 0x80000000u, Opacity);
+                Paused = Canvas.Pause(Row | kNested, Opacity);
                 Canvas.Record(AddressOf(Target.Tapes[Row]));
                 Target.Tapes[Row].Opacity = Opacity;
             }
@@ -274,8 +153,6 @@ namespace ZyPlugin::UI
 
             if (Span > 1 || Transformed)
             {
-                const Bool Clipped = Span > 1 && ((Shade && Shade->Clip) || mTree.Peek<Scroll>(Slot));
-
                 if (Clipped)
                 {
                     Canvas.PushClip(Target.Frames[Row]);
@@ -295,6 +172,46 @@ namespace ZyPlugin::UI
         {
             Close(Canvas, Target);
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Painter::IsKept(ConstRef<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row, Real32 Opacity) const
+    {
+        ConstRef<Canvas::Tape>    Kept   = Target.Tapes[Row];
+        const ConstPtr<Matrix3x2> Turn   = Canvas.GetTransform();
+        const Bool                Placed = Kept.Scale == Canvas.GetScale() && Kept.Clip == Canvas.GetClip();
+        const Bool                Turned = Kept.Turned == (Turn != nullptr) && (!Turn || Kept.Turn == * Turn);
+
+        return Kept.Valid && Placed && Turned && Kept.Opacity == Opacity;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Painter::Replay(Ref<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row) const
+    {
+        ZY_PROFILE_SCOPE("UI::Painter::Replay");
+
+        // A part replayed inside one being recorded is noted there, so replaying the outer one replays it too.
+        const Ptr<Canvas::Tape> Paused = Canvas.Pause(Row | kNested, Target.Tapes[Row].Opacity);
+
+        // A sketch draws anew every frame, and a part held inside replays from its own tape where it stood.
+        Canvas.Replay(Target.Tapes[Row], Delegate<void(ConstRef<Canvas::Tape::Live>)>::Create(
+            [&](ConstRef<Canvas::Tape::Live> Part)
+            {
+                if (Part.Tag & kNested)
+                {
+                    Replay(Canvas, Target, Part.Tag & ~kNested);
+                }
+                else
+                {
+                    DrawSketch(Canvas, BrushOf(Target, Part.Tag, Part.Opacity, Canvas.GetScale()));
+                }
+            }));
+
+        Canvas.Resume(Paused);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -322,8 +239,9 @@ namespace ZyPlugin::UI
             }
 
             // The children left their ripple one level down; one leaving their union as it was asks nothing.
-            Ref<Ripple> Below = mRipples[Depth + 1];
-            Bool        Asked = false;
+            Ref<Ripple> Below  = mRipples[Depth + 1];
+            const Bool  Marked = HasBit(Target.Marks[Row], Dirty::Paint);
+            Bool        Asked  = false;
 
             if (Below.Raised)
             {
@@ -331,7 +249,15 @@ namespace ZyPlugin::UI
                 Below.Raised = false;
             }
 
-            if (!Whole && !Asked && !HasBit(Target.Marks[Row], Dirty::Paint))
+            // A row drawing differently, or holding one that does, is no longer what its tape recorded.
+            if (Whole || Marked || Below.Marked)
+            {
+                Target.Tapes[Row].Valid = false;
+                mRipples[Depth].Marked  = true;
+                Below.Marked            = false;
+            }
+
+            if (!Whole && !Asked && !Marked)
             {
                 continue;
             }
@@ -414,19 +340,10 @@ namespace ZyPlugin::UI
 
     void Painter::Render(Ref<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row, Real32 Opacity) const
     {
-        Brush Element;
-        Element.Target  = AddressOf(Target);
-        Element.Row     = Row;
-        Element.Slot    = Target.Slots[Row];
-        Element.Frame   = SnapOf(Target.Frames[Row], Canvas.GetScale());
-        Element.Inner   = Target.Boxes[Row].Padding.Inset(Element.Frame);
-        Element.Opacity = Opacity;
-        Element.Shade   = mTree.Peek<Look>(Element.Slot);
-        Element.Extra   = mTree.Peek<Effect>(Element.Slot);
-        Element.Radius  = Element.Shade ? Element.Shade->Radius : 0.0f;
+        Brush Element = BrushOf(Target, Row, Opacity, Canvas.GetScale());
 
         // What it holds is drawn as faded as it is, so a cover only hides what lies under it at full opacity.
-        Element.Cover   = Opacity >= 1.0f ? Target.Covers[Row] : Rect();
+        Element.Cover = Opacity >= 1.0f ? Target.Covers[Row] : Rect();
 
         // Every stage of drawing whose kind of facet the element holds runs, in order, the interface's own among them.
         ConstRef<Mask> Held = mTree.GetMask(mTree.GetHandle(Element.Slot));
@@ -438,6 +355,24 @@ namespace ZyPlugin::UI
                 Each.Code(Canvas, Element);
             }
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Painter::Brush Painter::BrushOf(ConstRef<Pane> Target, UInt32 Row, Real32 Opacity, Real32 Scale) const
+    {
+        Brush Element;
+        Element.Target  = AddressOf(Target);
+        Element.Row     = Row;
+        Element.Slot    = Target.Slots[Row];
+        Element.Frame   = SnapOf(Target.Frames[Row], Scale);
+        Element.Inner   = Target.Boxes[Row].Padding.Inset(Element.Frame);
+        Element.Opacity = Opacity;
+        Element.Shade   = mTree.Peek<Look>(Element.Slot);
+        Element.Extra   = mTree.Peek<Effect>(Element.Slot);
+        Element.Radius  = Element.Shade ? Element.Shade->Radius : 0.0f;
+        return Element;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
