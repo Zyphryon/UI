@@ -329,6 +329,13 @@ namespace ZyPlugin::UI
 
     Bool Drag::OnMove(Ref<Interface> Owner)
     {
+        // A button let go of while the window was away never came up here, so nothing is picked up or carried on.
+        if (!Owner.IsButtonHeld(ZyInput::Button::Left))
+        {
+            Cancel(Owner);
+            return false;
+        }
+
         Ref<Session> Run = * Owner.Find<Session>();
 
         // What the pointer carries follows it, and only the targets it passes over hear it; one that died ends it.
