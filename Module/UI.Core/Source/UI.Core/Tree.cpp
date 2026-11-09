@@ -319,9 +319,20 @@ namespace ZyPlugin::UI
         if (After != Before)
         {
             Pane.States[Row] = After;
+            Pane.Restyle(Row, Row + 1);
 
-            // The parts of a widget wear its states, so everything it holds is dressed again.
-            Pane.Restyle(Row, Row + Pane.Spans[Row]);
+            // The parts of a widget wear its states, but a control it holds wears only its own, as all beneath it does.
+            for (UInt32 Cursor = Row + 1, End = Row + Pane.Spans[Row]; Cursor < End;)
+            {
+                if (mSlots[Pane.Slots[Cursor]].Facets.Test(Facets::Index<Control>()))
+                {
+                    Cursor += Pane.Spans[Cursor];
+                }
+                else
+                {
+                    Pane.Marks[Cursor++] |= Dirty::Style;
+                }
+            }
 
             // Hiding takes the element out of the layout, and showing it puts it back.
             if (HasBit(After ^ Before, State::Hidden))
