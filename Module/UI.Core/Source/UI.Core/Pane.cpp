@@ -146,7 +146,7 @@ namespace ZyPlugin::UI
 
         for (UInt Index = Size; Index > Row; --Index)
         {
-            Data[Index - 1 + Count] = Data[Index - 1];
+            Data[Index - 1 + Count] = Move(Data[Index - 1]);
         }
     }
 
