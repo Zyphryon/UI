@@ -49,6 +49,7 @@ namespace ZyPlugin::UI
         Ref<Level> Span = Result.Add<Level>();
         Span.Minimum = Minimum;
         Span.Maximum = Maximum;
+        Span.Value   = Clamp(Value, Minimum, Maximum);
 
         Ref<Stepper> Pace = Result.Add<Stepper>();
         Pace.Step     = Step;
@@ -64,7 +65,7 @@ namespace ZyPlugin::UI
         const Element Increase = Button::Create(Result, "+", Widget::Part(Style, "Increase"));
         Widget::Govern(Increase, Handler(), false);
 
-        SetValue(Result, Value);
+        Show(Result);
         return Result;
     }
 
@@ -94,12 +95,14 @@ namespace ZyPlugin::UI
 
     void Spinner::SetValue(Element Target, Real32 Value)
     {
-        const Ptr<Level> Span = Target.Edit<Level>();
-        Span->Value = Clamp(Value, Span->Minimum, Span->Maximum);
+        const Ptr<Level> Span = Target.Get<Level>();
 
-        Str Shown;
-        Shown.AppendReal(Span->Value, Min(Target.Get<Stepper>()->Decimals, kMaxDecimals));
-        Label::SetText(Target.GetFirst().GetNext(), Shown);
+        // A value told again as it stands shows nothing anew, so a game may tell it every frame for free.
+        if (const Real32 Held = Clamp(Value, Span->Minimum, Span->Maximum); Held != Span->Value)
+        {
+            Span->Value = Held;
+            Show(Target);
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -115,7 +118,7 @@ namespace ZyPlugin::UI
 
     void Spinner::SetMinimum(Element Target, Real32 Minimum)
     {
-        Target.Edit<Level>()->Minimum = Minimum;
+        Target.Get<Level>()->Minimum = Minimum;
         SetValue(Target, GetValue(Target));
     }
 
@@ -124,7 +127,7 @@ namespace ZyPlugin::UI
 
     void Spinner::SetMaximum(Element Target, Real32 Maximum)
     {
-        Target.Edit<Level>()->Maximum = Maximum;
+        Target.Get<Level>()->Maximum = Maximum;
         SetValue(Target, GetValue(Target));
     }
 
@@ -208,5 +211,15 @@ namespace ZyPlugin::UI
             Move(Owner, Self, Amount);
             Owner.Dispatch(Event(Signal::kEnd, Self));
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Spinner::Show(Element Target)
+    {
+        Str Shown;
+        Shown.AppendReal(Target.Get<Level>()->Value, Min(Target.Get<Stepper>()->Decimals, kMaxDecimals));
+        Label::SetText(Target.GetFirst().GetNext(), Shown);
     }
 }

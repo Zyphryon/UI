@@ -80,19 +80,28 @@ namespace ZyPlugin::UI
 
     void Slider::SetValue(Element Target, Real32 Value)
     {
-        const Ptr<Level> Span = Target.Edit<Level>();
+        const Ptr<Level> Span = Target.Get<Level>();
         Span->Value = Clamp(Value, Span->Minimum, Span->Maximum);
 
+        // A value told again as it stands marks nothing, so a game may set it every frame for free.
         const Real32 Share = Span->GetShare();
-        Target.Edit<Bar>()->Value = Share;
+
+        if (Target.Get<Bar>()->Value != Share)
+        {
+            Target.Edit<Bar>()->Value = Share;
+        }
 
         // The thumb's middle stands on the value, whatever width the theme gives it.
         const Element Thumb = Target.GetFirst();
-        Ref<Box>      Shape = Thumb.EditBox();
+        ConstRef<Box> Shape = Target.GetTree().GetBox(Thumb.GetHandle());
         const Real32  Half  = (Shape.Width.Measure == Length::Unit::Pixel ? Shape.Width.Value : 16.0f) * 0.5f;
 
-        Shape.Left        = Length::Percent(Share);
-        Shape.Margin.Left = -Half;
+        if (Shape.Left != Length::Percent(Share) || Shape.Margin.Left != -Half)
+        {
+            Ref<Box> Moved = Thumb.EditBox();
+            Moved.Left        = Length::Percent(Share);
+            Moved.Margin.Left = -Half;
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -108,7 +117,7 @@ namespace ZyPlugin::UI
 
     void Slider::SetMinimum(Element Target, Real32 Minimum)
     {
-        Target.Edit<Level>()->Minimum = Minimum;
+        Target.Get<Level>()->Minimum = Minimum;
         SetValue(Target, GetValue(Target));
     }
 
@@ -117,7 +126,7 @@ namespace ZyPlugin::UI
 
     void Slider::SetMaximum(Element Target, Real32 Maximum)
     {
-        Target.Edit<Level>()->Maximum = Maximum;
+        Target.Get<Level>()->Maximum = Maximum;
         SetValue(Target, GetValue(Target));
     }
 

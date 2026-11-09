@@ -74,11 +74,16 @@ namespace ZyPlugin::UI
 
     void Progress::SetValue(Element Target, Real32 Value)
     {
-        const Ptr<Level> Span = Target.Edit<Level>();
+        const Ptr<Level> Span = Target.Get<Level>();
         Span->Value = Clamp(Value, Span->Minimum, Span->Maximum);
 
+        // A value told again as it stands marks nothing, so a game may set it every frame for free.
         const Real32 Share = Span->GetShare();
-        Target.Edit<Bar>()->Value = Share;
+
+        if (Target.Get<Bar>()->Value != Share)
+        {
+            Target.Edit<Bar>()->Value = Share;
+        }
 
         if (const Element Readout(Target.GetTree(), Target.Get<Gauge>()->Readout); Readout.IsAlive())
         {

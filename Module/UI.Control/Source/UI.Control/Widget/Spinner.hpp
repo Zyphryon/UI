@@ -119,5 +119,10 @@ namespace ZyPlugin::UI
         /// \param Self   The scalar to move.
         /// \param Amount The number of steps, below nought to take them away.
         static void Nudge(Ref<Interface> Owner, Handle Self, Real32 Amount);
+
+        /// \brief Writes a scalar's value on its label, with the digits it shows after the point.
+        ///
+        /// \param Target The scalar to show.
+        static void Show(Element Target);
     };
 }

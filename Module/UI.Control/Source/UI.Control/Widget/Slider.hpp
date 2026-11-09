@@ -29,7 +29,7 @@ namespace ZyPlugin::UI
     struct Level final
     {
         /// What a change to the facet must have worked out again.
-        static constexpr Dirty kMarks = Dirty::Paint;
+        static constexpr Dirty kMarks = Dirty::None;
 
         /// The value the widget stands at, kept within the range by whoever sets it.
         Real32 Value   = 0.0f;
