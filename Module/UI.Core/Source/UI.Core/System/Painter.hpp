@@ -246,7 +246,7 @@ namespace ZyPlugin::UI
         /// \param Element The element whose look is drawn.
         void DrawFill(Ref<Canvas> Canvas, ConstRef<Brush> Element);
 
-        /// \brief Draws the image a theme lays over an element's fill.
+        /// \brief Draws the image a theme lays over an element's fill, asking to be painted again while it loads.
         ///
         /// \param Canvas  The canvas to draw through.
         /// \param Element The element whose backdrop is drawn.
@@ -308,22 +308,6 @@ namespace ZyPlugin::UI
         /// \param Opacity The opacity of the element, together with everything holding it.
         /// \param Hole    The box the element's own opaque fill covers whole once drawn over the halo, or an empty one.
         static void Cast(Ref<Canvas> Canvas, Rect Box, ConstRef<Halo> Source, Real32 Radius, Real32 Opacity, Rect Hole);
-
-        /// \brief Draws an image over an element's box, stretched to follow its corners or in nine pieces when sliced.
-        ///
-        /// \param Canvas  The canvas to draw through.
-        /// \param Element The element the image is drawn over.
-        /// \param Source  The image, drawn only once it has finished loading.
-        /// \param Region  The part of the image to draw, in texture coordinates.
-        /// \param Slice   The border kept unstretched on each side, in pixels of the image, or none to stretch it.
-        /// \param Tint    The colour the image is multiplied by, before the element's opacity fades it.
-        static void Stamp(
-            Ref<Canvas>                          Canvas,
-            ConstRef<Brush>                      Element,
-            ConstRef<Retainer<ZyGraphic::Image>> Source,
-            Rect                                 Region,
-            ConstRef<Edges>                      Slice,
-            Color                                Tint);
 
         /// \brief Gets the box a picture is drawn over within its element's frame.
         ///

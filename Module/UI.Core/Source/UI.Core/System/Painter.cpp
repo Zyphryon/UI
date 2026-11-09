@@ -546,7 +546,30 @@ namespace ZyPlugin::UI
     {
         // A theme's image lies over the fill and under the picture.
         const ConstPtr<Backdrop> Layer = mTree.Peek<Backdrop>(Element.Slot);
-        Stamp(Canvas, Element, Layer->Source, Layer->Region, Layer->Slice, Layer->Tint);
+
+        if (!Layer->Source || Layer->Source->HasFailed())
+        {
+            return;
+        }
+
+        // An image still loading has its element painted again, so it shows on the first paint after it loads.
+        if (!Layer->Source->HasCompleted())
+        {
+            mTree.Mark(mTree.GetHandle(Element.Slot), Dirty::Paint);
+            return;
+        }
+
+        const Color Tint = Fade(Layer->Tint, Element.Opacity);
+
+        // Only a stretched image can follow the corners.
+        if (Layer->Slice.IsEmpty())
+        {
+            Canvas.DrawImage(* Layer->Source, Element.Frame, Layer->Region, Tint, Element.Radius);
+        }
+        else
+        {
+            Canvas.DrawSliced(* Layer->Source, Element.Frame, Layer->Region, Layer->Slice, Tint);
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -702,33 +725,6 @@ namespace ZyPlugin::UI
             Max(Box.GetMaximumX() + Source.Spread, MinimumX), Max(Box.GetMaximumY() + Source.Spread, MinimumY));
 
         Canvas.DrawShadow(Grown, Fade(Source.Tint, Opacity), Max(Radius + Source.Spread, 0.0f), Source.Blur, Hole);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Painter::Stamp(
-        Ref<Canvas>                          Canvas,
-        ConstRef<Brush>                      Element,
-        ConstRef<Retainer<ZyGraphic::Image>> Source,
-        Rect                                 Region,
-        ConstRef<Edges>                      Slice,
-        Color                                Tint)
-    {
-        if (!Source || !Source->HasCompleted())
-        {
-            return;
-        }
-
-        // Only a stretched image can follow the corners.
-        if (Slice.IsEmpty())
-        {
-            Canvas.DrawImage(* Source, Element.Frame, Region, Fade(Tint, Element.Opacity), Element.Radius);
-        }
-        else
-        {
-            Canvas.DrawSliced(* Source, Element.Frame, Region, Slice, Fade(Tint, Element.Opacity));
-        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
