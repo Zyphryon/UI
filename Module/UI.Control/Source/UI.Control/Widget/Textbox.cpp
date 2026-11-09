@@ -66,9 +66,6 @@ namespace ZyPlugin::UI
 
         Result.Add<Look>().Clip = true;
 
-        // The caret and the selection stand where the text is, placed once the field has been laid out.
-        Result.Add<Virtual>().Realize = Realizer::Create<&Textbox::OnRealize>();
-
         // The parts stand in a fixed order: text, caret, hint, then one selection band per line, made as needed.
         const Element Shown = Label::Create(Result, Content, Widget::Part(Style, "Text"));
         const Element Caret = Panel::Create(Result, Widget::Part(Style, "Caret"));
@@ -358,9 +355,25 @@ namespace ZyPlugin::UI
         case Signal::kFocus:
             Data->Original = GetText(Target);
             Data->Editing  = false;
+
+            // The caret and the selection stand where the text is, placed after every layout while it is held.
+            Target.Obtain<Virtual>().Realize = Realizer::Create<&Textbox::OnRealize>();
             return false;
         case Signal::kBlur:
             Data->Selecting = false;
+
+            // Nothing places the selection of a field without the keyboard, so it goes before the commit is heard.
+            for (Element Band = Target.GetFirst().GetNext().GetNext().GetNext(); Band.IsAlive(); Band = Band.GetNext())
+            {
+                Show(Band, false);
+            }
+
+            // A handler moving the keyboard on as it leaves another field takes it from this one before it was given.
+            if (Target.Has<Virtual>())
+            {
+                Target.Remove<Virtual>();
+            }
+
             Commit(Owner, Target, false);
             return false;
         default:
@@ -394,8 +407,8 @@ namespace ZyPlugin::UI
         // Kept from call to call, since the field holding the keyboard is surveyed every frame.
         thread_local Block Shape;
 
-        // Only the field holding the keyboard shows where its caret and selection stand.
-        if (!Data || !Target.HasState(State::Focus) || !Survey(Owner, Target, Shape) || !Shape.Source)
+        // A field with nothing to read yet, as while its typeface loads, shows no selection.
+        if (!Data || !Survey(Owner, Target, Shape) || !Shape.Source)
         {
             for (; Band.IsAlive(); Band = Band.GetNext())
             {

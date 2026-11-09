@@ -174,10 +174,10 @@ namespace ZyPlugin::UI
         /// \return `true` if the event was text typed into it or a key it keeps, `false` otherwise.
         static Bool OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
 
-        /// \brief Places a focused field's caret and selection and scrolls the caret into view; others hide it.
+        /// \brief Places the caret and selection of the field holding the keyboard and scrolls the caret into view.
         ///
         /// \param Owner The interface it stands in.
-        /// \param Self  The text field to place the parts of.
+        /// \param Self  The text field to place the parts of, realized only while it holds the keyboard.
         /// \return `true` if a part moved, showed or hid, or the field scrolled, `false` otherwise.
         static Bool OnRealize(Ref<Interface> Owner, Handle Self);
 
