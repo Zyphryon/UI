@@ -229,8 +229,8 @@ namespace ZyPlugin::UI
         /// \brief Gets the box an element paints opaque itself, by its fill or by a picture showing no transparency.
         ///
         /// \param Target The pane holding the element.
-        /// \param Row    The row of the element.
-        /// \param Scale  The pixels of the target one unit covers.
+        /// \param Row    The row of the element, which must draw at its own full opacity.
+        /// \param Scale  The pixels of the target one unit covers, which the edge's pixel of fade is measured in.
         /// \return The box, in pixels, or an empty one when it lets anything through.
         Rect CoverOf(ConstRef<Pane> Target, UInt32 Row, Real32 Scale) const;
 
@@ -332,16 +332,6 @@ namespace ZyPlugin::UI
         /// \param Mode  The way the picture fills the frame.
         /// \return The frame when the picture stretches, else the largest box of its shape in the frame's middle.
         static Rect FitOf(Rect Frame, Vector2 Size, Fit Mode);
-
-        /// \brief Gets the box an element's fill covers whole, so nothing drawn under it before shows through.
-        ///
-        /// \param Frame   The box the element was laid out in, in pixels.
-        /// \param Shade   The element's look, or `nullptr` for none.
-        /// \param Extra   The effects it is drawn with, or `nullptr` for none.
-        /// \param Opacity The opacity of the element, together with everything holding it.
-        /// \param Scale   The pixels of the target one unit covers, which the edge's half pixel of fade is measured in.
-        /// \return The box, in pixels, or an empty one when the fill lets anything through.
-        static Rect HoleOf(Rect Frame, ConstPtr<Look> Shade, ConstPtr<Effect> Extra, Real32 Opacity, Real32 Scale);
 
         /// \brief Gets a box with each of its edges moved to the nearest edge of a pixel of the target.
         ///

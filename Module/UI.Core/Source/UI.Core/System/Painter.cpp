@@ -448,21 +448,24 @@ namespace ZyPlugin::UI
         const ConstPtr<Effect>  Extra = mTree.Peek<Effect>(Slot);
         const ConstPtr<Picture> Image = mTree.Peek<Picture>(Slot);
 
-        const Rect Filled = HoleOf(Frame, Shade, Extra, Shade ? Shade->Opacity : 1.0f, Scale);
+        // A fill covers its box when its background is opaque, or the gradient drawn over it is.
+        const Bool Filled = (Shade && Shade->Background.IsOpaque())
+            || (Extra && Extra->Fill.From.IsOpaque() && Extra->Fill.To.IsOpaque());
 
         // A picture covers its box when it shows its colour alone, untinted and stretched over all of it.
         const Bool Ready = Image && (Image->Source ? Image->Source->HasCompleted() : Image->Texture != 0);
 
-        if (!Ready || !Image->Opaque || !Image->Tint.IsOpaque() || Image->Fit != Fit::Stretch)
+        if (!Filled && (!Ready || !Image->Opaque || !Image->Tint.IsOpaque() || Image->Fit != Fit::Stretch))
         {
-            return Filled;
+            return Rect();
         }
 
+        // The rounded corners and a pixel of fading edge let what lies under show, so only what is solid counts.
         const Real32 Edge  = 1.0f / Max(Scale, 1.0e-6f);
         const Real32 Side  = (Shade ? Max(Shade->Radius, 0.0f) : 0.0f) + Edge;
         const Rect   Shown = Frame.Contract(Side, Edge);
 
-        return LargerOf(Filled, Shown.IsEmpty() ? Rect() : Shown);
+        return Shown.IsEmpty() ? Rect() : Shown;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -744,27 +747,6 @@ namespace ZyPlugin::UI
         const Vector2 Corner = Frame.GetCenter() - Extent * 0.5f;
 
         return Rect(Corner, Corner + Extent);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Rect Painter::HoleOf(Rect Frame, ConstPtr<Look> Shade, ConstPtr<Effect> Extra, Real32 Opacity, Real32 Scale)
-    {
-        const Bool Gradient = Extra && Extra->Fill.From.IsOpaque() && Extra->Fill.To.IsOpaque();
-        const Bool Solid    = Shade && Shade->Background.IsOpaque();
-
-        if (Opacity < 1.0f || !(Gradient || Solid))
-        {
-            return Rect();
-        }
-
-        // The rounded corners and a pixel of fading edge are left to show the halo, so only what is solid is cut.
-        const Real32 Edge = 1.0f / Max(Scale, 1.0e-6f);
-        const Real32 Side = (Shade ? Max(Shade->Radius, 0.0f) : 0.0f) + Edge;
-        const Rect   Hole = Frame.Contract(Side, Edge);
-
-        return Hole.IsEmpty() ? Rect() : Hole;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
