@@ -815,7 +815,7 @@ namespace ZyPlugin::UI
     {
         const Ptr<Entry> Data = Target.Get<Entry>();
 
-        Data->Caret = static_cast<UInt32>(Min<UInt>(Offset, GetText(Target).GetSize()));
+        Data->Caret = static_cast<UInt32>(Unicode::Snap(GetText(Target), Offset));
         Data->Goal  = -1.0f;
 
         if (!Extend)
