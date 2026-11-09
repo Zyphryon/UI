@@ -74,11 +74,8 @@ namespace ZyPlugin::UI
         /// The markup making a row's content from a template, or `nullptr` to show the record's `Name`.
         Ptr<Markup>       Reader   = nullptr;
 
-        /// The name of the template a row's content is made from.
-        Str               Template;
-
-        /// The node a row's content is made from when written in place, or empty to use the template's name.
-        Unique<JsonValue> Node;
+        /// The shape a row's content is made from, a template's name or a node written in place, or empty for none.
+        Unique<JsonValue> Shape;
 
         /// The path of the top list, from the root, as `Scene`.
         Str               Base;
@@ -196,7 +193,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree view whose rows are filled.
         /// \param Reader The markup making the node, which must outlive the tree view.
-        /// \param Node   The node each row's content is made from, copied by the tree view.
+        /// \param Node   The node each row's content is made from, or the name of a template, copied by the tree view.
         static void SetTemplate(Element Owner, Ref<Markup> Reader, ConstRef<JsonValue> Node);
 
         /// \brief Opens or closes the branch of a record, without reporting it.

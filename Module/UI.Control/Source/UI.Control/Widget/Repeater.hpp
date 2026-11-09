@@ -69,11 +69,8 @@ namespace ZyPlugin::UI
         /// The markup filling a row from a template, or `nullptr` for none.
         Ptr<Markup>        Reader;
 
-        /// The name of the template a row is filled from.
-        Str                Template;
-
-        /// The node a row is filled from when written in place, or empty for the template; held apart, never moved.
-        Unique<JsonValue>  Node;
+        /// The shape a row is filled from, a template's name or a node written in place, held apart and never moved.
+        Unique<JsonValue>  Shape;
 
         /// The path of the list as text, the scope it was read in included, as `Party[2].Bag`.
         Str                Base;
@@ -189,7 +186,7 @@ namespace ZyPlugin::UI
         ///
         /// \param List   The item list whose rows are filled.
         /// \param Reader The markup making the node, which must outlive the list.
-        /// \param Node   The node each row is made from, copied by the list.
+        /// \param Node   The node each row is made from, or the name of a template, copied by the list.
         static void SetTemplate(Element List, Ref<Markup> Reader, ConstRef<JsonValue> Node);
 
         /// \brief Changes the height of every row.
@@ -351,14 +348,19 @@ namespace ZyPlugin::UI
         /// \return The path from the root, as `Party[2].Inventory`.
         static Str Resolve(Text Source, Text Scope);
 
+        /// \brief Copies the shape rows or cells are made from, logging one that is no shape.
+        ///
+        /// \param Shape The shape as a layout gives it, a template's name or a node written in place.
+        /// \return The copy, or empty when the value is neither, so nothing is made from it.
+        static Unique<JsonValue> Mold(ConstRef<JsonValue> Shape);
+
         /// \brief Makes a row's content from a node written in place or a template, its bindings reading one record.
         ///
-        /// \param Reader   The markup making the content.
-        /// \param Parent   The element the content is made in.
-        /// \param Scope    The path of the record from the root, as `Inventory[3]`.
-        /// \param Node     The node the content is made from, or `nullptr` to make it from the template.
-        /// \param Template The name of the template the content is made from when no node is given.
-        static void Stamp(Ref<Markup> Reader, Element Parent, Text Scope, ConstPtr<JsonValue> Node, Text Template);
+        /// \param Reader The markup making the content.
+        /// \param Parent The element the content is made in.
+        /// \param Scope  The path of the record from the root, as `Inventory[3]`.
+        /// \param Shape  The shape the content is made from, a template's name or a node written in place.
+        static void Stamp(Ref<Markup> Reader, Element Parent, Text Scope, ConstRef<JsonValue> Shape);
 
     private:
 

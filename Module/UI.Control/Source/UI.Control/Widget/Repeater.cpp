@@ -74,17 +74,9 @@ namespace ZyPlugin::UI
         SetMultiple(Result, Markup::GetBool(Node, "Multiple"));
         BuildRows(Reader, Result, Node);
 
-        if (const ConstPtr<JsonValue> Shape = Markup::GetField(Node, "ItemTemplate"); Shape && Shape->IsString())
-        {
-            SetTemplate(Result, Reader, Shape->GetString());
-        }
-        else if (Shape && Shape->IsObject())
+        if (const ConstPtr<JsonValue> Shape = Markup::GetField(Node, "ItemTemplate"))
         {
             SetTemplate(Result, Reader, * Shape);
-        }
-        else if (Shape)
-        {
-            LOG_W("An item list's 'ItemTemplate' must name a template or be a node, so its rows are left empty");
         }
 
         // The records are one list in braces, read from the scope the list stands in.
@@ -150,7 +142,7 @@ namespace ZyPlugin::UI
         {
             Own->Make   = Move(Make);
             Own->Reader = nullptr;
-            Own->Node   = Unique<JsonValue>();
+            Own->Shape  = Unique<JsonValue>();
             Reset(List);
         }
     }
@@ -160,14 +152,7 @@ namespace ZyPlugin::UI
 
     void Repeater::SetTemplate(Element List, Ref<Markup> Reader, Text Template)
     {
-        if (const Ptr<Items> Own = List.Get<Items>())
-        {
-            Own->Make     = Maker();
-            Own->Reader   = AddressOf(Reader);
-            Own->Template = Template;
-            Own->Node     = Unique<JsonValue>();
-            Reset(List);
-        }
+        SetTemplate(List, Reader, JsonValue(Template));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -179,8 +164,7 @@ namespace ZyPlugin::UI
         {
             Own->Make   = Maker();
             Own->Reader = AddressOf(Reader);
-            Own->Template.Clear();
-            Own->Node   = Unique<JsonValue>::Create(Node);
+            Own->Shape  = Mold(Node);
             Reset(List);
         }
     }
@@ -625,17 +609,31 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Repeater::Stamp(Ref<Markup> Reader, Element Parent, Text Scope, ConstPtr<JsonValue> Node, Text Template)
+    Unique<JsonValue> Repeater::Mold(ConstRef<JsonValue> Shape)
+    {
+        if (Shape.IsObject() || (Shape.IsString() && !Shape.GetString().IsEmpty()))
+        {
+            return Unique<JsonValue>::Create(Shape);
+        }
+
+        LOG_W("A template must be named or be a node written in place, so nothing is made from it");
+        return Unique<JsonValue>();
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Repeater::Stamp(Ref<Markup> Reader, Element Parent, Text Scope, ConstRef<JsonValue> Shape)
     {
         Reader.PushScope(Str::Print<"/{0}">(Scope));
 
-        if (Node)
+        if (Shape.IsString())
         {
-            Reader.Build(Parent, * Node);
+            Reader.Spawn(Parent, Shape.GetString());
         }
         else
         {
-            Reader.Spawn(Parent, Template);
+            Reader.Build(Parent, Shape);
         }
         Reader.PopScope();
     }
@@ -1220,9 +1218,8 @@ namespace ZyPlugin::UI
         const Ptr<Items>          Own      = List.Get<Items>();
         const Maker               Code     = Own->Make;
         const Ptr<Markup>         Reader   = Own->Reader;
-        const Str                 Template = Own->Template;
         const Str                 Base     = Own->Base;
-        const ConstPtr<JsonValue> Node     = Own->Node ? Own->Node.Grab() : nullptr;
+        const ConstPtr<JsonValue> Node     = Own->Shape ? Own->Shape.Grab() : nullptr;
         const Bool                Named    = Own->Named;
         const Str                 Scope    = GetScope(List, Record);
         const Sequence<RowState>  Marks    = Own->RowStates;
@@ -1231,9 +1228,9 @@ namespace ZyPlugin::UI
         {
             Code(Row, Scope);
         }
-        else if (Reader)
+        else if (Reader && Node)
         {
-            Stamp(* Reader, Row, Scope, Node, Template);
+            Stamp(* Reader, Row, Scope, * Node);
         }
 
         // Bound on the row itself, so they follow it to another record as its content does.

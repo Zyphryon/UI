@@ -522,7 +522,6 @@ namespace ZyPlugin::UI
         const Ptr<Markup> Reader = Sheet->Reader;
         const Str         Style  = Widget::Part(Sheet->Style, "Cell");
         const Str         Plain  = Widget::Part(Style, "Label");
-        const Str         Rooted = Str::Print<"/{0}">(Scope);
         const UInt32      Count  = static_cast<UInt32>(Sheet->Columns.GetSize());
 
         for (UInt32 Index = 0; Index < Count; ++Index)
@@ -532,7 +531,7 @@ namespace ZyPlugin::UI
             Ref<Column>               Entry    = Own->Columns[Index];
             const Real32              Width    = Index < Own->Widths.GetSize() ? Own->Widths[Index] : Entry.Minimum;
             const ConstPtr<JsonValue> Node     = Entry.Node ? Entry.Node.Grab() : nullptr;
-            const Str                 Template = Entry.Template;
+            const JsonValue           Named(Text(Entry.Template));
             const Str                 Key      = Entry.Key;
             const Align               Side     = Entry.Alignment;
 
@@ -544,19 +543,9 @@ namespace ZyPlugin::UI
             Fixed.Shrink  = 0.0f;
             Fixed.Content = Justify::Center;
 
-            if (Reader && (Node || !Template.IsEmpty()))
+            if (Reader && (Node || !Named.GetString().IsEmpty()))
             {
-                Reader->PushScope(Rooted);
-
-                if (Node)
-                {
-                    Reader->Build(Cell, * Node);
-                }
-                else
-                {
-                    Reader->Spawn(Cell, Template);
-                }
-                Reader->PopScope();
+                Repeater::Stamp(* Reader, Cell, Scope, Node ? * Node : Named);
                 continue;
             }
 
@@ -591,13 +580,9 @@ namespace ZyPlugin::UI
         {
             Entry.Template = Cell->GetString();
         }
-        else if (Cell && Cell->IsObject())
-        {
-            Entry.Node = Unique<JsonValue>::Create(* Cell);
-        }
         else if (Cell)
         {
-            LOG_W("A grid column's 'Cell' must name a template or be a node, so it shows its value");
+            Entry.Node = Repeater::Mold(* Cell);
         }
 
         AddColumn(Owner, Move(Entry), AddressOf(Reader));

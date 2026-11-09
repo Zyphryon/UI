@@ -79,17 +79,9 @@ namespace ZyPlugin::UI
         SetUnfolded(Result, Markup::GetBool(Node, "Unfolded"));
         SetDraggable(Result, Markup::GetText(Node, "DragRows"), Markup::GetBool(Node, "DropBetween"));
 
-        if (const ConstPtr<JsonValue> Shape = Markup::GetField(Node, "ItemTemplate"); Shape && Shape->IsString())
-        {
-            SetTemplate(Result, Reader, Shape->GetString());
-        }
-        else if (Shape && Shape->IsObject())
+        if (const ConstPtr<JsonValue> Shape = Markup::GetField(Node, "ItemTemplate"))
         {
             SetTemplate(Result, Reader, * Shape);
-        }
-        else if (Shape)
-        {
-            LOG_W("A tree view's 'ItemTemplate' must name a template or be a node, so its rows show their names");
         }
 
         // The records are one list in braces, read from the scope the tree view stands in.
@@ -148,13 +140,7 @@ namespace ZyPlugin::UI
 
     void Outline::SetTemplate(Element Owner, Ref<Markup> Reader, Text Template)
     {
-        if (const Ptr<Hierarchy> Own = Owner.Get<Hierarchy>())
-        {
-            Own->Reader   = AddressOf(Reader);
-            Own->Template = Template;
-            Own->Node     = Unique<JsonValue>();
-            Repeater::SetTemplate(GetList(Owner), Maker::Create<&Outline::OnMake>());
-        }
+        SetTemplate(Owner, Reader, JsonValue(Template));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -165,8 +151,7 @@ namespace ZyPlugin::UI
         if (const Ptr<Hierarchy> Own = Owner.Get<Hierarchy>())
         {
             Own->Reader = AddressOf(Reader);
-            Own->Template.Clear();
-            Own->Node   = Unique<JsonValue>::Create(Node);
+            Own->Shape  = Repeater::Mold(Node);
             Repeater::SetTemplate(GetList(Owner), Maker::Create<&Outline::OnMake>());
         }
     }
@@ -644,8 +629,7 @@ namespace ZyPlugin::UI
         // Copied, since the content may hold a list of its own and move this facet.
         const Ptr<Hierarchy>      Own      = Root.Get<Hierarchy>();
         const Ptr<Markup>         Reader   = Own->Reader;
-        const ConstPtr<JsonValue> Node     = Own->Node ? Own->Node.Grab() : nullptr;
-        const Str                 Template = Own->Template;
+        const ConstPtr<JsonValue> Node     = Own->Shape ? Own->Shape.Grab() : nullptr;
         const Str                 Style    = Own->Style;
         const Str                 Carry    = Own->Carry;
         const Bool                Between  = Own->Between;
@@ -668,9 +652,9 @@ namespace ZyPlugin::UI
         Fill.Grow  = 1.0f;
         Fill.Items = Align::Center;
 
-        if (Reader && (Node || !Template.IsEmpty()))
+        if (Reader && Node)
         {
-            Repeater::Stamp(* Reader, Holder, Scope, Node, Template);
+            Repeater::Stamp(* Reader, Holder, Scope, * Node);
         }
         else
         {
