@@ -166,9 +166,16 @@ namespace ZyPlugin::UI
         ///
         /// \param Output The receiver of the values the skin gives, the rest kept.
         /// \param Values The skin giving the values.
-        static void Lay(Ref<Appearance> Output, ConstRef<Skin> Values);
+        /// \return The values the skin changed, those it gave as they already stood left out.
+        static Skin::Field Lay(Ref<Appearance> Output, ConstRef<Skin> Values);
 
     private:
+
+        /// \brief Hands every value that moves to an action, as its bit and the members holding it.
+        ///
+        /// \param Action The callable, taking the bit of each value and its member of an appearance and of a skin.
+        template<typename Callable>
+        static void Fields(AnyRef<Callable> Action);
 
         /// \brief Mixes two colours channel by channel, keeping the hue of the visible end where the other is clear.
         ///
@@ -193,6 +200,15 @@ namespace ZyPlugin::UI
         /// \param Share The share of the way from one to the other.
         /// \return The mixed gradient.
         static Gradient Mix(ConstRef<Gradient> From, ConstRef<Gradient> To, Real32 Share);
+
+        /// \brief Mixes two values of any other kind, as two widths or two offsets.
+        ///
+        /// \param From  The value at nought.
+        /// \param To    The value at one.
+        /// \param Share The share of the way from one to the other.
+        /// \return The mixed value.
+        template<typename Type>
+        static Type Mix(ConstRef<Type> From, ConstRef<Type> To, Real32 Share);
 
         /// \brief Mixes some of the values that move from one set toward another.
         ///

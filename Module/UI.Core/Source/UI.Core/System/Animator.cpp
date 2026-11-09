@@ -407,82 +407,49 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Animator::Lay(Ref<Appearance> Output, ConstRef<Skin> Values)
+    Skin::Field Animator::Lay(Ref<Appearance> Output, ConstRef<Skin> Values)
     {
         using Field = Skin::Field;
 
-        if (Values.Has(Field::Background))
+        Field Changed = Field::None;
+
+        Fields([&Output, &Values, &Changed]<typename Type>(Field Bit, Type Appearance::* Shown, Type Skin::* Given)
         {
-            Output.Background  = Values.Background;
-        }
-        if (Values.Has(Field::Border))
-        {
-            Output.Border      = Values.Border;
-        }
-        if (Values.Has(Field::BorderWidth))
-        {
-            Output.BorderWidth = Values.BorderWidth;
-        }
-        if (Values.Has(Field::Radius))
-        {
-            Output.Radius      = Values.Radius;
-        }
-        if (Values.Has(Field::Opacity))
-        {
-            Output.Opacity     = Values.Opacity;
-        }
-        if (Values.Has(Field::Tint))
-        {
-            Output.Tint        = Values.Tint;
-        }
-        if (Values.Has(Field::Stroke))
-        {
-            Output.Stroke      = Values.Stroke;
-        }
-        if (Values.Has(Field::StrokeWidth))
-        {
-            Output.StrokeWidth = Values.StrokeWidth;
-        }
-        if (Values.Has(Field::Fill))
-        {
-            Output.Fill        = Values.Fill;
-        }
-        if (Values.Has(Field::Thumb))
-        {
-            Output.Thumb       = Values.Thumb;
-        }
-        if (Values.Has(Field::Gradient))
-        {
-            Output.Gradient    = Values.Gradient;
-        }
-        if (Values.Has(Field::Shadow))
-        {
-            Output.Shadow      = Values.Shadow;
-        }
-        if (Values.Has(Field::Glow))
-        {
-            Output.Glow        = Values.Glow;
-        }
-        if (Values.Has(Field::InnerGlow))
-        {
-            Output.InnerGlow   = Values.InnerGlow;
-        }
-        if (Values.Has(Field::Scale))
-        {
-            Output.Scale       = Values.Scale;
-        }
-        if (Values.Has(Field::Rotate))
-        {
-            Output.Rotate      = Values.Rotate;
-        }
-        if (Values.Has(Field::Translate))
-        {
-            Output.Translate   = Values.Translate;
-        }
-        if (Values.Has(Field::ImageTint))
-        {
-            Output.ImageTint   = Values.ImageTint;
-        }
+            if (Values.Has(Bit) && Differs(Output.*Shown, Values.*Given))
+            {
+                Output.*Shown = Values.*Given;
+                Changed      |= Bit;
+            }
+        });
+        return Changed;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    template<typename Callable>
+    void Animator::Fields(AnyRef<Callable> Action)
+    {
+        using Field = Skin::Field;
+
+        Action(Field::Background,  &Appearance::Background,  &Skin::Background);
+        Action(Field::Border,      &Appearance::Border,      &Skin::Border);
+        Action(Field::BorderWidth, &Appearance::BorderWidth, &Skin::BorderWidth);
+        Action(Field::Radius,      &Appearance::Radius,      &Skin::Radius);
+        Action(Field::Opacity,     &Appearance::Opacity,     &Skin::Opacity);
+        Action(Field::Tint,        &Appearance::Tint,        &Skin::Tint);
+        Action(Field::Stroke,      &Appearance::Stroke,      &Skin::Stroke);
+        Action(Field::StrokeWidth, &Appearance::StrokeWidth, &Skin::StrokeWidth);
+        Action(Field::Fill,        &Appearance::Fill,        &Skin::Fill);
+        Action(Field::Thumb,       &Appearance::Thumb,       &Skin::Thumb);
+        Action(Field::Gradient,    &Appearance::Gradient,    &Skin::Gradient);
+        Action(Field::Shadow,      &Appearance::Shadow,      &Skin::Shadow);
+        Action(Field::Glow,        &Appearance::Glow,        &Skin::Glow);
+        Action(Field::InnerGlow,   &Appearance::InnerGlow,   &Skin::InnerGlow);
+        Action(Field::Scale,       &Appearance::Scale,       &Skin::Scale);
+        Action(Field::Rotate,      &Appearance::Rotate,      &Skin::Rotate);
+        Action(Field::Translate,   &Appearance::Translate,   &Skin::Translate);
+        Action(Field::ImageTint,   &Appearance::ImageTint,   &Skin::ImageTint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -525,6 +492,15 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    template<typename Type>
+    Type Animator::Mix(ConstRef<Type> From, ConstRef<Type> To, Real32 Share)
+    {
+        return ::Lerp(From, To, Share);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     void Animator::Blend(Ref<Appearance>      Output,
                          ConstRef<Appearance> From,
                          ConstRef<Appearance> To,
@@ -533,78 +509,13 @@ namespace ZyPlugin::UI
     {
         using Field = Skin::Field;
 
-        if (HasBit(Mask, Field::Background))
+        Fields([&Output, &From, &To, Share, Mask]<typename Type>(Field Bit, Type Appearance::* Shown, Type Skin::*)
         {
-            Output.Background  = Mix(From.Background, To.Background, Share);
-        }
-        if (HasBit(Mask, Field::Border))
-        {
-            Output.Border      = Mix(From.Border, To.Border, Share);
-        }
-        if (HasBit(Mask, Field::BorderWidth))
-        {
-            Output.BorderWidth = ::Lerp(From.BorderWidth, To.BorderWidth, Share);
-        }
-        if (HasBit(Mask, Field::Radius))
-        {
-            Output.Radius      = ::Lerp(From.Radius, To.Radius, Share);
-        }
-        if (HasBit(Mask, Field::Opacity))
-        {
-            Output.Opacity     = ::Lerp(From.Opacity, To.Opacity, Share);
-        }
-        if (HasBit(Mask, Field::Tint))
-        {
-            Output.Tint        = Mix(From.Tint, To.Tint, Share);
-        }
-        if (HasBit(Mask, Field::Stroke))
-        {
-            Output.Stroke      = Mix(From.Stroke, To.Stroke, Share);
-        }
-        if (HasBit(Mask, Field::StrokeWidth))
-        {
-            Output.StrokeWidth = ::Lerp(From.StrokeWidth, To.StrokeWidth, Share);
-        }
-        if (HasBit(Mask, Field::Fill))
-        {
-            Output.Fill        = Mix(From.Fill, To.Fill, Share);
-        }
-        if (HasBit(Mask, Field::Thumb))
-        {
-            Output.Thumb       = Mix(From.Thumb, To.Thumb, Share);
-        }
-        if (HasBit(Mask, Field::Gradient))
-        {
-            Output.Gradient    = Mix(From.Gradient, To.Gradient, Share);
-        }
-        if (HasBit(Mask, Field::Shadow))
-        {
-            Output.Shadow      = Mix(From.Shadow, To.Shadow, Share);
-        }
-        if (HasBit(Mask, Field::Glow))
-        {
-            Output.Glow        = Mix(From.Glow, To.Glow, Share);
-        }
-        if (HasBit(Mask, Field::InnerGlow))
-        {
-            Output.InnerGlow   = Mix(From.InnerGlow, To.InnerGlow, Share);
-        }
-        if (HasBit(Mask, Field::Scale))
-        {
-            Output.Scale       = ::Lerp(From.Scale, To.Scale, Share);
-        }
-        if (HasBit(Mask, Field::Rotate))
-        {
-            Output.Rotate      = ::Lerp(From.Rotate, To.Rotate, Share);
-        }
-        if (HasBit(Mask, Field::Translate))
-        {
-            Output.Translate   = ::Lerp(From.Translate, To.Translate, Share);
-        }
-        if (HasBit(Mask, Field::ImageTint))
-        {
-            Output.ImageTint   = Mix(From.ImageTint, To.ImageTint, Share);
-        }
+            if (HasBit(Mask, Bit))
+            {
+                Output.*Shown = Mix(From.*Shown, To.*Shown, Share);
+            }
+        });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -626,24 +537,11 @@ namespace ZyPlugin::UI
         using Field = Skin::Field;
 
         Field Result = Field::None;
-        Result |= Differs(From.Background, To.Background)   ? Field::Background  : Field::None;
-        Result |= Differs(From.Border, To.Border)           ? Field::Border      : Field::None;
-        Result |= Differs(From.BorderWidth, To.BorderWidth) ? Field::BorderWidth : Field::None;
-        Result |= Differs(From.Radius, To.Radius)           ? Field::Radius      : Field::None;
-        Result |= Differs(From.Opacity, To.Opacity)         ? Field::Opacity     : Field::None;
-        Result |= Differs(From.Tint, To.Tint)               ? Field::Tint        : Field::None;
-        Result |= Differs(From.Stroke, To.Stroke)           ? Field::Stroke      : Field::None;
-        Result |= Differs(From.StrokeWidth, To.StrokeWidth) ? Field::StrokeWidth : Field::None;
-        Result |= Differs(From.Fill, To.Fill)               ? Field::Fill        : Field::None;
-        Result |= Differs(From.Thumb, To.Thumb)             ? Field::Thumb       : Field::None;
-        Result |= Differs(From.Gradient, To.Gradient)       ? Field::Gradient    : Field::None;
-        Result |= Differs(From.Shadow, To.Shadow)           ? Field::Shadow      : Field::None;
-        Result |= Differs(From.Glow, To.Glow)               ? Field::Glow        : Field::None;
-        Result |= Differs(From.InnerGlow, To.InnerGlow)     ? Field::InnerGlow   : Field::None;
-        Result |= Differs(From.Scale, To.Scale)             ? Field::Scale       : Field::None;
-        Result |= Differs(From.Rotate, To.Rotate)           ? Field::Rotate      : Field::None;
-        Result |= Differs(From.Translate, To.Translate)     ? Field::Translate   : Field::None;
-        Result |= Differs(From.ImageTint, To.ImageTint)     ? Field::ImageTint   : Field::None;
+
+        Fields([&From, &To, &Result]<typename Type>(Field Bit, Type Appearance::* Shown, Type Skin::*)
+        {
+            Result |= Differs(From.*Shown, To.*Shown) ? Bit : Field::None;
+        });
         return Result;
     }
 
