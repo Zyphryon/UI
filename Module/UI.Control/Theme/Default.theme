@@ -6,39 +6,10 @@
     "Ink": "#D9DBE6",
     "Gold": "#F0D98F",
     "Field": "#1C2129",
-    "Edge": "#4D5466",
     "Accent": "#2E6BDE",
     "Raised": "#2E3645"
   },
   "Animations": {
-    "FadeIn": {
-      "Duration": 0.15,
-      "Easing": "OutQuad",
-      "Keys": [
-        {
-          "At": 0,
-          "Opacity": 0
-        },
-        {
-          "At": 1,
-          "Opacity": 1
-        }
-      ]
-    },
-    "FadeOut": {
-      "Duration": 0.12,
-      "Easing": "InQuad",
-      "Keys": [
-        {
-          "At": 0,
-          "Opacity": 1
-        },
-        {
-          "At": 1,
-          "Opacity": 0
-        }
-      ]
-    },
     "Drop": {
       "Duration": 0.16,
       "Easing": "OutCubic",
@@ -310,19 +281,7 @@
       "Size": 14
     },
     "Repeater": {
-      "Background": "#0F121A",
-      "Radius": 6,
-      "Padding": 4,
-      "Gap": 2,
-      "Thumb": "Gold",
-      "Border": "#00000000",
-      "BorderWidth": 1,
-      "When": {
-        "Focus": {
-          "Border": "Gold",
-          "BorderWidth": 1
-        }
-      }
+      "Base": "Listbox"
     },
     "Repeater.Item": {
       "Base": "ListItem"
@@ -413,7 +372,6 @@
     "Progress.Label": {
       "Base": "Label",
       "Size": 12,
-      "Tint": "Ink",
       "Alignment": "Center"
     },
     "Tabs": {},
@@ -574,11 +532,7 @@
       "Base": "Button.Label"
     },
     "Spinner.Increase": {
-      "Base": "Button",
-      "Padding": [
-        8,
-        2
-      ]
+      "Base": "Spinner.Decrease"
     },
     "Spinner.Increase.Label": {
       "Base": "Button.Label"
@@ -790,19 +744,11 @@
       "BorderWidth": 1
     },
     "Menu.Check.Mark": {
-      "Background": "Gold",
+      "Base": "Checkbox.Mark",
       "Radius": 1,
-      "Opacity": 0,
-      "Scale": 0.6,
       "Transition": {
         "Duration": 0.12,
         "Easing": "OutBack"
-      },
-      "When": {
-        "Checked": {
-          "Opacity": 1,
-          "Scale": 1
-        }
       }
     },
     "Menu.Heading": {
@@ -858,8 +804,7 @@
       "Gap": 12
     },
     "Dropdown": {
-      "Base": "Button",
-      "Gap": 8
+      "Base": "Combobox"
     },
     "Dropdown.Label": {
       "Base": "Button.Label"
@@ -1106,11 +1051,7 @@
       "Size": 14
     },
     "Outline": {
-      "Background": "#0F121A",
-      "Radius": 6,
-      "Border": "Edge",
-      "BorderWidth": 1,
-      "Padding": 1
+      "Base": "Grid"
     },
     "Outline.List": {
       "Base": "Repeater",
