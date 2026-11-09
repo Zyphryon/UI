@@ -26,7 +26,6 @@
 #include "UI.Core/Paint/Canvas.hpp"
 #include "UI.Core/Pane.hpp"
 #include "UI.Core/Text/Block.hpp"
-#include "UI.Core/Text/Face.hpp"
 #include "UI.Core/Text/Ruler.hpp"
 #include "UI.Core/Tree.hpp"
 
@@ -678,7 +677,7 @@ namespace ZyPlugin::UI
 
         if (Text->Font && Text->Font->HasCompleted())
         {
-            Write(Canvas, * Text, mLayout.FaceOf(Text->Font), Element.Inner, Element.Opacity);
+            Write(Canvas, * Text, Element.Inner, Element.Opacity);
         }
     }
 
@@ -815,12 +814,13 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Painter::Typeset(Ref<Caption> Text, ConstRef<Face> Source)
+    void Painter::Typeset(Ref<Caption> Text)
     {
         Text.Glyphs.Clear();
         Text.Runs.Clear();
 
-        const ZyBase::Text Lines = Text.Lines;
+        ConstRef<ZyRender::Font> Source = * Text.Font;
+        const ZyBase::Text       Lines  = Text.Lines;
 
         // A glyph per byte at most, so the placements are made room for once.
         Text.Glyphs.Reserve(Lines.GetSize());
@@ -873,13 +873,13 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Painter::Write(Ref<Canvas> Canvas, Ref<Caption> Text, ConstRef<Face> Source, Rect Inner, Real32 Opacity)
+    void Painter::Write(Ref<Canvas> Canvas, Ref<Caption> Text, Rect Inner, Real32 Opacity)
     {
         ConstRef<ZyRender::Font> Font = * Text.Font;
 
         if (!Text.Shaped)
         {
-            Typeset(Text, Source);
+            Typeset(Text);
         }
 
         const Real32 Leading = Font.GetLineHeight(Text.Size);

@@ -22,7 +22,6 @@
 #include "UI.Core/Facet/Visual/Picture.hpp"
 #include "UI.Core/Paint/Canvas.hpp"
 #include "UI.Core/Pane.hpp"
-#include "UI.Core/Text/Face.hpp"
 #include "UI.Core/Tree.hpp"
 #include "UI.Core/Types.hpp"
 
@@ -80,7 +79,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner    The tree whose panes it draws, which must outlive it.
         /// \param Animator The animator that tells whether a hidden element still plays its way out.
-        /// \param Layout   The layout, whose tables place the glyphs of text.
+        /// \param Layout   The layout, which lays out the text a box held back as it comes into view.
         Painter(Ref<Tree> Owner, Ref<Animator> Animator, Ref<Layout> Layout);
 
         /// \brief Draws every row of a pane whose reach the clip does not miss.
@@ -348,18 +347,16 @@ namespace ZyPlugin::UI
 
         /// \brief Places the glyphs of every laid out line of a caption, once, for every paint after to draw from.
         ///
-        /// \param Text   The caption, whose typeface must have finished loading.
-        /// \param Source The tables of its typeface, which place a glyph as the typeface's own layout does.
-        static void Typeset(Ref<Caption> Text, ConstRef<Face> Source);
+        /// \param Text The caption, whose typeface must have finished loading.
+        static void Typeset(Ref<Caption> Text);
 
         /// \brief Draws the text of a caption line by line, placing its glyphs first when its lines or font changed.
         ///
         /// \param Canvas  The canvas to draw through.
         /// \param Text    The caption, whose typeface must have finished loading.
-        /// \param Source  The tables of its typeface.
         /// \param Inner   The box inside the padding of the element, in pixels.
         /// \param Opacity The opacity of the element, together with everything holding it.
-        static void Write(Ref<Canvas> Canvas, Ref<Caption> Text, ConstRef<Face> Source, Rect Inner, Real32 Opacity);
+        static void Write(Ref<Canvas> Canvas, Ref<Caption> Text, Rect Inner, Real32 Opacity);
 
         /// \brief Checks whether a change to the reach of children of a row can change the row's own reach.
         ///

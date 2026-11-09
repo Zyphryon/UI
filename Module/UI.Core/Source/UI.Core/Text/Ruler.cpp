@@ -12,7 +12,6 @@
 
 #include "Ruler.hpp"
 #include "Block.hpp"
-#include "Face.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -23,15 +22,10 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    ZY_INLINE Real32 Ruler::Advance(ConstRef<Face> Source, UInt32 Codepoint)
+    ZY_INLINE Real32 Ruler::Advance(ConstRef<ZyRender::Font> Source, UInt32 Codepoint)
     {
-        if (Codepoint < Face::kCovered)
-        {
-            return Source.Advances[Codepoint];
-        }
-
-        const ConstPtr<ZyRender::Font::Glyph> Glyph = Source.Font->GetGlyph(Codepoint);
-        return Glyph ? Glyph->Advance : Face::kNone;
+        const ConstPtr<ZyRender::Font::Glyph> Glyph = Source.GetGlyph(Codepoint);
+        return Glyph ? Glyph->Advance : kNone;
     }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -52,7 +46,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Real32 Ruler::Measure(ConstRef<Face> Source, Text Line, Real32 Size)
+    Real32 Ruler::Measure(ConstRef<ZyRender::Font> Source, Text Line, Real32 Size)
     {
         Real32 Pen      = 0.0f;
         UInt32 Previous = 0;
@@ -82,7 +76,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    UInt Ruler::Locate(ConstRef<Face> Source, Text Line, Real32 Size, Real32 Distance)
+    UInt Ruler::Locate(ConstRef<ZyRender::Font> Source, Text Line, Real32 Size, Real32 Distance)
     {
         const Real32 Goal     = Size > 0.0f ? Distance / Size : 0.0f;
         Real32       Pen      = 0.0f;
@@ -119,13 +113,13 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Vector2 Ruler::Wrap(ConstRef<Face>        Source,
-                        Text                  Content,
-                        Real32                Size,
-                        Real32                Width,
-                        Ref<Str>              Lines,
-                        Ref<Sequence<Real32>> Widths,
-                        Ref<Real32>           Natural)
+    Vector2 Ruler::Wrap(ConstRef<ZyRender::Font> Source,
+                        Text                     Content,
+                        Real32                   Size,
+                        Real32                   Width,
+                        Ref<Str>                 Lines,
+                        Ref<Sequence<Real32>>    Widths,
+                        Ref<Real32>              Natural)
     {
         // The walk is done in font units, as the font's own layout is, and only its results are scaled.
         const Real32 Limit = (Width > 0.0f && Size > 0.0f) ? Width / Size : kMaximum<Real32>;
@@ -147,17 +141,17 @@ namespace ZyPlugin::UI
         {
             Widest = Max(Widest, Line);
         }
-        return Vector2(Widest, Source.Font->GetLineHeight(Size) * Widths.GetSize());
+        return Vector2(Widest, Source.GetLineHeight(Size) * Widths.GetSize());
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Ruler::Ellipsize(ConstRef<Face>        Source,
-                          Real32                Size,
-                          Real32                Width,
-                          Ref<Str>              Lines,
-                          Ref<Sequence<Real32>> Widths)
+    Bool Ruler::Ellipsize(ConstRef<ZyRender::Font> Source,
+                          Real32                   Size,
+                          Real32                   Width,
+                          Ref<Str>                 Lines,
+                          Ref<Sequence<Real32>>    Widths)
     {
         if (Size <= 0.0f || Width <= 0.0f)
         {
@@ -165,7 +159,7 @@ namespace ZyPlugin::UI
         }
 
         // The ellipsis is one glyph where the typeface draws it, never the fallback glyph standing in for it.
-        const Text   Mark  = Source.Font->GetGlyph(0x2026, 0) ? Text("\xE2\x80\xA6") : Text("...");
+        const Text   Mark  = Source.GetGlyph(0x2026, 0) ? Text("\xE2\x80\xA6") : Text("...");
         const Real32 Tail  = Measure(Source, Mark, 1.0f);
         const Real32 Limit = Width / Size;
 
@@ -350,13 +344,13 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     template<Bool Copied>
-    Bool Ruler::Walk(ConstRef<Face>        Source,
-                     Text                  Content,
-                     Real32                Size,
-                     Real32                Limit,
-                     Ref<Str>              Lines,
-                     Ref<Sequence<Real32>> Widths,
-                     Ref<Real32>           Natural)
+    Bool Ruler::Walk(ConstRef<ZyRender::Font> Source,
+                     Text                     Content,
+                     Real32                   Size,
+                     Real32                   Limit,
+                     Ref<Str>                 Lines,
+                     Ref<Sequence<Real32>>    Widths,
+                     Ref<Real32>              Natural)
     {
         Real32 Pen      = 0.0f;
         Real32 Reach    = 0.0f;
@@ -372,30 +366,15 @@ namespace ZyPlugin::UI
 
         for (UInt Cursor = 0; Cursor < Content.GetSize();)
         {
-            const UInt  At   = Cursor;
-            const UInt8 Lead = static_cast<UInt8>(Content[Cursor]);
+            const UInt   At        = Cursor;
+            const UInt32 Codepoint = Unicode::Decode(Content, Cursor);
+            const Real32 Step      = Advance(Source, Codepoint);
 
-            // A byte below the tables' end is a codepoint of its own, read straight from them.
-            UInt32 Codepoint;
-            Real32 Step;
-
-            if (Lead < Face::kCovered)
+            if constexpr (Copied)
             {
-                Codepoint = Lead;
-                Step      = Source.Advances[Lead];
-                ++Cursor;
-            }
-            else
-            {
-                Codepoint = Unicode::Decode(Content, Cursor);
-                Step      = Advance(Source, Codepoint);
-
-                if constexpr (Copied)
+                if (Codepoint == 0 || Cursor - At != Unicode::GetLength(Codepoint))
                 {
-                    if (Codepoint == 0 || Cursor - At != Unicode::GetLength(Codepoint))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
 
@@ -415,7 +394,7 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            if (Step == Face::kNone)
+            if (Step == kNone)
             {
                 if constexpr (Copied)
                 {

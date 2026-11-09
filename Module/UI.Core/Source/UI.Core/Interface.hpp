@@ -25,7 +25,6 @@
 #include "System/Layout.hpp"
 #include "System/Painter.hpp"
 #include "System/Pointer.hpp"
-#include "Text/Face.hpp"
 #include "Tree.hpp"
 #include "Types.hpp"
 #include <Zyphryon.Input/Service.hpp>
@@ -180,15 +179,6 @@ namespace ZyPlugin::UI
         ///
         /// \return The text, without carriage returns, valid until the clipboard is next written or read.
         Text Paste();
-
-        /// \brief Gets the tables text set in a typeface is measured with, as a text field places its caret by them.
-        ///
-        /// \param Font The typeface, which must have finished loading.
-        /// \return The tables, valid until the next update.
-        ZY_INLINE ConstRef<Face> GetFace(ConstRef<Retainer<ZyRender::Font>> Font)
-        {
-            return mLayout.FaceOf(Font);
-        }
 
         /// \brief Gets the modifier keys held, as the input service attached reads them.
         ///

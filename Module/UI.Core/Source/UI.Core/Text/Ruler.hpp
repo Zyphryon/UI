@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Block.hpp"
-#include "Face.hpp"
 #include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -37,24 +36,24 @@ namespace ZyPlugin::UI
 
         /// \brief Measures how far the pen moves over a line of text, kerning included.
         ///
-        /// \param Source The tables of the typeface.
+        /// \param Source The typeface, which must have finished loading.
         /// \param Line   The line, holding no line break.
         /// \param Size   The size the text is set at, in pixels.
         /// \return The distance, in pixels.
-        static Real32 Measure(ConstRef<Face> Source, Text Line, Real32 Size);
+        static Real32 Measure(ConstRef<ZyRender::Font> Source, Text Line, Real32 Size);
 
         /// \brief Finds the place in a line of text a caret standing nearest a distance along it stands at.
         ///
-        /// \param Source   The tables of the typeface.
+        /// \param Source   The typeface, which must have finished loading.
         /// \param Line     The line, holding no line break.
         /// \param Size     The size the text is set at, in pixels.
         /// \param Distance The distance from the start of the line, in pixels.
         /// \return The byte the caret stands before, the size of the line past its last character.
-        static UInt Locate(ConstRef<Face> Source, Text Line, Real32 Size, Real32 Distance);
+        static UInt Locate(ConstRef<ZyRender::Font> Source, Text Line, Real32 Size, Real32 Distance);
 
         /// \brief Lays text out, breaking it onto a new line at the last space before it would overrun a width.
         ///
-        /// \param Source  The tables of the typeface the text is set in.
+        /// \param Source  The typeface the text is set in.
         /// \param Content The text to lay out.
         /// \param Size    The size the text is set at, in pixels.
         /// \param Width   The width no line may overrun, in pixels, or nought to break only where the text does.
@@ -62,27 +61,27 @@ namespace ZyPlugin::UI
         /// \param Widths  The receiver of the width of each line, in pixels.
         /// \param Natural The receiver of the widest line's reach in font units, or the largest real if a line broke.
         /// \return The width of the widest line and the height of every line together, in pixels.
-        static Vector2 Wrap(ConstRef<Face>        Source,
-                            Text                  Content,
-                            Real32                Size,
-                            Real32                Width,
-                            Ref<Str>              Lines,
-                            Ref<Sequence<Real32>> Widths,
-                            Ref<Real32>           Natural);
+        static Vector2 Wrap(ConstRef<ZyRender::Font> Source,
+                            Text                     Content,
+                            Real32                   Size,
+                            Real32                   Width,
+                            Ref<Str>                 Lines,
+                            Ref<Sequence<Real32>>    Widths,
+                            Ref<Real32>              Natural);
 
         /// \brief Cuts every laid out line reaching past a width short, ending it with an ellipsis or three dots.
         ///
-        /// \param Source The tables of the typeface.
+        /// \param Source The typeface, which must have finished loading.
         /// \param Size   The size the text is set at, in pixels.
         /// \param Width  The width no line may reach past, in pixels.
         /// \param Lines  The laid out lines, each one ending in a line break but the last, cut where they overrun.
         /// \param Widths The width of each line, in pixels, made that of the line as cut.
         /// \return `true` if any line was cut, `false` otherwise.
-        static Bool Ellipsize(ConstRef<Face>        Source,
-                              Real32                Size,
-                              Real32                Width,
-                              Ref<Str>              Lines,
-                              Ref<Sequence<Real32>> Widths);
+        static Bool Ellipsize(ConstRef<ZyRender::Font> Source,
+                              Real32                   Size,
+                              Real32                   Width,
+                              Ref<Str>                 Lines,
+                              Ref<Sequence<Real32>>    Widths);
 
         /// \brief Breaks a text into the lines it stands on screen in, as the layout breaks a caption.
         ///
@@ -124,17 +123,20 @@ namespace ZyPlugin::UI
 
     private:
 
+        /// The advance a codepoint the typeface draws nothing for holds, which no glyph has.
+        static constexpr Real32 kNone = -kMaximum<Real32>;
+
         /// \brief Gets how far a codepoint moves the pen, before any kerning.
         ///
-        /// \param Source    The tables of the typeface.
+        /// \param Source    The typeface, which must have finished loading.
         /// \param Codepoint The codepoint the pen moves over.
-        /// \return The advance, in font units, the fallback glyph's for one the typeface lacks, or \ref Face::kNone.
-        static Real32 Advance(ConstRef<Face> Source, UInt32 Codepoint);
+        /// \return The advance, in font units, the fallback glyph's for one the typeface lacks, or \ref kNone.
+        static Real32 Advance(ConstRef<ZyRender::Font> Source, UInt32 Codepoint);
 
         /// \brief Breaks text onto new lines, as \ref Wrap does.
         ///
         /// \tparam Copied  The flag, `true` to turn only spaces of a copy into breaks, `false` to write all codepoints.
-        /// \param Source  The tables of the typeface.
+        /// \param Source  The typeface, which must have finished loading.
         /// \param Content The text to lay out.
         /// \param Size    The size the text is set at, in pixels.
         /// \param Limit   The width no line may overrun, in font units.
@@ -143,12 +145,12 @@ namespace ZyPlugin::UI
         /// \param Natural The receiver of the widest line's reach in font units, or the largest real if a line broke.
         /// \return `true` if the walk ran to the end, `false` otherwise.
         template<Bool Copied>
-        static Bool Walk(ConstRef<Face>        Source,
-                         Text                  Content,
-                         Real32                Size,
-                         Real32                Limit,
-                         Ref<Str>              Lines,
-                         Ref<Sequence<Real32>> Widths,
-                         Ref<Real32>           Natural);
+        static Bool Walk(ConstRef<ZyRender::Font> Source,
+                         Text                     Content,
+                         Real32                   Size,
+                         Real32                   Limit,
+                         Ref<Str>                 Lines,
+                         Ref<Sequence<Real32>>    Widths,
+                         Ref<Real32>              Natural);
     };
 }

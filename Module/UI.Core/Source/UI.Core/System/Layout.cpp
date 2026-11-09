@@ -17,7 +17,6 @@
 #include "UI.Core/Facet/Visual/Picture.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
 #include "UI.Core/Pane.hpp"
-#include "UI.Core/Text/Face.hpp"
 #include "UI.Core/Text/Ruler.hpp"
 #include "UI.Core/Tree.hpp"
 
@@ -130,30 +129,6 @@ namespace ZyPlugin::UI
 
         Target.Touched = true;
         return true;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    ConstRef<Face> Layout::FaceOf(ConstRef<Retainer<ZyRender::Font>> Font)
-    {
-        const SInt Index = mFaces.Find([&Font](ConstRef<Face> Entry)
-        {
-            return Entry.Font == Font;
-        });
-        return Index >= 0 ? mFaces[static_cast<UInt>(Index)] : mFaces.Append(Font);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Layout::Forget()
-    {
-        // A typeface only the tables still hold is let go with them, so a theme dropping a font frees it.
-        mFaces.RemoveFastSomeIf([](ConstRef<Face> Entry)
-        {
-            return Entry.Font->IsUnique();
-        });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -718,8 +693,8 @@ namespace ZyPlugin::UI
 
     void Layout::Typeset(Ref<Caption> Words, Real32 Width)
     {
-        ConstRef<Face> Source = FaceOf(Words.Font);
-        const Bool     Cuts   = (Words.Overflow == Overflow::Ellipsis);
+        ConstRef<ZyRender::Font> Source = * Words.Font;
+        const Bool               Cuts   = (Words.Overflow == Overflow::Ellipsis);
 
         // A line to be cut short is laid out unbroken, asking for its whole text, then cut to the room it was given.
         const Real32 Allowed = Cuts ? 0.0f : Width;

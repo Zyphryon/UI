@@ -909,7 +909,7 @@ namespace ZyPlugin::UI
         Output.Inner     = Owner.GetBox(Holder.GetHandle()).Padding.Inset(Holder.GetFrame());
         Output.Size      = Words->Size;
         Output.Alignment = Words->Alignment;
-        Output.Source    = Loaded ? AddressOf(Owner.GetFace(Words->Font)) : nullptr;
+        Output.Source    = Loaded ? AddressOf(* Words->Font) : nullptr;
         Output.Leading   = Loaded ? Words->Font->GetLineHeight(Words->Size) : Words->Size;
 
         // The lines break where the layout broke them, at the width the text was given.

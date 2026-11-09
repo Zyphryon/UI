@@ -17,7 +17,6 @@
 #include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
 #include "UI.Core/Pane.hpp"
-#include "UI.Core/Text/Face.hpp"
 #include "UI.Core/Tree.hpp"
 #include "UI.Core/Types.hpp"
 
@@ -82,15 +81,6 @@ namespace ZyPlugin::UI
         /// \param Row    The row of the box coming into view.
         /// \return `true` if text was laid out, `false` otherwise.
         Bool Catch(Ref<Pane> Target, UInt32 Row);
-
-        /// \brief Gets the tables text set in a typeface is measured with, building them the first time.
-        ///
-        /// \param Font The typeface, which must have finished loading.
-        /// \return The tables, which stand until the next \ref Forget.
-        ConstRef<Face> FaceOf(ConstRef<Retainer<ZyRender::Font>> Font);
-
-        /// \brief Lets go of the tables of every typeface nothing but the tables holds any more.
-        void Forget();
 
     private:
 
@@ -262,7 +252,6 @@ namespace ZyPlugin::UI
         Sequence<UInt32> mFits;
         Sequence<UInt32> mWaiting;
         Sequence<Dirty>  mClimb;
-        Sequence<Face>   mFaces;
         Sequence<Probe>  mProbes;
     };
 }

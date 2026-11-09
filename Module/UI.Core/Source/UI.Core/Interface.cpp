@@ -130,7 +130,6 @@ namespace ZyPlugin::UI
         {
             Reflow();
         }
-        mLayout.Forget();
 
         // What the pointer rests on moved under it with the new ratio, so the hover follows it there.
         if (Rescaled)
