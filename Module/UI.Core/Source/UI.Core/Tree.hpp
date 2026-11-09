@@ -214,7 +214,7 @@ namespace ZyPlugin::UI
             return mSlots[Element.GetSlot()].Facets;
         }
 
-        /// \brief Checks whether the element in a slot holds a kind of facet that stops the pointer.
+        /// \brief Checks whether the element in a slot holds a kind of facet that answers the pointer.
         ///
         /// \param Slot The slot of the element asked about.
         /// \return `true` if it does, `false` otherwise.

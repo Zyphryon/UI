@@ -44,7 +44,7 @@ namespace ZyPlugin::UI
             return kIndex;
         }
 
-        /// \brief Gets the kinds of facet the pointer stops at.
+        /// \brief Gets the kinds of facet that answer the pointer, without which a pane lets it pass through.
         ///
         /// \return The mask of their indices.
         static ConstRef<Mask> GetInteractive();

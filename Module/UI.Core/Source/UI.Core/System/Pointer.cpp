@@ -20,6 +20,7 @@
 #include "UI.Core/Facet/Visual/Backdrop.hpp"
 #include "UI.Core/Facet/Visual/Effect.hpp"
 #include "UI.Core/Facet/Visual/Look.hpp"
+#include "UI.Core/Facet/Visual/Picture.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
 #include "UI.Core/Interface.hpp"
 #include "UI.Core/Layers.hpp"
@@ -651,6 +652,7 @@ namespace ZyPlugin::UI
                     || (Shade && (Shade->Background.GetAlpha() > 0.0f || Shade->BorderWidth > 0.0f))
                     || (Extra && Extra->Fill.IsVisible())
                     || (Layer && Layer->Source)
+                    || mOwner.Peek<Picture>(Slot)
                     || (Roll && Roll->GetTrack(Target.Frames[Row], Top).Contains(Point));
 
                 if (Over && Solid)
@@ -659,9 +661,13 @@ namespace ZyPlugin::UI
                 }
             }
 
-            if (Found != Pane::kNoParent)
+            // What was found is hit only while something answering the pointer holds it, or the pane is passed through.
+            for (UInt32 Row = Found; Row != Pane::kNoParent; Row = Target.Parents[Row])
             {
-                return mOwner.GetHandle(Target.Slots[Found]);
+                if (mOwner.IsInteractive(Target.Slots[Row]))
+                {
+                    return mOwner.GetHandle(Target.Slots[Found]);
+                }
             }
 
             // A modal pane holds the pointer: whatever stands behind it is out of reach.

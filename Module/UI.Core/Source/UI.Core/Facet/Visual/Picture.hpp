@@ -32,10 +32,7 @@ namespace ZyPlugin::UI
     struct Picture final
     {
         /// What a change to the facet must have worked out again.
-        static constexpr Dirty kMarks       = Dirty::Measure | Dirty::Paint;
-
-        /// `true`, so the pointer stops at an element holding it.
-        static constexpr Bool  kInteractive = true;
+        static constexpr Dirty kMarks = Dirty::Measure | Dirty::Paint;
 
         /// The image shown over the element's box, which wins over \ref Texture while it holds one.
         Retainer<ZyGraphic::Image> Source;
