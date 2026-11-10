@@ -342,15 +342,15 @@ namespace ZyPlugin::UI
 
                 if (Line % 3 == 0)
                 {
-                    Content.Format<"Guard: line {0} of the log, which scrolls to stay on the latest one.">(Line + 1);
+                    Content.Format("Guard: line {0} of the log, which scrolls to stay on the latest one.", Line + 1);
                 }
                 else if (Line % 3 == 1)
                 {
-                    Content.Format<"Gatekeeper: the gate opens at dawn, line {0}.">(Line + 1);
+                    Content.Format("Gatekeeper: the gate opens at dawn, line {0}.", Line + 1);
                 }
                 else
                 {
-                    Content.Format<"Brom: meet me there, line {0}.">(Line + 1);
+                    Content.Format("Brom: meet me there, line {0}.", Line + 1);
                 }
                 AddText(Log, Content, 14.0f, Color(0.78f, 0.80f, 0.83f, 1.0f));
             }
@@ -699,7 +699,7 @@ namespace ZyPlugin::UI
                 mLexicon.SetLanguage(Listbox::GetIndex(Element(mInterface, Self)) == 1 ? "Spanish" : "English");
 
                 Str Line;
-                Line.Format<"[Settings] Language: {0}">(mLexicon.GetLanguage());
+                Line.Format("[Settings] Language: {0}", mLexicon.GetLanguage());
                 Say(Line);
             }
             return false;
@@ -720,7 +720,7 @@ namespace ZyPlugin::UI
                 mInterface.SetScale(kScales[Picked]);
 
                 Str Line;
-                Line.Format<"[Settings] Interface scale: {0}%">(static_cast<UInt32>(kScales[Picked] * 100.0f));
+                Line.Format("[Settings] Interface scale: {0}%", static_cast<UInt32>(kScales[Picked] * 100.0f));
                 Say(Line);
             }
             return false;
@@ -797,7 +797,7 @@ namespace ZyPlugin::UI
             if (Message.Kind == Signal::kClick && Message.Target == Self)
             {
                 Str Line;
-                Line.Format<"[You] {0}!">(Name);
+                Line.Format("[You] {0}!", Name);
                 Say(Line);
             }
             return false;
@@ -815,7 +815,7 @@ namespace ZyPlugin::UI
             {
                 Str Line;
                 const Bool Checked = mInterface.HasState(Self, Widget::Checked());
-                Line.Format<"[Settings] {0}: {1}">(Name, Checked ? "on"_Text : "off"_Text);
+                Line.Format("[Settings] {0}: {1}", Name, Checked ? "on"_Text : "off"_Text);
                 Say(Line);
             }
             return false;
@@ -832,7 +832,7 @@ namespace ZyPlugin::UI
             if (Message.Kind == Signal::kChange && Message.Target == Self)
             {
                 Str Line;
-                Line.Format<"[Settings] Level: {0}">(static_cast<UInt32>(Spinner::GetValue(Element(Owner, Self))));
+                Line.Format("[Settings] Level: {0}", static_cast<UInt32>(Spinner::GetValue(Element(Owner, Self))));
                 Say(Line);
             }
             return false;
@@ -851,7 +851,7 @@ namespace ZyPlugin::UI
                 const Element Picked = Listbox::GetSelected(Element(mInterface, Self));
 
                 Str Line;
-                Line.Format<"[Settings] {0}: {1}">(Name, Text(Picked.GetFirst().Get<Caption>()->Content));
+                Line.Format("[Settings] {0}: {1}", Name, Text(Picked.GetFirst().Get<Caption>()->Content));
                 Say(Line);
             }
             return false;
@@ -949,7 +949,7 @@ namespace ZyPlugin::UI
                 const ConstPtr<Caption> Kind = Element(mInterface, Self).GetParent().GetFirst().Get<Caption>();
 
                 Str Line;
-                Line.Format<"[Codex] Tracking the {0}.">(Kind ? Text(Kind->Content) : Text("beast"));
+                Line.Format("[Codex] Tracking the {0}.", Kind ? Text(Kind->Content) : Text("beast"));
                 Say(Line);
             }
             return false;
@@ -965,10 +965,10 @@ namespace ZyPlugin::UI
             if (Message.Kind == Signal::kChange && Message.Target == Self)
             {
                 Str Where;
-                Where.Format<"Inventory[{0}].Name">(Repeater::GetIndex(Element(mInterface, Self)));
+                Where.Format("Inventory[{0}].Name", Repeater::GetIndex(Element(mInterface, Self)));
 
                 Str Line;
-                Line.Format<"[Bag] Picked {0}.">(Text(mModel.GetText(Where)));
+                Line.Format("[Bag] Picked {0}.", Text(mModel.GetText(Where)));
                 Say(Line);
             }
             return false;
@@ -986,7 +986,7 @@ namespace ZyPlugin::UI
                 const UInt32 Count = mModel.GetCount("Inventory");
 
                 Str Name;
-                Name.Format<"{0}. Found Trinket">(Count + 1);
+                Name.Format("{0}. Found Trinket", Count + 1);
 
                 const Ptr<Model> Record = mModel.Append("Inventory");
                 Record->SetText("Name", Name);
@@ -994,7 +994,7 @@ namespace ZyPlugin::UI
                 Record->SetBool("Rare", true);
 
                 Str Line;
-                Line.Format<"[Bag] Looted {0}.">(Text(Name));
+                Line.Format("[Bag] Looted {0}.", Text(Name));
                 Say(Line);
             }
             return false;
@@ -1012,10 +1012,10 @@ namespace ZyPlugin::UI
             if (Message.Kind == Signal::kClick && Message.Target == Self && Picked >= 0)
             {
                 Str Where;
-                Where.Format<"Inventory[{0}].Name">(Picked);
+                Where.Format("Inventory[{0}].Name", Picked);
 
                 Str Line;
-                Line.Format<"[Bag] Dropped {0}.">(Text(mModel.GetText(Where)));
+                Line.Format("[Bag] Dropped {0}.", Text(mModel.GetText(Where)));
                 Say(Line);
 
                 mModel.Erase("Inventory", static_cast<UInt32>(Picked));
@@ -1064,7 +1064,7 @@ namespace ZyPlugin::UI
             Swap(static_cast<UInt32>(From), static_cast<UInt32>(To));
 
             Str Line;
-            Line.Format<"[Bag] Moved {0} to slot {1}.">(Text(Carried), To + 1);
+            Line.Format("[Bag] Moved {0} to slot {1}.", Text(Carried), To + 1);
             Say(Line);
             return true;
         }
@@ -1118,15 +1118,15 @@ namespace ZyPlugin::UI
 
             if (Spell.IsEmpty())
             {
-                Line.Format<"[Spells] Right click a spell to use it.">();
+                Line.Format("[Spells] Right click a spell to use it.");
             }
             else if (Slot == 0)
             {
-                Line.Format<"[You] Cast {0}!">(Text(Spell));
+                Line.Format("[You] Cast {0}!", Text(Spell));
             }
             else
             {
-                Line.Format<"[Bar] {0} goes to slot {1}.">(Text(Spell), Slot);
+                Line.Format("[Bar] {0} goes to slot {1}.", Text(Spell), Slot);
             }
             Say(Line);
             return false;
@@ -1157,7 +1157,7 @@ namespace ZyPlugin::UI
             for (UInt32 Index = 0; Index < 500; ++Index)
             {
                 Str Name;
-                Name.Format<"{0}. {1} {2}">(Index + 1, kMaterials[Index % 8], kKinds[(Index / 8) % 10]);
+                Name.Format("{0}. {1} {2}", Index + 1, kMaterials[Index % 8], kKinds[(Index / 8) % 10]);
 
                 const Ptr<Model> Record = mModel.Append("Inventory");
                 Record->SetText("Name", Name);
@@ -1194,7 +1194,7 @@ namespace ZyPlugin::UI
             for (UInt32 Index = 0; Index < 40; ++Index)
             {
                 Str Name;
-                Name.Format<"{0} {1}">(kKinds[Index % 6], Index + 1);
+                Name.Format("{0} {1}", kKinds[Index % 6], Index + 1);
 
                 const Ptr<Model> Entity = mModel.Append("Entities");
                 Entity->SetText("Name", Name);
@@ -1255,7 +1255,7 @@ namespace ZyPlugin::UI
                 mModel.SetNumber("Player.Level", Level);
 
                 Str Line;
-                Line.Format<"[Game] Level up! Now level {0}.">(static_cast<UInt32>(Level));
+                Line.Format("[Game] Level up! Now level {0}.", static_cast<UInt32>(Level));
                 Say(Line);
             }
             mModel.SetNumber("Player.Experience", Experience);

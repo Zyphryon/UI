@@ -141,7 +141,7 @@ namespace ZyPlugin::UI
         // The items it held go before the records are counted, which makes theirs at once.
         Remake(Owner);
 
-        const Str Bound = Str::Print<"{{{0}}}">(Source);
+        const Str Bound = Str::Print("{{{0}}}", Source);
         return Binder::Attach(Owner, Bound, Writer::Create<&Listbox::OnItems>(), Reader(), Scope);
     }
 
@@ -392,7 +392,7 @@ namespace ZyPlugin::UI
         for (UInt32 Record = 0; Record < Count; ++Record)
         {
             const Element Item  = AddItem(Owner, Text());
-            const Str     Scope = Str::Print<"{0}[{1}]">(Text(Source), Record);
+            const Str     Scope = Str::Print("{0}[{1}]", Text(Source), Record);
 
             Binder::Attach(Item.GetFirst(), Content, Binder::PutText<&Label::SetText>(), Reader(), Scope);
 
@@ -473,6 +473,6 @@ namespace ZyPlugin::UI
         {
             return Str(Field);
         }
-        return Str::Print<"{{{0}}}">(Field);
+        return Str::Print("{{{0}}}", Field);
     }
 }

@@ -89,7 +89,7 @@ namespace ZyPlugin::UI
         {
             // Written on the stack, since a bar fed every frame would otherwise take memory for it every frame.
             String<16> Percent;
-            Percent.Format<"{0}%">(static_cast<UInt32>(::Round(Share * 100.0f)));
+            Percent.Format("{0}%", static_cast<UInt32>(::Round(Share * 100.0f)));
             Label::SetText(Readout, Percent);
         }
     }

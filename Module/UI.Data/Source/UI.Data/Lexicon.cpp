@@ -156,13 +156,13 @@ namespace ZyPlugin::UI
 
         if (JsonError Problem; !JsonDocument::Parse(Source, Document, Problem))
         {
-            Error.Format<"{0}">(Problem);
+            Error.Format("{0}", Problem);
             return false;
         }
 
         if (!Document.IsObject())
         {
-            Error.Format<"the table is not an object">();
+            Error.Format("the table is not an object");
             return false;
         }
         return Gather(Text(), Document, Output, Error);
@@ -194,7 +194,7 @@ namespace ZyPlugin::UI
 
         if (!Value.IsString())
         {
-            Error.Format<"the key '{0}' must be text or an object of keys">(Text(Key));
+            Error.Format("the key '{0}' must be text or an object of keys", Text(Key));
             return false;
         }
 

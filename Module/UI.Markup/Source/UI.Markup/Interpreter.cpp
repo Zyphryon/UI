@@ -91,7 +91,7 @@ namespace ZyPlugin::UI
 
         if (!Templates || !Templates->IsObject())
         {
-            Error.Format<"the layout gives no 'Templates' object">();
+            Error.Format("the layout gives no 'Templates' object");
             return false;
         }
 
@@ -100,7 +100,7 @@ namespace ZyPlugin::UI
         {
             if (!Entry.Second.IsObject())
             {
-                Error.Format<"every template must be an object">();
+                Error.Format("every template must be an object");
                 return false;
             }
         }
@@ -119,7 +119,7 @@ namespace ZyPlugin::UI
     {
         if (Context.Error.IsEmpty())
         {
-            Context.Error.Format<"{0}'{1}', field '{2}': {3}">(Context.Origin, Where, Key, Why);
+            Context.Error.Format("{0}'{1}', field '{2}': {3}", Context.Origin, Where, Key, Why);
         }
     }
 
@@ -130,7 +130,7 @@ namespace ZyPlugin::UI
     {
         if (Str Why; !Parser::Parse(Source, Output, Why))
         {
-            Context.Error.Format<"{0}{1}">(Context.Origin, Why);
+            Context.Error.Format("{0}{1}", Context.Origin, Why);
             return;
         }
 
@@ -138,7 +138,7 @@ namespace ZyPlugin::UI
         {
             if (const ConstPtr<JsonValue> Found = Parser::Find(Output, Table); Found && !Found->IsObject())
             {
-                Context.Error.Format<"{0}'Colors', 'Fonts', 'Images', 'Styles' and 'Animations' must be objects">(
+                Context.Error.Format("{0}'Colors', 'Fonts', 'Images', 'Styles' and 'Animations' must be objects",
                     Context.Origin);
                 return;
             }
@@ -597,7 +597,7 @@ namespace ZyPlugin::UI
             {
                 // The mistake belongs to the layer naming the animation, not the one read last.
                 Context.Origin = Entry.Origin;
-                Fail(Context, Entry.Where, Entry.Key, Str::Print<"no animation is named '{0}'">(Entry.Name));
+                Fail(Context, Entry.Where, Entry.Key, Str::Print("no animation is named '{0}'", Entry.Name));
             }
         }
     }

@@ -129,7 +129,7 @@ namespace ZyPlugin::UI
         // Destroying the rows may move this facet, so nothing of it is read past here.
         Reset(List);
 
-        const Str Bound = Str::Print<"{{{0}}}">(Source);
+        const Str Bound = Str::Print("{{{0}}}", Source);
         return Binder::Attach(List, Bound, Writer::Create<&Repeater::OnItems>(), Reader(), Scope);
     }
 
@@ -411,7 +411,7 @@ namespace ZyPlugin::UI
         {
             return Str();
         }
-        return Own->Named ? Own->Records[Record] : Str::Print<"{0}[{1}]">(Text(Own->Base), Record);
+        return Own->Named ? Own->Records[Record] : Str::Print("{0}[{1}]", Text(Own->Base), Record);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -538,7 +538,7 @@ namespace ZyPlugin::UI
         }
 
         // A key opening with `!` stays in the braces, so the row wears the state while the value reads as clear.
-        Own->RowStates.Append(Bit, Str::Print<"{{{0}}}">(Key));
+        Own->RowStates.Append(Bit, Str::Print("{{{0}}}", Key));
         Reset(List);
     }
 
@@ -647,7 +647,7 @@ namespace ZyPlugin::UI
 
     void Repeater::Stamp(Ref<Markup> Reader, Element Parent, Text Scope, ConstRef<JsonValue> Shape)
     {
-        Reader.PushScope(Str::Print<"/{0}">(Scope));
+        Reader.PushScope(Str::Print("/{0}", Scope));
 
         if (Shape.IsString())
         {

@@ -559,7 +559,7 @@ namespace ZyPlugin::UI
 
             if (!Key.IsEmpty())
             {
-                const Str Bound = Str::Print<"{{{0}}}">(Key);
+                const Str Bound = Str::Print("{{{0}}}", Key);
                 Binder::Attach(Words, Bound, Binder::PutText<&Label::SetText>(), UI::Reader(), Scope);
             }
         }
@@ -700,7 +700,7 @@ namespace ZyPlugin::UI
 
         for (UInt32 Index = 0; Index < Count; ++Index)
         {
-            Scopes[Index].Format<"{0}[{1}]">(Text(Own->Base), Order[Index]);
+            Scopes[Index].Format("{0}[{1}]", Text(Own->Base), Order[Index]);
         }
 
         Own->Order = Move(Order);

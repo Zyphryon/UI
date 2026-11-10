@@ -701,7 +701,7 @@ namespace ZyPlugin::UI
         for (UInt32 Index = 0; Index < Count; ++Index)
         {
             Limb Entry;
-            Entry.Path.Format<"{0}[{1}]">(List, Index);
+            Entry.Path.Format("{0}[{1}]", List, Index);
             Entry.Depth = Depth;
 
             const Str Children = Str::Join(Entry.Path, '.', Own.Nested);
@@ -730,7 +730,7 @@ namespace ZyPlugin::UI
         for (UInt32 Index = 0, Count = Data.GetCount(List); Index < Count; ++Index)
         {
             Str Record;
-            Record.Format<"{0}[{1}]">(List, Index);
+            Record.Format("{0}[{1}]", List, Index);
 
             if (Data.GetKey(List, Index) == Key)
             {
@@ -858,7 +858,7 @@ namespace ZyPlugin::UI
 
         // A level's indent is the theme's width of the style plus `.Indent`, named on the stack for the frame loop.
         String<128> Name;
-        Name.Format<"{0}.Indent">(Own->Style);
+        Name.Format("{0}.Indent", Own->Style);
 
         if (Skin Found; Source && Source->Resolve(Identify(Name), State::None, Found)
             && Found.Has(Skin::Field::Width) && Found.Width.Measure == Length::Unit::Pixel)

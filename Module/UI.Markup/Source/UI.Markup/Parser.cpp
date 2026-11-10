@@ -36,13 +36,13 @@ namespace ZyPlugin::UI
     {
         if (JsonError Problem; !JsonDocument::Parse(Source, Output, Problem))
         {
-            Error.Format<"{0}">(Problem);
+            Error.Format("{0}", Problem);
             return false;
         }
 
         if (!Output.IsObject())
         {
-            Error.Format<"the document is not an object">();
+            Error.Format("the document is not an object");
             return false;
         }
         return true;

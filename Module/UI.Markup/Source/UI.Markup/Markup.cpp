@@ -199,7 +199,7 @@ namespace ZyPlugin::UI
 
     Element Markup::Spawn(Element Parent, Text Template, Text Scope, ConstRef<Path> Within)
     {
-        PushScope(Str::Print<"/{0}">(Scope));
+        PushScope(Str::Print("/{0}", Scope));
         const Element Result = Spawn(Parent, Template);
         PopScope();
 
