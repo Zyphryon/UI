@@ -37,11 +37,8 @@ namespace ZyPlugin::UI
           mSurface    { nullptr },
           mStaging    { false }
     {
-        // A popup whose opener died goes with it, before its bindings are shown again.
         AddStage(Phase::Prepare, 10, Stage::Create<&Interface::OnPrune>());
-
         AddStage(Phase::Prepare, 30, Stage::Create<&Interface::OnRealize>());
-
         AddStage(Phase::Prepare, 40, Stage::Create<&Interface::OnTick>());
     }
 
@@ -228,10 +225,12 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Interface::Attach(Ref<ZyInput::Service> Input, Ptr<ZyPlatform::Window> Surface)
+    void Interface::Attach(Ref<ZyEngine::Subsystem::Host> Host, Ref<ZyInput::Service> Input, Ptr<ZyPlatform::Window> Surface)
     {
         mInput   = AddressOf(Input);
         mSurface = Surface;
+
+        mDispatcher.Attach(Host);
 
         Input.OnKeyDown.AddMethod<&Interface::OnKeyDown>(this);
         Input.OnKeyRepeat.AddMethod<&Interface::OnKeyRepeat>(this);

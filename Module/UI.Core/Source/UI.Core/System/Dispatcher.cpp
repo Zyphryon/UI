@@ -145,9 +145,10 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Dispatcher::SetSoundHook(SoundHook Callback)
+    void Dispatcher::Attach(Ref<ZyEngine::Subsystem::Host> Host)
     {
-        mSoundHook = Move(Callback);
+        mAudio   = Host.GetService<ZyAudio::Service>();
+        mContent = Host.GetService<ZyContent::Service>();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -157,17 +158,38 @@ namespace ZyPlugin::UI
     {
         const ConstPtr<Theme> Source = mOwner.GetTheme();
 
-        if (mSoundHook.IsEmpty() || !Source || !mOwner.IsAlive(Element))
+        if (!mAudio || !mContent || !Source || !mOwner.IsAlive(Element))
         {
             return;
         }
 
-        // Copied, since the hook may change the theme and drop the text it was handed.
-        const Str Address(Source->FindSound(mOwner.GetStyle(Element), Moment));
+        const Text Address = Source->FindSound(mOwner.GetStyle(Element), Moment);
 
-        if (!Address.IsEmpty())
+        if (Address.IsEmpty())
         {
-            mSoundHook(Address, Moment, Element);
+            return;
+        }
+
+        // A sound is loaded the first time a style asks for it and kept, so only that time waits for it to land.
+        Ref<Retainer<ZyAudio::Sound>> Found = mSounds.FindOrInsert(Digest(Identify(Address)));
+
+        if (!Found)
+        {
+            Found = mContent->Load<ZyAudio::Sound>(ZyContent::Uri(Address));
+        }
+
+        // One still on its way plays when it lands, holding the service and the sound rather than the dispatcher.
+        ZyContent::Service::Callback Ring = [Audio = mAudio, Sound = Found](Ref<ZyContent::Resource>)
+        {
+            if (Sound->HasCompleted())
+            {
+                Audio->Play(ZyAudio::Category::Interface, Sound, 1.0f);
+            }
+        };
+
+        if (mContent->Await(Found, Move(Ring)) && Found->HasCompleted())
+        {
+            mAudio->Play(ZyAudio::Category::Interface, Found, 1.0f);
         }
     }
 

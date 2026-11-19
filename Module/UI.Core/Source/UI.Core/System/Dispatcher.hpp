@@ -16,6 +16,9 @@
 #include "UI.Core/Handle.hpp"
 #include "UI.Core/Shortcut.hpp"
 #include "UI.Core/Style/Style.hpp"
+#include <Zyphryon.Audio/Service.hpp>
+#include <Zyphryon.Content/Service.hpp>
+#include <Zyphryon.Engine/Subsystem.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -24,9 +27,6 @@
 namespace ZyPlugin::UI
 {
     class Interface;
-
-    /// \brief Defines the code the game runs to play a sound a style names, so the library never depends on audio.
-    using SoundHook = Delegate<void(Text Address, Cue Moment, Handle Element)>;
 
     /// \brief Represents the router of an interface's events, up from their target through every control holding it.
     class Dispatcher final
@@ -70,12 +70,12 @@ namespace ZyPlugin::UI
         /// \return `true` if the code took the key, `false` when it declined it or no code is bound.
         Bool Perform(ConstRef<Shortcut> Entry, ConstRef<Event> Message);
 
-        /// \brief Hooks the code that plays the sounds styles name for controls and panes.
+        /// \brief Hooks the dispatcher to the services that load and play the sounds styles name.
         ///
-        /// \param Callback The code, or empty to play nothing.
-        void SetSoundHook(SoundHook Callback);
+        /// \param Host The host whose audio and content services it uses, playing nothing without audio.
+        void Attach(Ref<ZyEngine::Subsystem::Host> Host);
 
-        /// \brief Plays the sound an element's style names for a moment, through the game's hook.
+        /// \brief Plays the sound an element's style names for a moment, on the interface's submix.
         ///
         /// \param Element The element whose style names the sound.
         /// \param Moment  The moment the sound is played for.
@@ -142,11 +142,13 @@ namespace ZyPlugin::UI
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Ref<Interface>         mOwner;
-        Table<Digest, Handler> mActions;
-        SoundHook              mSoundHook;
-        Handle                 mBackdrop;
-        Handle                 mModal;
-        Sequence<Handler>      mListeners;
+        Ref<Interface>                          mOwner;
+        Table<Digest, Handler>                  mActions;
+        Retainer<ZyAudio::Service>              mAudio;
+        Retainer<ZyContent::Service>            mContent;
+        Table<Digest, Retainer<ZyAudio::Sound>> mSounds;
+        Handle                                  mBackdrop;
+        Handle                                  mModal;
+        Sequence<Handler>                       mListeners;
     };
 }

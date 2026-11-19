@@ -34,7 +34,6 @@
 #include <UI.Gesture/Drag.hpp>
 #include <UI.Gesture/Tooltip.hpp>
 #include <UI.Markup/Markup.hpp>
-#include <Zyphryon.Audio/Service.hpp>
 #include <Zyphryon.Content/Mount/Disk.hpp>
 #include <Zyphryon.Platform/Service.hpp>
 #include <Zyphryon.Runtime/Kernel.hpp>
@@ -98,14 +97,8 @@ namespace ZyPlugin::UI
             // The clipboard and the display scale follow the window.
             Ref<ZyInput::Service>    Input    = * GetService<ZyInput::Service>();
             Ref<ZyPlatform::Service> Platform = * GetService<ZyPlatform::Service>();
-            mInterface.Attach(Input, AddressOf(Platform.GetWindow()));
+            mInterface.Attach(* this, Input, AddressOf(Platform.GetWindow()));
             Input.OnWindowScale.AddMethod<&Example::OnWindowScale>(this);
-
-            // The library names sounds, and the game decides how each plays.
-            mInterface.SetSoundHook(SoundHook::Create([this](Text Address, Cue Moment, Handle)
-            {
-                OnSound(Address, Moment);
-            }));
 
             ControlModule::Declare(mInterface);
 
@@ -749,27 +742,6 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        /// \brief Plays a sound the theme names through the audio service, loading it the first time it is named.
-        ///
-        /// \param Address The address of the sound.
-        /// \param Moment  The moment of interaction it is played for.
-        void OnSound(Text Address, Cue Moment)
-        {
-            const UInt64 Key = Identify(Address);
-
-            if (const ConstPtr<Retainer<ZyAudio::Sound>> Known = mSounds.Find(Key))
-            {
-                if ((* Known)->HasCompleted())
-                {
-                    GetService<ZyAudio::Service>()->Play(ZyAudio::Category::Interface, * Known, 0.8f);
-                }
-                return;
-            }
-
-            LOG_I("The interface asks for sound '{0}' on {1}", Address, ZyEnum::GetName(Moment));
-            mSounds.Assign(Key, GetService<ZyContent::Service>()->Load<ZyAudio::Sound>(ZyContent::Uri(Address)));
-        }
-
         /// \brief Writes a line to the chat log.
         ///
         /// \param Content The line.
@@ -1269,7 +1241,6 @@ namespace ZyPlugin::UI
         Lexicon                                 mLexicon;
         Theme                                   mTheme;
         Unique<Markup>                          mMarkup;
-        Table<UInt64, Retainer<ZyAudio::Sound>> mSounds;
         Real32                                  mTime;
     };
 }

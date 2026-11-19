@@ -228,11 +228,12 @@ namespace ZyPlugin::UI
             mFocus.RemoveShortcut(Key, Modifiers, Owner);
         }
 
-        /// \brief Hooks the interface to the input service, hearing the pointer and keyboard first.
+        /// \brief Hooks the interface to the engine, hearing the pointer and keyboard first and playing its sounds.
         ///
+        /// \param Host    The host whose audio and content services play the sounds styles name.
         /// \param Input   The input service whose pointer, keyboard and window events the interface hears.
         /// \param Surface The window text fields copy to and paste from, or `nullptr` for its own clipboard.
-        void Attach(Ref<ZyInput::Service> Input, Ptr<ZyPlatform::Window> Surface = nullptr);
+        void Attach(Ref<ZyEngine::Subsystem::Host> Host, Ref<ZyInput::Service> Input, Ptr<ZyPlatform::Window> Surface);
 
         /// \brief Unhooks the interface from the input service and the window.
         ///
@@ -287,14 +288,6 @@ namespace ZyPlugin::UI
         ZY_INLINE void OnChange(Text Action, Reaction Code)
         {
             React(Action, Signal::kChange, ::Move(Code));
-        }
-
-        /// \brief Hooks the code that plays the sounds styles name, as a control is hovered, pressed or a pane shown.
-        ///
-        /// \param Callback The code, or empty to play nothing.
-        ZY_INLINE void SetSoundHook(SoundHook Callback)
-        {
-            mDispatcher.SetSoundHook(::Move(Callback));
         }
 
         /// \brief Moves the keyboard to a control, or takes it away.

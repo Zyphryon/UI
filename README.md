@@ -40,7 +40,7 @@ ControlModule::Declare(Reader);                                 // every widget,
 Reader.Dress(Theme, ThemeText, Error);                          // the default theme, with the game's over it
 Reader.Read(LayoutText, Error);
 
-Interface.Attach(Input, AddressOf(Platform.GetWindow()));       // input, key repeats, the clipboard and the scale
+Interface.Attach(Host, Input, AddressOf(Platform.GetWindow())); // input, the clipboard, the scale and the sounds
 Interface.Bind("ShowNames", Handler::Create<&OnShowNames>());
 const Element Window = Reader.Spawn(Interface, "Settings");
 
@@ -168,8 +168,8 @@ pixels of the image) and `Tint`. A variant can change one member and keep the re
 ```
 
 **Sounds.** A style names a sound per moment: `"Sounds": { "Hover": a, "Press": a, "Click": a, "Focus": a, "Change": a,
-"Open": a, "Close": a }`. A style without one plays its base's, and an empty address silences it. The library plays
-nothing itself: the game hands `Interface::SetSoundHook` a hook that hears the address, the moment and the element.
+"Open": a, "Close": a }`. A style without one plays its base's, and an empty address silences it. The interface loads
+each sound the first time it is named and plays it on the audio service's `Interface` submix.
 
 ## Layouts
 
