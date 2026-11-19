@@ -20,7 +20,7 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Represents one piece of the text a binding is written as, either literal text or a value of the model.
+    /// \brief Represents one piece of a binding's text, a literal or a value of the model.
     struct Piece final
     {
         /// The text kept as written, for a piece naming no value.
@@ -32,7 +32,7 @@ namespace ZyPlugin::UI
         /// The digits a number keeps after the point, written `{Key:2}`, or below nought for as many as it needs.
         SInt32 Decimals = -1;
 
-        /// The leading steps of the path that came from its scope, so only those follow a row moved to another record.
+        /// The leading steps of the path its scope gave, which follow a row moved to another record.
         UInt32 Scoped   = 0;
 
         /// `true` when the piece names a value, `false` when it is text kept as written.

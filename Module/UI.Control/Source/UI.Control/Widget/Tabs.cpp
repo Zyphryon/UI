@@ -14,14 +14,6 @@
 #include "Button.hpp"
 #include "Common.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -140,13 +132,9 @@ namespace ZyPlugin::UI
         // Selected before the tab goes, since one destroyed inside a walk still stands until the walk ends.
         UInt32 Kept = Shown;
 
-        if (Shown == Index)
+        if (Shown == Index && Count > 1)
         {
-            Kept = Index + 1 < Count ? Index + 1 : (Index > 0 ? Index - 1 : Index);
-        }
-
-        if (Kept != Index)
-        {
+            Kept = Index + 1 < Count ? Index + 1 : Index - 1;
             Select(Owner, Kept);
         }
 
@@ -271,19 +259,16 @@ namespace ZyPlugin::UI
 
     Bool Tabs::OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
     {
-        // Only its own tabs answer; a click deeper down, as on a button in a page, belongs to whatever holds it.
-        const Handle Header = Owner.Get<Deck>(Self)->Header;
-
         if (Message.Target == Self)
         {
             return false;
         }
 
         // A close button stands inside its tab, after the title.
+        const Handle  Header = Owner.Get<Deck>(Self)->Header;
         const Element Pressed(Owner, Message.Target);
-        const Bool    Clicked = Message.Kind == Signal::kClick;
 
-        if (Clicked && Owner.GetParent(Owner.GetParent(Message.Target)) == Header)
+        if (Message.Kind == Signal::kClick && Owner.GetParent(Owner.GetParent(Message.Target)) == Header)
         {
             const Element Tab = Pressed.GetParent();
 
@@ -294,6 +279,7 @@ namespace ZyPlugin::UI
             }
         }
 
+        // Only its own tabs answer, a click deeper down, as on a button in a page, belonging to whatever holds it.
         if (Owner.GetParent(Message.Target) != Header)
         {
             return false;
@@ -313,7 +299,7 @@ namespace ZyPlugin::UI
         }
 
         const Element Root(Owner, Self);
-        const UInt32  Index = Element(Owner, Message.Target).GetIndex();
+        const UInt32  Index = Pressed.GetIndex();
 
         if (Index != GetSelected(Root))
         {

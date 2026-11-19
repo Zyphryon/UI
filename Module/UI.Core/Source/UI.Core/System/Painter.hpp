@@ -12,18 +12,11 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Animator.hpp"
 #include "Layout.hpp"
-#include "UI.Core/Facet.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Facet/Visual/Caption.hpp"
 #include "UI.Core/Facet/Visual/Effect.hpp"
 #include "UI.Core/Facet/Visual/Look.hpp"
 #include "UI.Core/Facet/Visual/Picture.hpp"
 #include "UI.Core/Paint/Canvas.hpp"
-#include "UI.Core/Pane.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -124,25 +117,25 @@ namespace ZyPlugin::UI
         struct Scope final
         {
             /// The row of the element.
-            UInt32 Row         = 0;
+            UInt32            Row         = 0;
 
             /// The row past the last one the element holds.
-            UInt32 End         = 0;
+            UInt32            End         = 0;
 
             /// The opacity of the element, together with everything holding it.
-            Real32 Opacity     = 1.0f;
+            Real32            Opacity     = 1.0f;
 
-            /// `true` when it cut what its children draw to its box.
-            Bool   Clipped     = false;
+            /// `true` when it cut what its children draw to its box, `false` otherwise.
+            Bool              Clipped     = false;
 
-            /// `true` when it moved itself and what its children draw by its transform.
-            Bool   Transformed = false;
+            /// `true` when it moved itself and what its children draw by its transform, `false` otherwise.
+            Bool              Transformed = false;
 
-            /// `true` when the element bounds a part being recorded into its tape, which its closing ends.
-            Bool              Recording = false;
+            /// `true` when the element bounds a part being recorded into its tape, `false` otherwise.
+            Bool              Recording   = false;
 
-            /// The tape the recording goes on into once this part's ends, or `nullptr` for none.
-            Ptr<Canvas::Tape> Paused    = nullptr;
+            /// The tape the recording goes on into once this part ends, or `nullptr` for none.
+            Ptr<Canvas::Tape> Paused      = nullptr;
         };
 
         /// \brief Represents what the changed children of a row leave for it while reaches are worked out again.
@@ -154,7 +147,7 @@ namespace ZyPlugin::UI
             /// The union of the reach they have now, in pixels, meaningful only while \ref Raised.
             Rect After;
 
-            /// `true` when a child's reach changed.
+            /// `true` when a child's reach changed, `false` otherwise.
             Bool Raised = false;
 
             /// `true` when a child or a row it holds draws differently since the last paint, `false` otherwise.
@@ -182,7 +175,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Target The pane, whose children of the row have their reach worked out already.
         /// \param Row    The row of the element.
-        /// \param Turned The receiver of `true` when the element's own transform moved the box, `false` otherwise.
+        /// \param Turned Receives `true` when the element's own transform moved the box, `false` otherwise.
         /// \return The box, in pixels, moved by the element's own transform, or an empty one when it is hidden.
         Rect Reach(ConstRef<Pane> Target, UInt32 Row, Ref<Bool> Turned) const;
 
@@ -209,7 +202,7 @@ namespace ZyPlugin::UI
         /// \param Target  The pane holding the row.
         /// \param Row     The row bounding the part.
         /// \param Opacity The opacity the part would be drawn at.
-        /// \return `true` if nothing in the part changed and it would be drawn under what it was recorded under.
+        /// \return `true` if nothing in the part changed and it is drawn under the same state, `false` otherwise.
         Bool IsKept(ConstRef<Canvas> Canvas, ConstRef<Pane> Target, UInt32 Row, Real32 Opacity) const;
 
         /// \brief Draws a boundary's part from its tape, noting it in the tape being recorded around it.
@@ -277,13 +270,6 @@ namespace ZyPlugin::UI
 
     private:
 
-        /// \brief Fades a colour.
-        ///
-        /// \param Tint    The colour to fade.
-        /// \param Opacity The opacity it is drawn at, over nought through one.
-        /// \return The colour with its alpha scaled by the opacity.
-        static Color Fade(Color Tint, Real32 Opacity);
-
         /// \brief Fades both colours of a gradient.
         ///
         /// \param Fill    The gradient to fade.
@@ -308,13 +294,14 @@ namespace ZyPlugin::UI
         /// \param Hole    The box the element's own opaque fill covers whole once drawn over the halo, or an empty one.
         static void Cast(Ref<Canvas> Canvas, Rect Box, ConstRef<Halo> Source, Real32 Radius, Real32 Opacity, Rect Hole);
 
-        /// \brief Gets the box a picture is drawn over within its element's frame.
+        /// \brief Gets the box a picture is drawn over within its element's frame, and the part of its region shown.
         ///
-        /// \param Frame The box the element was laid out in, in pixels.
-        /// \param Size  The size of the part of the picture shown, in its own pixels, or nought when it is not known.
-        /// \param Mode  The way the picture fills the frame.
-        /// \return The frame when the picture stretches, else the largest box of its shape in the frame's middle.
-        static Rect FitOf(Rect Frame, Vector2 Size, Fit Mode);
+        /// \param Frame  The box the element was laid out in, in pixels.
+        /// \param Size   The size of the region of the picture, in its own pixels, or nought when it is not known.
+        /// \param Mode   The way the picture fills the frame.
+        /// \param Region The region of the picture in texture coordinates, cut around its middle when it covers.
+        /// \return The largest box of the picture's shape in the frame's middle when it is contained, else the frame.
+        static Rect FitOf(Rect Frame, Vector2 Size, Fit Mode, Ref<Rect> Region);
 
         /// \brief Gets a box with each of its edges moved to the nearest edge of a pixel of the target.
         ///

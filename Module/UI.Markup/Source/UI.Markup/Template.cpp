@@ -10,8 +10,8 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Parser.hpp"
 #include "Template.hpp"
+#include "Parser.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -62,40 +62,11 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    JsonValue Template::Copy(ConstRef<JsonValue> Template, ConstRef<JsonValue> Node)
-    {
-        JsonValue Result = Template;
-        JsonValue Parameters;
-
-        if (Result.IsObject())
-        {
-            Result.GetObject().Extract(kParameters, Parameters);
-        }
-
-        // A template declaring no parameter names none, so its copy is not walked looking for them.
-        if (Parameters.IsObject() && !Parameters.GetObject().IsEmpty())
-        {
-            Substitute(Result, Parameters, Node);
-        }
-
-        if (Node.IsObject())
-        {
-            Node.GetObject().ForEach([&](ConstRef<Str> Field, ConstRef<JsonValue> Value)
-            {
-                Overlay(Result, Parameters, Field, Value);
-            });
-        }
-        return Result;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     ConstRef<JsonValue> Template::Expand(ConstRef<JsonValue> Template,
                                          ConstRef<JsonValue> Node,
                                          Ref<JsonValue>      Output)
     {
-        // A template declaring no parameter, used by a node giving it no field, is built as it was read.
+        // A template with no parameters, used by a node with no fields, is used as read.
         Bool Plain = Template.IsObject() && !Template.GetObject().Contains(kParameters);
 
         if (Plain && Node.IsObject())
@@ -111,7 +82,27 @@ namespace ZyPlugin::UI
             return Template;
         }
 
-        Output = Copy(Template, Node);
+        JsonValue Parameters;
+        Output = Template;
+
+        if (Output.IsObject())
+        {
+            Output.GetObject().Extract(kParameters, Parameters);
+        }
+
+        // A template with no parameters is not walked looking for them.
+        if (Parameters.IsObject() && !Parameters.GetObject().IsEmpty())
+        {
+            Substitute(Output, Parameters, Node);
+        }
+
+        if (Node.IsObject())
+        {
+            Node.GetObject().ForEach([&](ConstRef<Str> Field, ConstRef<JsonValue> Value)
+            {
+                Overlay(Output, Parameters, Field, Value);
+            });
+        }
         return Output;
     }
 
@@ -163,7 +154,7 @@ namespace ZyPlugin::UI
                            ConstRef<Str>       Key,
                            ConstRef<JsonValue> Value)
     {
-        // The node's children are made by the node, after the template's, rather than copied into it.
+        // The node's children are made by the node after the template's, never copied into it.
         if (ConstSpan<Text>(kOwnFields).Contains(Key) || Parser::Find(Parameters, Key))
         {
             return;

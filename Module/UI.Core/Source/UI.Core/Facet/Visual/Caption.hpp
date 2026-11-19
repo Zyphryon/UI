@@ -24,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the text an element shows, and how it was last laid out.
     struct Caption final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Measure | Dirty::Paint;
 
         /// The text shown, as written before it is broken into lines.
@@ -54,7 +54,7 @@ namespace ZyPlugin::UI
         /// The size of the laid out text, in pixels.
         Vector2                             Extent;
 
-        /// How far that copy is pushed, in pixels.
+        /// The distance the copy of the text drawn under it is pushed, in pixels.
         Vector2                             ShadowOffset = Vector2(1.0f, 1.0f);
 
         /// The colour the text is drawn in.
@@ -75,19 +75,19 @@ namespace ZyPlugin::UI
         /// The width \ref Lines was last broken at, in font units, the largest real when nothing broke it.
         Real32                              Limit        = -1.0f;
 
-        /// How far the widest line reached, in font units, when nothing broke at \ref Limit, or the largest real.
+        /// The reach of the widest line, in font units, when nothing broke at \ref Limit, or the largest real.
         Real32                              Natural      = kMaximum<Real32>;
 
-        /// Where each line sits along the width of the box.
+        /// The place each line sits at along the width of the box.
         Align                               Alignment    = Align::Start;
 
-        /// `true` when the text breaks onto a new line where it would overrun its box.
+        /// `true` when the text breaks onto a new line where it would overrun its box, `false` to keep each line whole.
         Bool                                Breaks       = true;
 
         /// `true` when \ref Glyphs holds the lines as they are laid out now, `false` once they change.
         Bool                                Shaped       = false;
 
-        /// What a line too long for the box does, which only cuts a caption that does not break.
+        /// The way a line too long for the box ends, which only cuts a caption that does not break.
         UI::Overflow                        Overflow     = UI::Overflow::Clip;
 
         /// \brief Checks whether breaking the text at another width gives the lines it was last broken into.

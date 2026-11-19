@@ -15,12 +15,8 @@
 #include "Common.hpp"
 #include "Label.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -53,9 +49,10 @@ namespace ZyPlugin::UI
         const Element Result = Create(Parent, Markup::GetText(Node, "Text"), Markup::GetText(Node, "Style", "Button"));
         Reader.Bind(Result, Node, "Text", Binder::PutText<&Button::SetText>());
 
-        // A button standing for a flag wears the checked state, which a toggle turns over itself.
+        // A toggle turns the checked state over itself.
         Result.SetState(Widget::Checked(), Markup::GetBool(Node, "Checked"));
-        Reader.Bind(Result, Node, "Checked", Binder::PutState<&Widget::Checked>(), Binder::TakeState<&Widget::Checked>());
+        Reader.Bind(Result, Node, "Checked", Binder::PutState<&Widget::Checked>(),
+                    Binder::TakeState<&Widget::Checked>());
 
         if (Markup::GetBool(Node, "Toggle"))
         {

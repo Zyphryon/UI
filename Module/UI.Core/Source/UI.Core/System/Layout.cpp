@@ -11,14 +11,9 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Layout.hpp"
-#include "Animator.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Facet/Visual/Caption.hpp"
 #include "UI.Core/Facet/Visual/Picture.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Pane.hpp"
 #include "UI.Core/Text/Ruler.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -102,7 +97,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // The box is arranged again around what it now holds, as a layout would, text fit to a new room measured anew.
+        // The box is arranged again around what it now holds, as a layout would.
         for (UInt32 Pass = 0; Pass < kPasses; ++Pass)
         {
             Target.Marks[Row] |= Dirty::Arrange;
@@ -120,7 +115,6 @@ namespace ZyPlugin::UI
         }
         Requeue(Target);
 
-        // A font still loading is measured again by the next layout, once it has.
         for (const UInt32 Waiting : mWaiting)
         {
             Target.Marks[Waiting] |= Dirty::Measure;
@@ -184,7 +178,6 @@ namespace ZyPlugin::UI
             }
         }
 
-        // Boxes moved, so every reach is worked out again at the next paint.
         Target.Moved = true;
     }
 
@@ -205,7 +198,6 @@ namespace ZyPlugin::UI
             Requeue(Target);
         }
 
-        // Every row measured or arranged was marked to have its reach worked out again.
         Target.Touched = true;
     }
 
@@ -214,7 +206,7 @@ namespace ZyPlugin::UI
 
     void Layout::Survey(Ref<Pane> Target)
     {
-        // Walked backward so children come first; what a row asks of its parent waits at its depth until the parent.
+        // Walked backward so children come first, and what a row asks of its parent waits at its depth.
         mClimb.Clear();
 
         for (UInt32 Row = Target.GetSize(); Row-- > 0;)
@@ -234,7 +226,6 @@ namespace ZyPlugin::UI
                 mClimb[Depth + 1] = Dirty::None;
             }
 
-            // Most rows are marked for nothing the layout does, and are passed over at once.
             if (!HasAnyBit(Bits, kAsked | kSought))
             {
                 continue;
@@ -257,7 +248,6 @@ namespace ZyPlugin::UI
                 Target.Marks[Row] = Bits;
             }
 
-            // Every row holding one to arrange is walked through by the sweep to reach it.
             if (HasAnyBit(Bits, kSought))
             {
                 mClimb[Depth] |= Dirty::Below;
@@ -276,7 +266,6 @@ namespace ZyPlugin::UI
         // What a row draws of its own moves only with its frame, which the sweep tells, its text, or its box.
         Target.Marks[Row] = ClearBit(Bits, kAsked) | Dirty::Arrange | ((Told || Words) ? Dirty::Paint : Dirty::None);
 
-        // New text is measured unbroken first, as a whole layout does.
         if (Told && Words)
         {
             Target.Rooms[Row] = Vector2();
@@ -297,7 +286,7 @@ namespace ZyPlugin::UI
             return Dirty::None;
         }
 
-        // A told change may alter the parent's layout whatever the size; otherwise only a new size reaches the parent.
+        // A told change may alter the parent's layout whatever the size, otherwise only a new size reaches it.
         return (Told || Target.Sizes[Row] != Before) ? Dirty::Resize : Dirty::None;
     }
 
@@ -388,7 +377,7 @@ namespace ZyPlugin::UI
                     Text->Measured = Digest;
                     Text->Limit    = (Width > 0.0f && Text->Size > 0.0f) ? Width / Text->Size : kMaximum<Real32>;
 
-                    // Glyphs are placed again only when the lines or font changed; unbroken lines reuse the digest.
+                    // Glyphs are placed again only when the lines or font changed, and unbroken lines reuse the digest.
                     const Bool   Unbroken = (Text->Lines == Text->Content);
                     const UInt64 Lined    = Unbroken ? Words : Text->Lines.Hash();
                     const UInt64 Stamp    = HashCombine(Lined, Typeface);
@@ -418,7 +407,6 @@ namespace ZyPlugin::UI
             }
         }
 
-        // What flows in the element lines up along its axis, starting a new line where it wraps past its room.
         const Real32 Room = Along ? Target.Rooms[Row].GetX() : Target.Rooms[Row].GetY();
         const Bool   Wrap = Shape.Wrap && Room > 0.0f;
 
@@ -463,8 +451,8 @@ namespace ZyPlugin::UI
         const Vector2          Children = Along ? Vector2(Main, Side) : Vector2(Side, Main);
         const Real32           Asked    = (Roll && Roll->Horizontal) ? 0.0f : Max(Content.GetX(), Children.GetX());
         const Real32           Wide     = Asked + Shape.Padding.Left + Shape.Padding.Right;
-        const Real32           Tall     = Max(Content.GetY(), Children.GetY()) + Shape.Padding.Top +
-                                          Shape.Padding.Bottom;
+        const Real32           High     = Max(Content.GetY(), Children.GetY());
+        const Real32           Tall     = High + Shape.Padding.Top + Shape.Padding.Bottom;
 
         // A share of the parent is unknown until the parent is placed, so here it asks only for its content.
         Target.Sizes[Row] = Vector2(Shape.Width.Ask(Wide), Shape.Height.Ask(Tall));
@@ -490,11 +478,14 @@ namespace ZyPlugin::UI
         const Bool Along  = (Shape.Flow == Direction::Row);
 
         // One scrolling sideways lays its content out as wide as it asks, when that is wider than the element.
-        const Real32  Wide   = (Roll && Roll->Horizontal && !Shape.Wrap) ? Breadth(Target, Row) : 0.0f;
-        const Rect    Inner  = Wide > Padded.GetWidth()
-            ? Rect(Padded.GetMinimumX(), Padded.GetMinimumY(), Padded.GetMinimumX() + Wide, Padded.GetMaximumY())
-            : Padded;
-        const Vector2 Room   = Inner.GetSize();
+        const Real32 Wide  = (Roll && Roll->Horizontal && !Shape.Wrap) ? Breadth(Target, Row) : 0.0f;
+        Rect         Inner = Padded;
+
+        if (Wide > Padded.GetWidth())
+        {
+            Inner = Rect(Padded.GetMinimumX(), Padded.GetMinimumY(), Padded.GetMinimumX() + Wide, Padded.GetMaximumY());
+        }
+        const Vector2 Room = Inner.GetSize();
 
         // What was fit to the room of the pass before is fit again when the room changed, unless its lines would hold.
         const ConstPtr<Caption> Text   = mTree.Peek<Caption>(Slot);
@@ -520,7 +511,6 @@ namespace ZyPlugin::UI
         Real32 Right     = Inner.GetMinimumX();
         UInt32 Cursor    = Row + 1;
 
-        // Each pass of the loop gathers one line of children, the whole flow when the element does not wrap.
         while (Cursor < End)
         {
             UInt32 Rest   = End;
@@ -619,9 +609,8 @@ namespace ZyPlugin::UI
                 ConstRef<Length> Across = Along ? Next.Height : Next.Width;
                 const Real32     Space  = LineSide - SideOf(Along, Margin);
                 const Real32     Wanted = Along ? Size.GetY() : Size.GetX();
-                const Real32     Thick  = (Across.IsAuto() && Shape.Items == Align::Stretch)
-                    ? Max(Space, 0.0f)
-                    : Across.Resolve(RoomSide, Wanted);
+                const Bool       Fills  = Across.IsAuto() && Shape.Items == Align::Stretch;
+                const Real32     Thick  = Fills ? Max(Space, 0.0f) : Across.Resolve(RoomSide, Wanted);
 
                 Real32 Offset = 0.0f;
 
@@ -637,9 +626,9 @@ namespace ZyPlugin::UI
                 const Real32 Start = LineStart + Offset + (Along ? Margin.Top : Margin.Left);
                 const Real32 Lead  = Pen + (Along ? Margin.Left : Margin.Top);
 
-                const Rect Placed = Along
-                    ? Rect(Lead, Start, Lead + Extent, Start + Thick)
-                    : Rect(Start, Lead, Start + Thick, Lead + Extent);
+                const Vector2 Corner = Along ? Vector2(Lead, Start) : Vector2(Start, Lead);
+                const Vector2 Reach  = Along ? Vector2(Extent, Thick) : Vector2(Thick, Extent);
+                const Rect    Placed = Rect(Corner, Corner + Reach);
 
                 Target.Frames[Child] = Placed;
                 Bottom    = Max(Bottom, Placed.GetMaximumY() + Margin.Bottom);
@@ -651,17 +640,14 @@ namespace ZyPlugin::UI
             Cursor     = Rest;
         }
 
-        // The offset is held within the content now its size is known; moving the placed children moves all they hold.
+        // The offset is held within the content now its size is known, which moves all the children hold.
         if (Roll)
         {
-            const Real32 Limit  = Max(Bottom - Inner.GetMinimumY() - Room.GetY(), 0.0f);
-            const Real32 LimitX = Roll->Horizontal ? Max(Right - Inner.GetMinimumX() - Padded.GetWidth(), 0.0f) : 0.0f;
-
             Roll->Overflow  = Bottom - Inner.GetMinimumY();
-            Roll->Offset    = Roll->Follow ? Limit : Clamp(Roll->Offset, 0.0f, Limit);
             Roll->OverflowX = Right - Inner.GetMinimumX();
-            Roll->OffsetX   = Clamp(Roll->OffsetX, 0.0f, LimitX);
             Roll->View      = Padded.GetSize();
+            Roll->Offset    = Roll->Follow ? Roll->GetLimit() : Clamp(Roll->Offset, 0.0f, Roll->GetLimit());
+            Roll->OffsetX   = Roll->Horizontal ? Clamp(Roll->OffsetX, 0.0f, Roll->GetLimitX()) : 0.0f;
 
             if (Roll->Offset > 0.0f || Roll->OffsetX > 0.0f)
             {
@@ -726,7 +712,7 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // Only a width the child sets is its own; one taken as a share of the room cannot widen the room.
+            // Only a width the child sets is its own, as one taken as a share of the room cannot widen it.
             const Real32 Asked = Inner.Width.Measure == Length::Unit::Percent ? 0.0f : Target.Sizes[Child].GetX();
             const Real32 Outer = Asked + Inner.Margin.Left + Inner.Margin.Right;
 
@@ -784,7 +770,7 @@ namespace ZyPlugin::UI
         Ref<Real32>      Start,
         Ref<Real32>      End)
     {
-        // Pinned on both sides it stretches between them unless its size is set; the margin pushes it off its edge.
+        // Pinned on both sides it stretches between them unless sized, and the margin pushes it off its edge.
         const Real32 Room   = Maximum - Minimum;
         const Real32 Head   = Lead.Resolve(Room, 0.0f) + Before;
         const Real32 Tail   = Trail.Resolve(Room, 0.0f) + After;

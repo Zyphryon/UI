@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "UI.Core/Paint/Canvas.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -26,12 +25,13 @@ namespace ZyPlugin::UI
     {
         Stretch,     ///< Stretched over the whole box, whatever its shape.
         Contain,     ///< As large as fits whole within the box, its shape kept, in the middle of the box.
+        Cover,       ///< As small as fills the whole box, its shape kept, cut to the box around its middle.
     };
 
     /// \brief Represents the image an element shows over its box, loaded from the content or any texture of the GPU.
     struct Picture final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Measure | Dirty::Paint;
 
         /// The image shown over the element's box, which wins over \ref Texture while it holds one.
@@ -55,16 +55,16 @@ namespace ZyPlugin::UI
         /// The slice shown of an image or a texture that is an array.
         UInt16                     Layer   = 0;
 
-        /// How the image is read between its texels, where pixel art and tiles want the nearest.
+        /// The filter the image is read with between its texels, where pixel art and tiles want the nearest.
         Canvas::Filter             Filter  = Canvas::Filter::Linear;
 
-        /// How the image fills the box, where only an image of a known size keeps its shape.
+        /// The way the image fills the box, where only an image of a known size keeps its shape.
         UI::Fit                    Fit     = UI::Fit::Stretch;
 
-        /// `true` to show the image's colour alone with its alpha taken as whole, as a target whose alpha holds data.
+        /// `true` to show the image's colour alone with its alpha taken as whole, `false` to blend by its alpha.
         Bool                       Opaque  = false;
 
-        /// `true` to show the image upside down, its last row at the top.
+        /// `true` to show the image upside down, its last row at the top, `false` to show it as stored.
         Bool                       Flip    = false;
     };
 }

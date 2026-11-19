@@ -11,11 +11,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Label.hpp"
-#include "UI.Core/Element.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -53,9 +50,7 @@ namespace ZyPlugin::UI
     void Label::SetText(Element Target, Text Content)
     {
         // Text told again as it stands marks nothing, so a game may set it every frame for free.
-        const Ptr<Caption> Words = Target.Get<Caption>();
-
-        if (Words && Words->Content != Content)
+        if (const Ptr<Caption> Words = Target.Get<Caption>(); Words && Words->Content != Content)
         {
             Words->Content = Content;
             Target.GetTree().Mark(Target.GetHandle(), Caption::kMarks);

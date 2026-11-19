@@ -11,16 +11,10 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Focus.hpp"
-#include "Dispatcher.hpp"
-#include "Pointer.hpp"
 #include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Input/Keymap.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Pane.hpp"
-#include "UI.Core/Shortcut.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -125,15 +119,15 @@ namespace ZyPlugin::UI
         }
 
         // An element not laid out yet has no frame, so it is brought into view once the layout gives it one.
-        if (mTree.GetFrame(Element).IsEmpty())
+        Rect Box = mTree.GetFrame(Element);
+
+        if (Box.IsEmpty())
         {
             mRevealed = Element;
             return;
         }
 
         // Each scroll moves the box as the next one out sees it, so an element deep in nested scrolls comes out whole.
-        Rect Box = mTree.GetFrame(Element);
-
         for (Handle Current = mTree.GetParent(Element); Current.IsValid(); Current = mTree.GetParent(Current))
         {
             const ConstPtr<Scroll> Found = mTree.Get<Scroll>(Current);
@@ -147,13 +141,15 @@ namespace ZyPlugin::UI
             const Rect    Seen(Corner, Corner + Found->View);
 
             const Real32 Down   = Nudge(Box.GetMinimumY(), Box.GetMaximumY(), Seen.GetMinimumY(), Seen.GetMaximumY());
-            const Real32 Across = Found->Horizontal
-                ? Nudge(Box.GetMinimumX(), Box.GetMaximumX(), Seen.GetMinimumX(), Seen.GetMaximumX())
-                : 0.0f;
+            Real32       Across = 0.0f;
 
-            const Real32 Offset = Clamp(Found->Offset + Down, 0.0f, Max(Found->Overflow - Found->View.GetY(), 0.0f));
-            const Real32 OffsetX = Clamp(Found->OffsetX + Across, 0.0f,
-                                         Max(Found->OverflowX - Found->View.GetX(), 0.0f));
+            if (Found->Horizontal)
+            {
+                Across = Nudge(Box.GetMinimumX(), Box.GetMaximumX(), Seen.GetMinimumX(), Seen.GetMaximumX());
+            }
+
+            const Real32 Offset  = Clamp(Found->Offset + Down, 0.0f, Found->GetLimit());
+            const Real32 OffsetX = Clamp(Found->OffsetX + Across, 0.0f, Found->GetLimitX());
 
             // Edited only when it moves, since an edit lays the pane out again.
             if (Offset != Found->Offset || OffsetX != Found->OffsetX)
@@ -233,7 +229,7 @@ namespace ZyPlugin::UI
 
     Bool Focus::OnKeyDown(ZyInput::Key Key, ZyInput::Modifier Modifiers, Bool Repeat)
     {
-        // A module's gesture may take the key first, as escape letting go of what is carried does, then a shortcut may.
+        // A module's gesture may take the key first, as escape dropping what is carried does, then a shortcut.
         return mPointer.OnKey(Key) || Answer(Key, Modifiers, Repeat) || Deliver(Key, Modifiers);
     }
 
@@ -383,7 +379,7 @@ namespace ZyPlugin::UI
         }
         else if (!mDispatcher.IsUsable(mFocused))
         {
-            // With nothing focused, tab starts moving the keyboard and escape closes a popup; the rest reach the game.
+            // With nothing focused, tab starts moving the keyboard and escape closes a popup.
             Set(Handle());
             return (Key == ZyInput::Key::Tab && Cycle(!Backward)) || (Key == ZyInput::Key::Escape && Retreat());
         }
@@ -404,7 +400,6 @@ namespace ZyPlugin::UI
 
     Bool Focus::OnKeyType(Text Content)
     {
-        // Typing reaches no control a modal pane stands over.
         if (const Handle Modal = mDispatcher.GetModal(); Modal.IsValid() && !mDispatcher.IsOpenedFrom(mFocused, Modal))
         {
             return true;
@@ -427,7 +422,7 @@ namespace ZyPlugin::UI
 
     Bool Focus::Steer(ZyInput::Key Key, ZyInput::Modifier Modifiers, Handle Target)
     {
-        // Under a modal pane the keyboard may stand behind it; then only moving into the pane or closing it is done.
+        // Under a modal pane the keyboard may stand behind it, where only entering or closing the pane is done.
         const Bool Held = (Target == mFocused);
 
         switch (Key)
@@ -481,7 +476,6 @@ namespace ZyPlugin::UI
             ConstRef<Pane> Target = mTree.GetPane(Order[Index]);
             const Handle   Root   = mTree.GetHandle(Target.Slots[0]);
 
-            // Tooltips, ghosts and the backdrop never take the keyboard.
             if (Target.Band.Has(Layer::Trait::Overlay) || Root == mDispatcher.GetBackdrop() || Target.IsHidden(0))
             {
                 continue;
@@ -628,7 +622,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Handle Focus::Toward(ConstRef<Sequence<Handle>> Candidates, Rect From, Heading Way) const
+    Handle Focus::Toward(ConstSpan<Handle> Candidates, Rect From, Heading Way) const
     {
         Handle Best;
         Real32 Score = 0.0f;
@@ -644,7 +638,7 @@ namespace ZyPlugin::UI
             Real32     Across = 0.0f;
             const Bool Ahead  = Gauge(From, mTree.GetFrame(Candidate), Way, Along, Across);
 
-            // Only what stands past the edge counts; one in line beats any off it, where straying weighs double.
+            // Only what stands past the edge counts, and one in line beats any off it, where straying weighs double.
             const Real32 Weight = Along + Across * 2.0f + (Across > 0.0f ? kBeam : 0.0f);
 
             if (Ahead && (!Best.IsValid() || Weight < Score))
@@ -710,9 +704,9 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // Only a popup, or a modal pane no popup stands over, is closed; a window in front is left alone.
-            const Bool Popped = Target.Band.Has(Layer::Trait::Popup) || mDispatcher.IsOwned(Root) ||
-                               mPointer.IsSummoned(Root);
+            // Only a popup, or a modal pane no popup stands over, is closed, and a window in front is left alone.
+            const Bool Opened = Target.Band.Has(Layer::Trait::Popup) || mDispatcher.IsOwned(Root);
+            const Bool Popped = Opened || mPointer.IsSummoned(Root);
 
             if (!Popped && !Target.Band.Has(Layer::Trait::Modal))
             {
@@ -725,7 +719,6 @@ namespace ZyPlugin::UI
 
             mTree.SetState(Root, State::Hidden, true);
 
-            // The keyboard held in what closed goes back to what opened it.
             if (Inside)
             {
                 Set(mDispatcher.IsUsable(Opener) ? Opener : Handle());
@@ -750,7 +743,7 @@ namespace ZyPlugin::UI
             }
 
             const Real32 View  = Found->View.GetY();
-            const Real32 Limit = Max(Found->Overflow - View, 0.0f);
+            const Real32 Limit = Found->GetLimit();
             Real32       Offset;
 
             switch (Key)
@@ -769,7 +762,7 @@ namespace ZyPlugin::UI
                 break;
             }
 
-            // Edited only when it moves, since an edit lays the pane out again; the end keeps following a log.
+            // Edited only when it moves, since an edit lays the pane out again, and the end keeps following a log.
             if (Offset = Clamp(Offset, 0.0f, Limit); Offset != Found->Offset)
             {
                 const Ptr<Scroll> Moved = mTree.Edit<Scroll>(Current);
@@ -809,9 +802,9 @@ namespace ZyPlugin::UI
         const Bool    Vertical = (Way == Heading::Up || Way == Heading::Down);
 
         // Boxes overlapping across the way moved, as buttons over a wide field, stand in line whatever their sizes.
-        const Bool Overlap = Vertical
-            ? To.GetMinimumX() < From.GetMaximumX() && To.GetMaximumX() > From.GetMinimumX()
-            : To.GetMinimumY() < From.GetMaximumY() && To.GetMaximumY() > From.GetMinimumY();
+        const Bool SharesX = To.GetMinimumX() < From.GetMaximumX() && To.GetMaximumX() > From.GetMinimumX();
+        const Bool SharesY = To.GetMinimumY() < From.GetMaximumY() && To.GetMaximumY() > From.GetMinimumY();
+        const Bool Overlap = Vertical ? SharesX : SharesY;
 
         Across = Overlap ? 0.0f : Abs(Vertical ? Gap.GetX() : Gap.GetY());
 

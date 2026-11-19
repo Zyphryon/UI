@@ -26,7 +26,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an element its interface remembers by a key, so one made again takes back how it was left.
     struct Recall final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The identifier of the key the element is remembered by.
@@ -35,10 +35,10 @@ namespace ZyPlugin::UI
         /// The scroll, right and down in pixels, the element is brought back to once what it holds reaches that far.
         Vector2 Wanted;
 
-        /// The scroll seen at the last update while it waited, so a move the user makes ends the wait.
+        /// The scroll it stood at when it was held, so a move the user makes ends the wait.
         Vector2 Seen;
 
-        /// `true` while the element waits for what it holds to reach the scroll it is brought back to.
+        /// `true` while the element waits for what it holds to reach the scroll it is brought back to, `false` after.
         Bool    Restoring = false;
     };
 
@@ -63,13 +63,13 @@ namespace ZyPlugin::UI
         /// \brief Keeps whether an element remembered by a key is open, as an expander does when it turns.
         ///
         /// \param Target The element, which keeps nothing when it is remembered by no key.
-        /// \param Opened The flag, `true` when it is open, `false` when it is closed.
+        /// \param Opened `true` when it is open, `false` when it is closed.
         static void SetOpened(Element Target, Bool Opened);
 
         /// \brief Finds whether an element remembered by a key was left open.
         ///
         /// \param Target The element, remembered by the key it was held under.
-        /// \param Output The flag receiving `true` when it was left open, `false` when it was left closed.
+        /// \param Output Receives `true` when it was left open, `false` when it was left closed.
         /// \return `true` if the key remembers an open state, `false` when the element is new to it.
         static Bool FindOpened(Element Target, Ref<Bool> Output);
 
@@ -84,10 +84,10 @@ namespace ZyPlugin::UI
         /// \brief Holds what an interface remembers, by the identifier of each key.
         struct Store final
         {
-            /// Whether each element remembered was left open.
+            /// The open state each element remembered was left in.
             Table<Digest, Bool>    Opened;
 
-            /// How far each element remembered was left scrolled, right and down in pixels.
+            /// The scroll each element remembered was left at, right and down in pixels.
             Table<Digest, Vector2> Scrolled;
         };
 

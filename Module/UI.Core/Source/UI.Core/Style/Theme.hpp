@@ -13,9 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Animation.hpp"
-#include "Skin.hpp"
 #include "Style.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -53,7 +51,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Name    The identifier of the style the element wears.
         /// \param Current The states the element is in, which pick the variants worn.
-        /// \param Output  The receiver of the skin, left untouched when no style has the name.
+        /// \param Output  Receives the skin, left untouched when no style has the name.
         /// \return `true` if a style has the name, `false` otherwise.
         Bool Resolve(UInt64 Name, State Current, Ref<Skin> Output) const;
 
@@ -107,7 +105,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Name    The identifier of the style to gather.
         /// \param Current The states the element is in, which pick the variants worn.
-        /// \param Output  The receiver of the values, merged over what the styles before gave.
+        /// \param Output  Receives the values, merged over what the styles before gave.
         /// \param Depth   The number of styles deep the chain already is, which stops a loop at \ref kMaxDepth.
         /// \return `true` if a style has the name, `false` otherwise.
         Bool Gather(UInt64 Name, State Current, Ref<Skin> Output, UInt32 Depth) const;

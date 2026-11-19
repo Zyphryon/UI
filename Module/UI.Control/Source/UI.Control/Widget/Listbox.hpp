@@ -12,13 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Datum.hpp"
-#include "UI.Data/Path.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -30,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents what a list, or a widget keeping one, has picked, and the parts it is made of.
     struct Choice final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The item picked, or one naming nothing.
@@ -49,10 +42,10 @@ namespace ZyPlugin::UI
     /// \brief Represents where the items of a list come from when each stands for a record of a list of the model.
     struct Listing final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
-        /// The path of the list of records from the root, as the items were first bound to it, as `Assets.Kinds`.
+        /// The path of the list of records from the root, as `Assets.Kinds`.
         Str    Source;
 
         /// The text each item shows, read in its record, as `{Name}` or `{Icon}  {Name}`.
@@ -158,8 +151,8 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The interface it stands in.
         /// \param Self   The list or the widget, which hears the change.
-        /// \param Offset The places to move, below nought to move up; with none picked, the first or last item is.
-        /// \return `true` if another item was picked, `false` otherwise, as when the move would run past either end.
+        /// \param Offset The places to move, below nought to move up, counted from past an end while none is picked.
+        /// \return `true` if another item was picked, `false` when the move would run past either end.
         static Bool Step(Ref<Interface> Owner, Handle Self, SInt32 Offset);
 
     private:
@@ -175,15 +168,14 @@ namespace ZyPlugin::UI
         /// \param Owner The list or the widget whose items are made, every item it held before going.
         static void Remake(Element Owner);
 
-        /// \brief Finds the path of a record a list's items stand for, as its own binding of the records reads it now.
+        /// \brief Finds the path of the records a list's items stand for.
         ///
         /// \param Owner  The list or the widget whose records are bound.
-        /// \param Record The position of the record.
-        /// \param Output The variable receiving the path of the record.
+        /// \param Output Receives the path of the first record, whose last step indexes the records.
         /// \return `true` if the records are bound, `false` otherwise.
-        static Bool Locate(Element Owner, UInt32 Record, Ref<Path> Output);
+        static Bool Locate(Element Owner, Ref<Path> Output);
 
-        /// \brief Checks whether an item can be picked by the keyboard, as one that is neither hidden nor disabled.
+        /// \brief Checks whether an item is neither hidden nor disabled.
         ///
         /// \param Item The item to check.
         /// \return `true` if it can, `false` otherwise.

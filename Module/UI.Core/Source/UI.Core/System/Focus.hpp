@@ -12,12 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Dispatcher.hpp"
 #include "Pointer.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Shortcut.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -78,9 +73,7 @@ namespace ZyPlugin::UI
 
         /// \brief Scrolls every scrolling element holding an element so the element stands in its view.
         ///
-        /// \note An element not laid out yet is kept, and brought into view by \ref Settle once it is.
-        ///
-        /// \param Element The element brought into view.
+        /// \param Element The element brought into view, or kept for \ref Settle when it is not laid out yet.
         void Reveal(Handle Element);
 
         /// \brief Brings into view an element asked for before it was laid out, once a layout has placed it.
@@ -110,7 +103,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Key       The key pressed.
         /// \param Modifiers The modifier keys held with it, as shift turns tab backward.
-        /// \param Repeat    The flag, `true` when the key repeats as it is held, `false` when it went down.
+        /// \param Repeat    `true` when the key repeats as it is held, `false` when it went down.
         /// \return `true` if the key was taken or moved the keyboard, `false` otherwise.
         Bool OnKeyDown(ZyInput::Key Key, ZyInput::Modifier Modifiers = ZyInput::Modifier::None, Bool Repeat = false);
 
@@ -143,7 +136,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Key       The key pressed.
         /// \param Modifiers The modifier keys held with it.
-        /// \param Repeat    The flag, `true` when the key repeats as it is held.
+        /// \param Repeat    `true` when the key repeats as it is held, `false` when it went down.
         /// \return `true` if a shortcut took the key, `false` otherwise.
         Bool Answer(ZyInput::Key Key, ZyInput::Modifier Modifiers, Bool Repeat);
 
@@ -153,7 +146,7 @@ namespace ZyPlugin::UI
         /// \param Owner     The element keeping it, or one naming nothing for the interface's own.
         /// \param Key       The key pressed.
         /// \param Modifiers The modifier keys of shift, control and alt held with it.
-        /// \param Repeat    The flag, `true` when the key repeats as it is held.
+        /// \param Repeat    `true` when the key repeats as it is held, `false` when it went down.
         /// \return `true` if it does, `false` otherwise.
         Bool Answers(ConstRef<Shortcut> Entry,
                      Handle             Owner,
@@ -186,12 +179,12 @@ namespace ZyPlugin::UI
         /// \brief Gathers the innermost controls of a pane the keyboard stops at, in layout order.
         ///
         /// \param Root   The root of the pane, which is never one of them.
-        /// \param Output The receiver of the controls, added to those it held.
+        /// \param Output Receives the controls, added to those it held.
         void Gather(Handle Root, Ref<Sequence<Handle>> Output) const;
 
         /// \brief Moves the keyboard to the next or the previous control of the pane it moves within.
         ///
-        /// \param Forward The flag, `true` to move to the next control, `false` to the previous one.
+        /// \param Forward `true` to move to the next control, `false` to the previous one.
         /// \return `true` if a control took the keyboard, `false` otherwise.
         Bool Cycle(Bool Forward);
 
@@ -207,7 +200,7 @@ namespace ZyPlugin::UI
         /// \param From       The box moved from, in pixels of the target.
         /// \param Way        The way on screen to move toward.
         /// \return The control, or one naming nothing when none stands that way.
-        Handle Toward(ConstRef<Sequence<Handle>> Candidates, Rect From, Heading Way) const;
+        Handle Toward(ConstSpan<Handle> Candidates, Rect From, Heading Way) const;
 
         /// \brief Clicks a control as the pointer would, pressing and releasing it over itself.
         ///
@@ -239,8 +232,8 @@ namespace ZyPlugin::UI
         /// \param From   The box moved from.
         /// \param To     The box moved to.
         /// \param Way    The way on screen moved toward.
-        /// \param Along  The receiver of the gap between the edges facing each other, in pixels.
-        /// \param Across The receiver of how far apart their middles stand across that way.
+        /// \param Along  Receives the gap between the edges facing each other, in pixels.
+        /// \param Across Receives how far apart their middles stand across that way.
         /// \return `true` if the middle of the box stands past the far edge of the other, `false` otherwise.
         static Bool Gauge(Rect From, Rect To, Heading Way, Ref<Real32> Along, Ref<Real32> Across);
 

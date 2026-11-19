@@ -13,11 +13,9 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Facet.hpp"
-#include "Facet/Layout/Box.hpp"
 #include "Handle.hpp"
 #include "Pane.hpp"
 #include "Service.hpp"
-#include "Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -91,10 +89,11 @@ namespace ZyPlugin::UI
         {
             const UInt32 Slot = Element.GetSlot();
 
-            return Element.IsValid()
-                && Slot < mSlots.GetSize()
-                && mSlots[Slot].Pane != kFree
-                && mSlots[Slot].Generation == Element.GetGeneration();
+            if (!Element.IsValid() || Slot >= mSlots.GetSize())
+            {
+                return false;
+            }
+            return mSlots[Slot].Pane != kFree && mSlots[Slot].Generation == Element.GetGeneration();
         }
 
         /// \brief Changes the identifier an element is found by.
@@ -174,7 +173,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Element The element whose states change, which must be alive.
         /// \param Bits    The states to turn on or off.
-        /// \param Enabled The flag, `true` to turn them on, `false` to turn them off.
+        /// \param Enabled `true` to turn them on, `false` to turn them off.
         void SetState(Handle Element, State Bits, Bool Enabled);
 
         /// \brief Checks whether an element is in every one of some states.
@@ -518,7 +517,7 @@ namespace ZyPlugin::UI
         /// \brief Represents one change held back until the running walk ends.
         struct Change final
         {
-            /// What the change does to the element.
+            /// The operation the change does to the element.
             Operation Kind = Operation::Destroy;
 
             /// The element the change is about.

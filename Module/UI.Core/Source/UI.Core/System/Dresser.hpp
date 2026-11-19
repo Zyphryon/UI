@@ -13,13 +13,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Animator.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Pane.hpp"
-#include "UI.Core/Style/Skin.hpp"
 #include "UI.Core/Style/Style.hpp"
 #include "UI.Core/Style/Theme.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -83,11 +78,11 @@ namespace ZyPlugin::UI
         /// \brief Represents a row whose descendants take its states, for a walk that dresses a pane.
         struct Owner final
         {
-            /// One past the last row it holds.
-            UInt32 End;
+            /// The row past the last one it holds.
+            UInt32 End  = 0;
 
             /// The states its descendants take.
-            State  Bits;
+            State  Bits = State::None;
         };
 
         /// \brief Gives an element the values a skin gives.

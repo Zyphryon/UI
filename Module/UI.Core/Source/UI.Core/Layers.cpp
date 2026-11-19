@@ -47,7 +47,7 @@ namespace ZyPlugin::UI
         {
             return false;
         }
-        Output = Entries[static_cast<UInt>(Found)].Value;
+        Output = Entries[Found].Value;
         return true;
     }
 

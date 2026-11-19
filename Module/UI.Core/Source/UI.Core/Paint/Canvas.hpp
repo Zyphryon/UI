@@ -95,7 +95,7 @@ namespace ZyPlugin::UI
             /// The radius, material, blur, angle or slice, and the code holding the transform, form and opacity.
             Array<UInt16, 4> Shape;
 
-            /// How far the quad stands, from nought nearest to one, which only a canvas drawing with depth sets.
+            /// The depth the quad stands at, from nought nearest to one, which only a canvas drawing with depth sets.
             Real32           Depth = 0.0f;
         };
 
@@ -126,7 +126,7 @@ namespace ZyPlugin::UI
                 /// The way the quad's texture is read.
                 Filter            Sampling = Filter::Linear;
 
-                /// `true` when the quad's batch was opened to stand at the clip with the scissor.
+                /// `true` when the quad's batch was opened to stand at the clip with the scissor, `false` otherwise.
                 Bool              Uncut    = false;
             };
 
@@ -176,10 +176,10 @@ namespace ZyPlugin::UI
             /// The transform the part was drawn under, which must stand again for the tape to be replayed.
             Matrix3x2                 Turn;
 
-            /// `true` when the part was drawn under a transform.
+            /// `true` when the part was drawn under a transform, `false` otherwise.
             Bool                      Turned  = false;
 
-            /// `true` when the tape holds the pane as it was last drawn, and nothing in it draws anew each frame.
+            /// `true` when the tape holds the pane as it was last drawn, `false` when it must be recorded again.
             Bool                      Valid   = false;
         };
 
@@ -195,16 +195,16 @@ namespace ZyPlugin::UI
             /// The slice of an array read.
             UInt16                   Layer          = 0;
 
-            /// How it is read between its texels.
+            /// The filter it is read with between its texels.
             Filter                   Filter         = Filter::Linear;
 
-            /// `true` to show its colour alone with its alpha taken as whole, as a target whose alpha holds data.
+            /// `true` to show its colour alone with its alpha taken as whole, `false` to blend by its alpha.
             Bool                     Opaque         = false;
 
-            /// `true` to read its colour as already scaled by its alpha, as a target that light was added onto.
+            /// `true` to read its colour as already scaled by its alpha, `false` to scale it.
             Bool                     Premultiplied  = false;
 
-            /// `true` to read it upside down, its last row at the top.
+            /// `true` to read it upside down, its last row at the top, `false` to read it as stored.
             Bool                     Flip           = false;
         };
 
@@ -252,7 +252,7 @@ namespace ZyPlugin::UI
 
         /// \brief Draws every opaque quad first, nearest first, keeping its depth, so nothing under it is shaded.
         ///
-        /// \param Enabled The flag, `true` to draw with depth, `false` to draw every quad in order as it was asked.
+        /// \param Enabled `true` to draw with depth, `false` to draw every quad in order as it was asked.
         ZY_INLINE void SetDepth(Bool Enabled)
         {
             if (mDepth != Enabled)
@@ -495,7 +495,7 @@ namespace ZyPlugin::UI
         /// \param Points The points, in pixels, in the order the lines join them.
         /// \param Tint   The colour of the lines.
         /// \param Width  The thickness of the lines, in pixels.
-        /// \param Closed The flag, `true` to join the last point back to the first, `false` to leave the run open.
+        /// \param Closed `true` to join the last point back to the first, `false` to leave the run open.
         /// \param Ends   The way the ends of every line are drawn.
         void DrawPolyline(ConstSpan<Vector2> Points,
                           Color              Tint,
@@ -597,38 +597,6 @@ namespace ZyPlugin::UI
                         Color                                Tint,
                         ConstRef<ZyRender::FontEffect>       Effect = ZyRender::FontEffect());
 
-        /// \brief Gets the quads drawn since \ref Begin, as \ref End uploads them.
-        ///
-        /// \return The quads, in the order they were drawn.
-        ZY_INLINE ConstSpan<Quad> GetQuads() const
-        {
-            return ConstSpan(mQuads.GetData(), mCount);
-        }
-
-        /// \brief Gets the box a quad covers on the target, once its transform has moved it.
-        ///
-        /// \param Index The quad, in the order drawn.
-        /// \return The box around its part drawn, in pixels of the target.
-        Rect GetPlace(UInt32 Index) const;
-
-        /// \brief Gets the count of batches drawn since \ref Begin, each one command once \ref End runs.
-        ///
-        /// \return The count of batches.
-        ZY_INLINE UInt32 GetBatchCount() const
-        {
-            return static_cast<UInt32>(mBatches.GetSize());
-        }
-
-        /// \brief Gets how a batch reads the texture of the slot a kind of paint takes.
-        ///
-        /// \param Index The batch, in the order drawn.
-        /// \param Kind  The paint whose slot is asked about, where a colour or a glyph is always read linearly.
-        /// \return The filter the slot's sampler reads with.
-        ZY_INLINE Filter GetFilter(UInt32 Index, Paint Kind) const
-        {
-            return mBatches[Index].Filters[SlotOf(Kind)];
-        }
-
     private:
 
         /// \brief Defines the texture coordinates of a quad's edges, over 16 bits.
@@ -664,13 +632,13 @@ namespace ZyPlugin::UI
             /// The width of the atlas's distance range, in texture coordinates.
             Vector2 Range;
 
-            /// Unused, so the effect starts on the boundary the block aligns it to.
+            /// The room left unused, so the effect starts on the boundary the block aligns it to.
             Vector2 Padding;
 
             /// The colour of the outline, packed with red in the lowest byte.
             UInt32  Tint      = 0;
 
-            /// How far the outline is pushed past the stroke, in pixels of the target.
+            /// The distance the outline is pushed past the stroke, in pixels of the target.
             Real32  Offset    = 0.0f;
 
             /// The width of the outline as a share of the distance range.
@@ -679,7 +647,7 @@ namespace ZyPlugin::UI
             /// The width added to the outline, in pixels of the target.
             Real32  Bias      = 0.0f;
 
-            /// How much of the outline fades out, from nought to one.
+            /// The share of the outline that fades out, from nought to one.
             Real32  Blur      = 0.0f;
 
             /// The blend from the sharp distance at nought to the smooth one at one.
@@ -688,7 +656,7 @@ namespace ZyPlugin::UI
             /// The distance the stroke's edge sits at.
             Real32  Threshold = 0.0f;
 
-            /// Unused, so each element ends on the boundary the block aligns the next to.
+            /// The room left unused, so each element ends on the boundary the block aligns the next to.
             UInt32  Tail      = 0;
         };
 
@@ -698,7 +666,7 @@ namespace ZyPlugin::UI
             /// The textures of the atlas, image and layer slots, nought where no quad of the run claimed one.
             Array<ZyGraphic::Object, 3> Textures;
 
-            /// How the texture of each slot is read, which the run's first quad to claim the slot chose.
+            /// The filter the texture of each slot is read with, which the run's first quad to claim the slot chose.
             Array<Filter, 3>            Filters;
 
             /// The box the run is cut to, in pixels, which only turned quads and figures need narrower than the target.
@@ -726,7 +694,7 @@ namespace ZyPlugin::UI
             /// The count of quads of the run.
             UInt32 Count  = 0;
 
-            /// `true` when the run draws opaque quads nearest first, keeping their depth.
+            /// `true` when the run draws opaque quads nearest first, keeping their depth, `false` otherwise.
             Bool   Solid  = false;
         };
 
@@ -757,13 +725,29 @@ namespace ZyPlugin::UI
             /// The atlas page of the last glyph, or the maximum before the first.
             UInt32                   Page  = kMaximum<UInt32>;
 
-            /// `true` while the page's atlas has loaded and the clip lets something through.
+            /// `true` while the page's atlas has loaded and the clip lets something through, `false` otherwise.
             Bool                     Ready = false;
 
             /// \brief Draws one glyph where the font placed it.
             ///
             /// \param Placement The place the font gave the glyph, in font units, and where its atlas holds it.
             void operator()(ConstRef<ZyRender::Font::Placement> Placement);
+        };
+
+        /// \brief Represents how the lines of a stroke are drawn, in pixels of the target.
+        struct Pen final
+        {
+            /// The colour, packed, faded by how much thinner than a pixel the stroke was asked to be.
+            UInt32 Tint   = 0;
+
+            /// The half of the thickness, never under half a pixel.
+            Real32 Half   = 0.0f;
+
+            /// The distance each end stands past its point.
+            Real32 Reach  = 0.0f;
+
+            /// The radius each end is rounded to.
+            Real32 Radius = 0.0f;
         };
 
         /// \brief Resolves the technique variant the canvas draws with under the current colour space.
@@ -797,28 +781,12 @@ namespace ZyPlugin::UI
                     Color                          Tint,
                     ConstRef<ZyRender::FontEffect> Effect);
 
-        /// \brief Represents how the lines of a stroke are drawn, in pixels of the target.
-        struct Pen final
-        {
-            /// The colour, packed, faded by how much thinner than a pixel the stroke was asked to be.
-            UInt32 Tint   = 0;
-
-            /// Half the thickness, never under half a pixel.
-            Real32 Half   = 0.0f;
-
-            /// How far each end stands past its point.
-            Real32 Reach  = 0.0f;
-
-            /// The radius each end is rounded to.
-            Real32 Radius = 0.0f;
-        };
-
         /// \brief Makes the last batch the one the next quads land in, opening a new one when it must.
         ///
         /// \param Kind     The paint the quads are filled with, which names the slot their texture takes.
         /// \param Texture  The texture the quads sample, or nought for a colour.
         /// \param Sampling The way the texture is read between its texels.
-        /// \param Uncut    The flag, `true` when the quads cannot be cut to the clip on the spot, `false` otherwise.
+        /// \param Uncut    `true` when the quads cannot be cut to the clip on the spot, `false` otherwise.
         /// \return `true` if the quads can be drawn, `false` otherwise.
         Bool Open(Paint Kind, ZyGraphic::Object Texture, Filter Sampling = Filter::Linear, Bool Uncut = false);
 
@@ -848,7 +816,7 @@ namespace ZyPlugin::UI
         /// \param Start  The angle the run starts at, in radians.
         /// \param Sweep  The angle the run turns through, in radians, either way round.
         /// \param Steps  The count of lines.
-        /// \param Closed The flag, `true` when the run goes the whole way round, so no end of it is left open.
+        /// \param Closed `true` when the run goes the whole way round, so no end of it is left open, `false` otherwise.
         /// \param Brush  The way the lines are drawn.
         /// \param Ends   The way the open ends are drawn.
         void Trace(Vector2       Center,
@@ -959,7 +927,25 @@ namespace ZyPlugin::UI
         /// \return The transform's place in its block, nought for none.
         UInt32 ObtainTransform();
 
-    public:
+        /// \brief Gets the size of one pixel of the target in the units drawn in.
+        ///
+        /// \return The size, held finite however small the scale.
+        ZY_INLINE Real32 GetPixel() const
+        {
+            return 1.0f / Max(mScale, 1.0e-6f);
+        }
+
+        /// \brief Takes the next quad of the frame, growing the quads ahead in large steps.
+        ///
+        /// \return The quad, holding whatever an earlier frame left in it.
+        ZY_INLINE Ref<Quad> Claim()
+        {
+            if (mCount == mQuads.GetSize())
+            {
+                mQuads.Advance(Max<UInt>(mQuads.GetSize(), 256));
+            }
+            return mQuads[mCount++];
+        }
 
         /// \brief Gets the slot of a batch the texture of a kind of paint takes.
         ///

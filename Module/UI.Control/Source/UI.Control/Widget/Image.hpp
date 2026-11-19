@@ -113,13 +113,24 @@ namespace ZyPlugin::UI
         /// \brief Sets whether the picture's alpha is ignored, as a target whose alpha holds data.
         ///
         /// \param Target The image whose alpha is ignored or heeded.
-        /// \param Opaque The flag, `true` to show the colour alone, `false` to blend by the alpha.
+        /// \param Opaque `true` to show the colour alone, `false` to blend by the alpha.
         static void SetOpaque(Element Target, Bool Opaque);
 
         /// \brief Sets whether the picture is shown upside down.
         ///
         /// \param Target The image flipped or not.
-        /// \param Flip   The flag, `true` to show its last row at the top, `false` to show it as it is.
+        /// \param Flip   `true` to show its last row at the top, `false` to show it as it is.
         static void SetFlip(Element Target, Bool Flip);
+
+    private:
+
+        /// \brief Changes one field of an image's picture, marking the image only when the field held another value.
+        ///
+        /// \param Target The image whose picture changes, where an element holding no picture is left alone.
+        /// \param Field  The field of the picture to change.
+        /// \param Value  The value to give the field.
+        /// \param Marks  The work the change asks for, as measuring the image again for a new size.
+        template<typename Type>
+        static void Change(Element Target, Type Picture::* Field, Type Value, Dirty Marks);
     };
 }

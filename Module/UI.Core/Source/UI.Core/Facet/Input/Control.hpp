@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
 #include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -25,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an element that answers the pointer and the keyboard, as a widget or a part acting on its own.
     struct Control final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks       = Dirty::None;
 
         /// `true`, so the pointer stops at an element holding it.
@@ -43,16 +42,16 @@ namespace ZyPlugin::UI
         /// The identifier of the action the interface runs after the observers, or zero for none.
         UInt64            Action    = 0;
 
-        /// `true` when a press moves the keyboard to it.
+        /// `true` when a press moves the keyboard to it, `false` when it never takes the keyboard.
         Bool              Focusable = false;
 
-        /// `true` when every button presses, drags, releases and clicks it as the left one does, each held on its own.
+        /// `true` when every button presses, drags and clicks it as the left one does, `false` for the left alone.
         Bool              AnyButton = false;
 
-        /// `true` when it hears the pointer come over it, move over it and leave it, which no other control is told.
+        /// `true` when it hears the pointer come over it, move and leave, `false` when it is told none of those.
         Bool              Hover     = false;
 
-        /// `true` when it takes typed text, so the interface counts as typing while it holds the keyboard.
+        /// `true` when it takes typed text, so holding the keyboard counts as typing, `false` otherwise.
         Bool              Typing    = false;
     };
 }

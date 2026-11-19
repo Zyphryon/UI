@@ -45,7 +45,7 @@ namespace ZyPlugin::UI
         /// \brief Finds a band by its name, in any case.
         ///
         /// \param Name   The name to look for.
-        /// \param Output The receiver of the band.
+        /// \param Output Receives the band, left untouched when no band has the name.
         /// \return `true` if a band has that name, `false` otherwise.
         static Bool Find(Text Name, Ref<Layer> Output);
 

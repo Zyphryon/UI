@@ -41,7 +41,7 @@ namespace ZyPlugin::UI
 
         /// \brief Constructs a value holding a flag.
         ///
-        /// \param Value The flag, `true` to hold a set flag, `false` to hold a clear one.
+        /// \param Value `true` to hold a set flag, `false` to hold a clear one.
         Datum(Bool Value);
 
         /// \brief Constructs a value holding a number.
@@ -155,9 +155,9 @@ namespace ZyPlugin::UI
         /// \return The text, with a flag written `true` or `false` and nothing written for none.
         Str Print(SInt32 Decimals = -1) const;
 
-        /// \brief Writes the value as text at the end of a string, so a reused string writes many without allocating.
+        /// \brief Appends the value as text to a string.
         ///
-        /// \param Output   The receiver of the text, after what it held.
+        /// \param Output   Receives the text, after what it held.
         /// \param Decimals The digits a number keeps after the point, or below nought for up to four.
         void Print(Ref<Str> Output, SInt32 Decimals = -1) const;
 
@@ -180,12 +180,12 @@ namespace ZyPlugin::UI
         /// The most digits a number keeps after the point, past which a double holds nothing exact.
         static constexpr SInt32 kMaxDecimals   = 9;
 
-        /// The digits a number written without a format keeps at most, before the zeros ending them are dropped.
+        /// The most digits a number written without a format keeps, trailing zeros dropped.
         static constexpr UInt   kLooseDecimals = 4;
 
         /// \brief Writes a number as text at the end of a string.
         ///
-        /// \param Output   The receiver of the text, after what it held.
+        /// \param Output   Receives the text, after what it held.
         /// \param Value    The number written.
         /// \param Decimals The digits kept after the point, or below nought for up to four, trailing zeros dropped.
         static void PrintNumber(Ref<Str> Output, Real64 Value, SInt32 Decimals);
@@ -196,7 +196,6 @@ namespace ZyPlugin::UI
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Form   mForm;
-        Bool   mFlag;
         Real64 mNumber;
         Str    mWords;
         Color  mTint;

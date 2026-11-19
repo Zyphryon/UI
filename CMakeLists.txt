@@ -72,17 +72,3 @@ IF (ZY_UI_EXAMPLE)
     ZyApplyModules(${PROJECT_NAME}_Example)
 
 ENDIF (ZY_UI_EXAMPLE)
-
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-## Test
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-OPTION(ZY_UI_TEST "Build the tests of the interface" ${PROJECT_IS_TOP_LEVEL})
-
-IF (ZY_UI_TEST)
-
-    ZyAddTarget(${PROJECT_NAME}_Test EXECUTABLE SOURCE "Test/Source")
-
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME}_Test PRIVATE ${PROJECT_NAME})
-
-ENDIF (ZY_UI_TEST)

@@ -13,17 +13,7 @@
 #include "Tooltip.hpp"
 #include "Drag.hpp"
 #include "Facet/Hint.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/System/Dispatcher.hpp"
-#include "UI.Core/System/Pointer.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Data/Path.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -100,7 +90,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // A name the markup knows is a template; anything else is the text shown, which may name values.
+        // A name the markup knows is a template, and anything else is the text shown.
         const Text Content = Field->GetString();
 
         if (!Binder::IsBound(Content) && Reader.HasTemplate(Content))
@@ -141,7 +131,7 @@ namespace ZyPlugin::UI
         Gesture.Picked  = Pointer::Hook::OnPointer::Create<&Tooltip::OnPicked>();
         Target.GetCursor().AddHook(Move(Gesture));
 
-        // A tooltip due is made before anything is dressed, so it shows at once.
+        // Made before anything is dressed, so a due tooltip shows at once.
         Target.AddStage(Interface::Phase::Prepare, 41, Interface::Stage::Create<&Tooltip::OnLinger>());
     }
 
@@ -180,6 +170,19 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    void Tooltip::Refresh(Ref<Interface> Owner)
+    {
+        const Ptr<Session> Run = Owner.Find<Session>();
+
+        if (Run && Owner.IsAlive(Run->Pane) && Owner.Has<Hint>(Run->Shown))
+        {
+            Fill(Owner, * Run, Run->Shown);
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     void Tooltip::Write(Element Holder, Element Source)
     {
         const Element Line = Holder.Create();
@@ -192,26 +195,13 @@ namespace ZyPlugin::UI
 
     void Tooltip::Spawn(Element Holder, Element Source)
     {
-        // Copied, since the template may give tooltips too and move the store under this one.
+        // Copied, since the template may give tooltips too and move this store.
         const ConstPtr<Hint> Found  = Source.Get<Hint>();
         const Markup::Recipe Recipe = Found ? Found->Recipe : Markup::Recipe();
 
         if (Recipe.Reader && !Recipe.Make(Holder).IsAlive())
         {
             LOG_W("The tooltip template '{0}' makes nothing, so the tooltip shows empty", Text(Recipe.Template));
-        }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Tooltip::Refresh(Ref<Interface> Owner)
-    {
-        const Ptr<Session> Run = Owner.Find<Session>();
-
-        if (Run && Owner.IsAlive(Run->Pane) && Owner.Has<Hint>(Run->Shown))
-        {
-            Fill(Owner, * Run, Run->Shown);
         }
     }
 
@@ -228,7 +218,7 @@ namespace ZyPlugin::UI
 
     void Tooltip::OnTurned(Ref<Interface> Owner, Bool Stopped)
     {
-        // A turn a control took changed only what it shows, as a thumbnail's face, so its tooltip stays to show it.
+        // A turn a control took changed only what it shows, so its tooltip stays.
         if (!Stopped)
         {
             Silence(Owner);
@@ -242,7 +232,7 @@ namespace ZyPlugin::UI
     {
         Ref<Session> Run = * Owner.Find<Session>();
 
-        // A tooltip belongs to what the pointer rests on; moving on to something else starts its wait over.
+        // Moving on to another element starts the wait over.
         if (const Handle Source = Hinted(Owner, Owner.GetOver()); Source != Run.Hinted)
         {
             Hush(Owner, Run);
@@ -260,16 +250,14 @@ namespace ZyPlugin::UI
         Ref<Dispatcher> Route = Owner.GetDispatcher();
 
         // A tooltip whose element went away, was hidden with its pane, or lost its tooltip, goes with it.
-        const Bool Valid = Run.Shown.IsValid();
-
-        if (Valid && (!Owner.Has<Hint>(Run.Shown) || !Route.IsShown(Run.Shown)))
+        if (Run.Shown.IsValid() && (!Owner.Has<Hint>(Run.Shown) || !Route.IsShown(Run.Shown)))
         {
             Hush(Owner, Run);
         }
 
-        const Bool Waiting = Owner.Has<Hint>(Run.Hinted) && Route.IsShown(Run.Hinted)
-            && Run.Hinted != Run.Hushed && Run.Hinted != Run.Shown && !Drag::GetDragged(Owner).IsValid()
-            && !Owner.GetCursor().IsHeld();
+        const Bool Hinted  = Owner.Has<Hint>(Run.Hinted) && Route.IsShown(Run.Hinted);
+        const Bool Pending = Hinted && Run.Hinted != Run.Hushed && Run.Hinted != Run.Shown;
+        const Bool Waiting = Pending && !Drag::GetDragged(Owner).IsValid() && !Owner.GetCursor().IsHeld();
 
         if (!Waiting)
         {
@@ -315,7 +303,7 @@ namespace ZyPlugin::UI
             Owner.Destroy(Child);
         }
 
-        // Copied, since the code may add a facet of the kind and move the store under it.
+        // Copied, since the code may add a facet and move this store.
         const Filler  Code = Owner.Get<Hint>(Source)->Fill;
         const Element Holder(Owner, Run.Pane);
         const Element Explained(Owner, Source);
@@ -335,7 +323,7 @@ namespace ZyPlugin::UI
 
     void Tooltip::Tip(Ref<Interface> Owner, Ref<Session> Run)
     {
-        // One pane serves every tooltip, made the first time one shows and dressed by the theme as `Tooltip`.
+        // One pane, made the first time and dressed as `Tooltip`, serves every tooltip.
         if (!Owner.IsAlive(Run.Pane))
         {
             Run.Pane = Owner.Open(kLayer);

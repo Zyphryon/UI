@@ -26,7 +26,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the label a progress bar shows its share in, kept by handle as a layout may add children.
     struct Gauge final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The label showing the share, or one naming nothing for a bar made without one.
@@ -44,7 +44,7 @@ namespace ZyPlugin::UI
         /// \param Value    The value it starts at.
         /// \param Minimum  The lowest value it shows.
         /// \param Maximum  The highest value it shows.
-        /// \param Labelled The flag, `true` to show its share, as `40%`, over its middle, `false` to show none.
+        /// \param Labelled `true` to show its share, as `40%`, over its middle, `false` to show none.
         /// \param Style    The name of the style it wears, its label wearing it followed by `.Label`.
         /// \return The progress bar, filled up to its value.
         static Element Create(Element Parent,

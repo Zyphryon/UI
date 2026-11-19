@@ -80,7 +80,7 @@ namespace ZyPlugin::UI
         /// The radius of the corners, in pixels.
         Real32                     Radius      = 0.0f;
 
-        /// How opaque the element and all it holds are, over nought through one.
+        /// The opacity of the element and all it holds, over nought through one.
         Real32                     Opacity     = 1.0f;
 
         /// The colour of the text.
@@ -113,7 +113,7 @@ namespace ZyPlugin::UI
         /// The colour of a scroll's thumb.
         Color                      Thumb       = Color::White(0.3f);
 
-        /// Where each line of the text sits.
+        /// The place each line of the text sits at.
         Align                      Alignment   = Align::Start;
 
         /// The room between the children, in pixels.
@@ -131,16 +131,16 @@ namespace ZyPlugin::UI
         /// The glow just inside the box's edge, whose offset and spread are not read.
         Halo                       InnerGlow;
 
-        /// How much larger the element and all it holds are drawn on each axis, about its middle.
+        /// The scale the element and all it holds are drawn at on each axis, about its middle.
         Vector2                    Scale       = Vector2(1.0f, 1.0f);
 
-        /// How far the element and all it holds are drawn turned, clockwise, in degrees.
+        /// The turn the element and all it holds are drawn at, clockwise, in degrees.
         Real32                     Rotate      = 0.0f;
 
-        /// How far the element and all it holds are drawn moved, in pixels.
+        /// The distance the element and all it holds are drawn moved, in pixels.
         Vector2                    Translate   = Vector2(0.0f, 0.0f);
 
-        /// How the element moves to the values a new state gives.
+        /// The transition the element moves by to the values a new state gives.
         UI::Transition             Transition;
 
         /// The identifier of the animation the element plays, looping, while it wears the skin, or zero for none.
@@ -368,7 +368,7 @@ namespace ZyPlugin::UI
 
         /// \brief Takes a value another skin gives in place of this one's own.
         ///
-        /// \param Gives The flag, `true` if the other skin gives the value, `false` to keep this one's.
+        /// \param Gives `true` if the other skin gives the value, `false` to keep this one's.
         /// \param Value The value this skin holds, replaced when the other gives it.
         /// \param Given The value the other skin holds.
         template<typename Type>

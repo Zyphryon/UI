@@ -48,7 +48,7 @@ namespace ZyPlugin::UI
         Widget::Govern(Result, Handler::Create<&Grid::OnEvent>(), false);
         Result.EditBox().Height = Length::Pixels(kHeight);
 
-        // The headings and the rows scroll sideways together in a viewer, while the rows scroll down on their own.
+        // The headings and the rows scroll sideways together, while the rows scroll down on their own.
         const Element Viewer = Scroller::Create(Result, Widget::Part(Style, "Viewer"));
         Ref<Box>      Frame  = Viewer.EditBox();
         Frame.Height = Length::Auto();
@@ -65,7 +65,6 @@ namespace ZyPlugin::UI
         Rows.Grow   = 1.0f;
         Rows.Basis  = Length::Pixels(0.0f);
 
-        // The rows are named one by one, in the order the grid sorts them.
         Repeater::SetTemplate(List, Maker::Create<&Grid::OnMake>());
         Repeater::SetRecords(List, Sequence<Str>());
 
@@ -99,12 +98,9 @@ namespace ZyPlugin::UI
             LOG_W("A grid's 'Columns' must be a list of columns, so it shows none");
         }
 
-        Repeater::SetItemHeight(GetList(Result), Markup::GetNumber(Node, "ItemHeight", 0.0f));
         Repeater::BuildRows(Reader, GetList(Result), Node);
-        SetMultiple(Result, Markup::GetBool(Node, "Multiple"));
         SetGroup(Result, Markup::GetText(Node, "Group"), Markup::GetBool(Node, "GroupDescending", true));
 
-        // The records are one list in braces, read from the scope the grid stands in.
         if (const Text Source = Markup::GetText(Node, "Items"); !Source.IsEmpty())
         {
             if (Text Inside; Repeater::Unwrap(Source, Inside))
@@ -117,7 +113,6 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The column sorted by is named by its key.
         if (const Text Sort = Markup::GetText(Node, "Sort"); !Sort.IsEmpty())
         {
             const SInt32 Found = static_cast<SInt32>(Result.Get<Ledger>()->Columns.Find([Sort](ConstRef<Column> Entry)
@@ -159,7 +154,7 @@ namespace ZyPlugin::UI
         Own->Widths.Clear();
         MakeHeading(Owner, static_cast<UInt32>(Own->Columns.GetSize() - 1), Reader ? Reader->GetScope() : Text());
 
-        // Every row is made again, a cell for the new column included.
+        // Every row is made again, with a cell for the new column.
         Repeater::SetTemplate(GetList(Owner), Maker::Create<&Grid::OnMake>());
         Mark(Owner);
     }
@@ -357,8 +352,8 @@ namespace ZyPlugin::UI
         {
             return -1;
         }
-        return Position < Own->Order.GetSize()
-            ? static_cast<SInt32>(Own->Order[Position]) : static_cast<SInt32>(Position);
+        const UInt32 Record = Position < Own->Order.GetSize() ? Own->Order[Position] : Position;
+        return static_cast<SInt32>(Record);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -409,26 +404,20 @@ namespace ZyPlugin::UI
         const Element          Root(Owner, Self);
         const ConstPtr<Ledger> Own = Owner.Get<Ledger>(Self);
 
-        // A pick the rows report is the grid's, so its binding and its observers hear it as its own.
-        if (Message.Kind == Signal::kChange && Message.Target == Own->List)
-        {
-            Owner.Dispatch(Event(Signal::kChange, Self));
-            return true;
-        }
-
-        // So are its rows' activations and renames, still naming the record, heard as stopped only when the grid's are.
-        const Bool Reported = Message.Kind == Signal::kActivate || Message.Kind == Repeater::kRename;
+        // A pick, activation or rename the rows report is the grid's, so its binding and observers hear it.
+        const Bool Picked   = Message.Kind == Signal::kChange || Message.Kind == Signal::kActivate;
+        const Bool Reported = Picked || Message.Kind == Repeater::kRename;
 
         if (Reported && Message.Target == Own->List)
         {
             Event Forward = Message;
             Forward.Target = Self;
-            return Owner.Dispatch(Forward);
+            return Owner.Dispatch(Forward) || Message.Kind == Signal::kChange;
         }
 
         const Handle Parent = Owner.GetParent(Message.Target);
 
-        // A click on a heading sorts; one on the grip it holds does not.
+        // A click on a heading sorts, while one on the grip it holds does not.
         if (Message.Kind == Signal::kClick && Parent == Own->Header)
         {
             Toggle(Owner, Root, Element(Owner, Message.Target).GetIndex());
@@ -440,7 +429,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // A grip is the last a heading holds and a control; a drag on it moves the right edge of its column.
+        // A grip is the last control a heading holds, and a drag on it moves the right edge of its column.
         const Element Heading(Owner, Parent);
         const UInt32  Index = Heading.GetIndex();
 
@@ -476,7 +465,7 @@ namespace ZyPlugin::UI
         const UInt32      Stamp = Data ? Data->GetRevision() : 0;
         Bool              Due   = Own->Stale || Data != Own->Source;
 
-        // A model left as it was costs one comparison; a change elsewhere in it, one lookup of the grid's own list.
+        // A model left as it was costs one comparison, and a change elsewhere in it one lookup of the grid's own list.
         if (Due || Stamp != Own->Revision)
         {
             const UInt32 Deep = Data && !Own->Where.Steps.IsEmpty() ? Data->GetSubtreeStamp(Own->Where) : 0;
@@ -515,7 +504,6 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // The cells stand side by side from the row's left edge, each as wide as its column.
         Ref<Box> Shape = Row.EditBox();
         Shape.Flow    = Direction::Row;
         Shape.Items   = Align::Stretch;
@@ -529,14 +517,14 @@ namespace ZyPlugin::UI
 
         for (UInt32 Index = 0; Index < Count; ++Index)
         {
-            // Copied, since a cell holding a list of its own may move this facet.
-            const Ptr<Ledger>         Own      = Root.Get<Ledger>();
-            Ref<Column>               Entry    = Own->Columns[Index];
-            const Real32              Width    = Index < Own->Widths.GetSize() ? Own->Widths[Index] : Entry.Minimum;
-            const ConstPtr<JsonValue> Node     = Entry.Node ? Entry.Node.Grab() : nullptr;
+            // Looked up each time, since a cell holding a list of its own may move this facet.
+            const Ptr<Ledger>         Own   = Root.Get<Ledger>();
+            Ref<Column>               Entry = Own->Columns[Index];
+            const Real32              Width = Index < Own->Widths.GetSize() ? Own->Widths[Index] : Entry.Minimum;
+            const ConstPtr<JsonValue> Node  = Entry.Node ? Entry.Node.Grab() : nullptr;
             const JsonValue           Named(Text(Entry.Template));
-            const Str                 Key      = Entry.Key;
-            const Align               Side     = Entry.Alignment;
+            const Str                 Key   = Entry.Key;
+            const Align               Side  = Entry.Alignment;
 
             const Element Cell = Panel::Create(Row, Style);
             Cell.Add<Look>().Clip = true;
@@ -552,7 +540,6 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // A column naming no template shows its value, cut short with an ellipsis when it runs past the cell.
             const Element Words = Label::Create(Cell, "", Plain);
             Label::SetOverflow(Words, Overflow::Ellipsis);
             Words.Edit<Caption>()->Alignment = Side;
@@ -610,7 +597,6 @@ namespace ZyPlugin::UI
         Widget::Govern(Heading, Handler(), false);
         Heading.SetStyle(Widget::Part(Style, "Heading"));
 
-        // The title stands where the column's cells do, with the sort mark right after it.
         Ref<Box> Shape = Heading.EditBox();
         Shape.Flow    = Direction::Row;
         Shape.Items   = Align::Center;
@@ -622,7 +608,6 @@ namespace ZyPlugin::UI
                                             Widget::Part(Style, "Heading.Label"));
         Label::SetOverflow(Words, Overflow::Ellipsis);
 
-        // A title naming values or a text of the lexicon is read from the scope the grid was made in.
         if (Bound)
         {
             Binder::Attach(Words, Title, Binder::PutText<&Label::SetText>(), Reader(), Scope);
@@ -631,7 +616,6 @@ namespace ZyPlugin::UI
         const Element Mark = Label::Create(Heading, ">", Widget::Part(Style, "Sort"));
         Mark.SetState(State::Hidden, true);
 
-        // The grip stands over the heading's right edge, the height of it.
         const Element Grip = Heading.Create();
         Widget::Govern(Grip, Handler(), false);
         Grip.SetStyle(Widget::Part(Style, "Grip"));
@@ -685,7 +669,7 @@ namespace ZyPlugin::UI
             });
         }
 
-        // Unchanged, the rows are left as they stand; the first order is always handed to the list.
+        // Unchanged, the rows are left as they stand, though the first order is always handed to the list.
         const Bool Same = Order.GetSize() == Own->Order.GetSize();
 
         if (Same && Repeater::GetCount(List) == Count && Compare(Order.GetData(), Own->Order.GetData(), Count))
@@ -753,7 +737,7 @@ namespace ZyPlugin::UI
         // Weighed against the widths kept first, so a grid whose room holds still makes nothing.
         for (UInt Index = 0; Same && Index < Count; ++Index)
         {
-            Same = Abs(Measure(Own->Columns[Index], Left, Shares) - Own->Widths[Index]) < 0.5f;
+            Same = IsAlmostZero(Measure(Own->Columns[Index], Left, Shares) - Own->Widths[Index], 0.5f);
         }
 
         if (Same)
@@ -761,17 +745,19 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        ConstRef<Sequence<Real32>> Widths = Own->Widths;
-        Real32                     Total  = 0.0f;
+        Real32 Total = 0.0f;
         Own->Widths.Clear();
 
         for (ConstRef<Column> Entry : Own->Columns)
         {
-            Own->Widths.Append(Measure(Entry, Left, Shares));
-            Total += Widths.GetBack();
+            const Real32 Width = Measure(Entry, Left, Shares);
+            Own->Widths.Append(Width);
+            Total += Width;
         }
 
-        // The headings and the rows stand as wide as the columns together, the gutter above the thumb kept free.
+        ConstSpan<Real32> Widths = Own->Widths;
+
+        // The gutter above the thumb is kept free.
         Header.EditBox().Width = Length::Pixels(Total + Gutter);
         List.EditBox().Width   = Length::Pixels(Total + Gutter);
 
@@ -804,7 +790,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Grid::Fit(Element Row, ConstRef<Sequence<Real32>> Widths)
+    void Grid::Fit(Element Row, ConstSpan<Real32> Widths)
     {
         UInt Index = 0;
 
@@ -879,11 +865,9 @@ namespace ZyPlugin::UI
             return (One ? 1 : 0) - (Two ? 1 : 0);
         }
 
-        const Bool Numeric =
-               (One->GetForm() == Form::Number || One->GetForm() == Form::Bool)
-            && (Two->GetForm() == Form::Number || Two->GetForm() == Form::Bool);
+        const Bool Numeric = One->GetForm() == Form::Number || One->GetForm() == Form::Bool;
 
-        if (Numeric)
+        if (Numeric && (Two->GetForm() == Form::Number || Two->GetForm() == Form::Bool))
         {
             const Real64 Left  = One->GetNumber();
             const Real64 Right = Two->GetNumber();
@@ -895,7 +879,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Grid::Precedes(ConstRef<Sequence<Ptr<Model>>> Records, ConstRef<Rule> Order, UInt32 First, UInt32 Second)
+    Bool Grid::Precedes(ConstSpan<Ptr<Model>> Records, ConstRef<Rule> Order, UInt32 First, UInt32 Second)
     {
         ConstRef<Model> Former = * Records[First];
         ConstRef<Model> Latter = * Records[Second];
@@ -916,8 +900,8 @@ namespace ZyPlugin::UI
             return First < Second;
         }
 
-        const SInt32 Ranked = Order.Code.IsEmpty() ? Weigh(Former, Latter, Order.Key)
-                                                   : Order.Code(Former, Latter, Order.Key);
+        const Text   Key    = Order.Key;
+        const SInt32 Ranked = Order.Code.IsEmpty() ? Weigh(Former, Latter, Key) : Order.Code(Former, Latter, Key);
         const SInt32 Signed = Order.Descending ? -Ranked : Ranked;
         return Signed != 0 ? Signed < 0 : First < Second;
     }

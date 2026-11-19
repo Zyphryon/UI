@@ -34,13 +34,13 @@ namespace ZyPlugin::UI
         /// The path of the record from the root, as `Scene[0].Children[2]`.
         Str    Path;
 
-        /// How deep the record stands, nought for one of the top list.
+        /// The depth of the record, nought for one of the top list.
         UInt16 Depth  = 0;
 
-        /// `true` when the record holds children, or says it may.
+        /// `true` when the record holds children or says it may, `false` for a leaf.
         Bool   Parent = false;
 
-        /// `true` while its children are shown under it.
+        /// `true` while its children are shown under it, `false` while they are hidden.
         Bool   Open   = false;
     };
 
@@ -61,14 +61,14 @@ namespace ZyPlugin::UI
         /// The path of the record it was dropped on.
         Str  Target;
 
-        /// Where it lands against the record it was dropped on.
+        /// The spot it lands at against the record it was dropped on.
         Spot Where = Spot::Inside;
     };
 
     /// \brief Represents a tree view, with where its records come from, which branches are open, and its rows laid out.
     struct Hierarchy final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The markup making a row's content from a template, or `nullptr` to show the record's `Name`.
@@ -119,13 +119,13 @@ namespace ZyPlugin::UI
         /// The stamp of the newest change to the top list or to anything beneath it when the tree was last laid out.
         UInt32            Deep     = 0;
 
-        /// `true` when every branch starts open, so the turned ones are the closed ones.
+        /// `true` when every branch starts open, so the turned ones are closed, `false` when they start closed.
         Bool              Unfolded = false;
 
-        /// `true` when the tree is to be laid out again at the next update.
+        /// `true` when the tree is to be laid out again at the next update, `false` while its rows hold.
         Bool              Stale    = true;
 
-        /// `true` when a row dropped near another's edge lands beside it rather than in it.
+        /// `true` when a row dropped near another's edge lands beside it, `false` when every drop lands in it.
         Bool              Between  = false;
     };
 
@@ -140,16 +140,16 @@ namespace ZyPlugin::UI
         /// The indent of each level when the theme gives none, in pixels.
         static constexpr Real32 kIndent   = 16.0f;
 
-        /// A branch was opened; `Content` names the record, `Other` the row showing it.
+        /// The event reported when a branch opens, `Content` naming the record and `Other` the row showing it.
         static constexpr UInt64 kExpand   = Identify("Expand");
 
-        /// A branch was closed; `Content` names the record, `Other` the row showing it.
+        /// The event reported when a branch closes, `Content` naming the record and `Other` the row showing it.
         static constexpr UInt64 kCollapse = Identify("Collapse");
 
-        /// A row dropped on another; `Content` names its record, `Other` the one carried, \ref GetLanding where.
+        /// The event reported when a row is dropped on another, `Content` naming its record, `Other` the one carried.
         static constexpr UInt64 kDrop     = Identify("OutlineDrop");
 
-        /// How far from a row's top or bottom edge a drop lands beside it rather than in it, as a share of its height.
+        /// The reach from a row's top or bottom edge where a drop lands beside it, as a share of its height.
         static constexpr Real32 kEdge     = 0.25f;
 
     public:
@@ -163,7 +163,7 @@ namespace ZyPlugin::UI
 
         /// \brief Creates a tree view from a node, reading `Items`, `Nested`, `ItemTemplate` and `Selected`.
         ///
-        /// \param Reader The markup reading the layout, which must outlive the tree view, as rows are made on scroll.
+        /// \param Reader The markup reading the layout, which must outlive the tree view.
         /// \param Parent The element to hold it.
         /// \param Node   The layout node the tree view is read from.
         /// \return The tree view, which reports \ref Signal::kChange when the pick changes.
@@ -200,7 +200,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner    The tree view holding the record.
         /// \param Path     The path of the record, as `Scene[0].Children[2]`.
-        /// \param Expanded The flag, `true` to show its children, `false` to hide them.
+        /// \param Expanded `true` to show its children, `false` to hide them.
         static void SetExpanded(Element Owner, Text Path, Bool Expanded);
 
         /// \brief Checks whether the branch of a record is open.
@@ -214,7 +214,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner The tree view holding the record.
         /// \param Key   The key of the record, as the model keeps it.
-        /// \param Open  The flag, `true` to show its children, `false` to hide them.
+        /// \param Open  `true` to show its children, `false` to hide them.
         static void SetOpen(Element Owner, UInt64 Key, Bool Open);
 
         /// \brief Checks whether the branch of a record named by its key is open.
@@ -247,13 +247,13 @@ namespace ZyPlugin::UI
         /// \brief Changes whether every branch starts open, so only the ones closed by hand stay closed.
         ///
         /// \param Owner    The tree view whose branches start open or closed.
-        /// \param Unfolded The flag, `true` for branches to start open, `false` for them to start closed.
+        /// \param Unfolded `true` for branches to start open, `false` for them to start closed.
         static void SetUnfolded(Element Owner, Bool Unfolded);
 
         /// \brief Lets control and shift pick several rows together.
         ///
         /// \param Owner   The tree view to pick in.
-        /// \param Enabled The flag, `true` to pick several, `false` to pick one at a time.
+        /// \param Enabled `true` to pick several, `false` to pick one at a time.
         static void SetMultiple(Element Owner, Bool Enabled);
 
         /// \brief Picks the row of a record alone, without reporting it, when the record has a row.
@@ -313,7 +313,7 @@ namespace ZyPlugin::UI
         /// \return The list, or one naming nothing when the element is no tree view.
         static Element GetList(Element Owner);
 
-        /// \brief Lays the tree out again at the next update, as when the game changed it without the model knowing.
+        /// \brief Lays the tree out again at the next update.
         ///
         /// \param Owner The tree view to lay out again.
         static void Refresh(Element Owner);
@@ -322,13 +322,13 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner   The tree view whose rows are dragged.
         /// \param Kind    The kind a row is carried as and accepts, as `Archetype`, or empty to drag none.
-        /// \param Between The flag, `true` to land a drop near a row's top or bottom edge beside it, `false` in it.
+        /// \param Between `true` to land a drop near a row's top or bottom edge beside it, `false` in it.
         static void SetDraggable(Element Owner, Text Kind, Bool Between = false);
 
         /// \brief Gets where the row being reported as \ref kDrop landed.
         ///
         /// \param Owner The tree view the row was dropped on.
-        /// \return The drop, naming the record dropped, the one landed on and where, as the last \ref kDrop reported.
+        /// \return The drop the last \ref kDrop reported.
         static Landing GetLanding(Element Owner);
 
     private:
@@ -360,7 +360,7 @@ namespace ZyPlugin::UI
         /// \param Own    The tree view's facet, naming the open branches and the list of children.
         /// \param List   The path of the list.
         /// \param Depth  The depth its records stand at.
-        /// \param Output The variable receiving the rows.
+        /// \param Output Receives the rows.
         static void Walk(ConstRef<Model>     Data,
                          ConstRef<Hierarchy> Own,
                          Text                List,
@@ -385,7 +385,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Own    The facet of the tree view.
         /// \param Branch The identifier of the record whose branch is opened or closed.
-        /// \param Open   The flag, `true` to open the branch, `false` to close it.
+        /// \param Open   `true` to open the branch, `false` to close it.
         /// \return `true` if the branch changed, `false` when it stood that way already.
         static Bool Mark(Ref<Hierarchy> Own, Digest Branch, Bool Open);
 
@@ -407,7 +407,7 @@ namespace ZyPlugin::UI
         /// \param Owner    The interface it stands in.
         /// \param Root     The tree view holding the row.
         /// \param Position The position of the row.
-        /// \param Expanded The flag, `true` to open it, `false` to close it.
+        /// \param Expanded `true` to open it, `false` to close it.
         static void Turn(Ref<Interface> Owner, Element Root, UInt32 Position, Bool Expanded);
 
         /// \brief Picks a row alone, brings it into view and reports it.
@@ -435,7 +435,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Row   The row dropped on.
         /// \param Point The point, in the interface's pixels.
-        /// \return Where it lands, beside the row near its edges and in it otherwise.
+        /// \return The spot it lands at, beside the row near its edges and in it otherwise.
         static Spot Land(Element Row, Vector2 Point);
 
         /// \brief Gets the marker a row shows where a drop lands beside it.

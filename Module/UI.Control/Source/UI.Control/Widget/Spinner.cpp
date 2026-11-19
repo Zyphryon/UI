@@ -16,13 +16,7 @@
 #include "Label.hpp"
 #include "Panel.hpp"
 #include "Slider.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -168,8 +162,9 @@ namespace ZyPlugin::UI
             return true;
         }
 
-        if (Message.Kind == Signal::kKey && Message.Target == Self
-            && (Message.Key == ZyInput::Key::Up || Message.Key == ZyInput::Key::Down))
+        const Bool Stepped = Message.Key == ZyInput::Key::Up || Message.Key == ZyInput::Key::Down;
+
+        if (Message.Kind == Signal::kKey && Message.Target == Self && Stepped)
         {
             Nudge(Owner, Self, Message.Key == ZyInput::Key::Up ? 1.0f : -1.0f);
             return true;

@@ -12,17 +12,9 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Datum.hpp"
 #include "Link.hpp"
 #include "Model.hpp"
-#include "Path.hpp"
-#include "Piece.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet.hpp"
-#include "UI.Core/Handle.hpp"
 #include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -36,9 +28,6 @@ namespace ZyPlugin::UI
     class Binder final
     {
     public:
-
-        /// The room a value written into a text is given up front, in bytes, enough for any number.
-        static constexpr UInt kRoom = 24;
 
         /// \brief Defines the code finding the record an element's facet keeps, or `nullptr` when it holds none.
         using Scoped = Delegate<Ptr<Path>(Element Target)>;
@@ -113,7 +102,7 @@ namespace ZyPlugin::UI
         /// \brief Shows every bound value a change was stamped on since it was last shown.
         ///
         /// \param Owner The tree whose bindings are shown from its model.
-        /// \param Force The flag, `true` to show every value whatever its stamp, `false` to show only changed ones.
+        /// \param Force `true` to show every value whatever its stamp, `false` to show only changed ones.
         static void Refresh(Ref<Tree> Owner, Bool Force);
 
         /// \brief Reads every field written `@Key` again from the tree's lexicon, and shows it.
@@ -127,7 +116,7 @@ namespace ZyPlugin::UI
         /// \param Target The element given them.
         static void Mirror(Element Source, Element Target);
 
-        /// \brief Writes back to the model every field of an element bound both ways, as when its value changed.
+        /// \brief Writes every field of an element bound both ways back to the model.
         ///
         /// \param Target The element whose value is written back.
         static void Store(Element Target);
@@ -142,7 +131,7 @@ namespace ZyPlugin::UI
         /// \brief Works out the steps a scope gives every path read in it.
         ///
         /// \param Scope  The path of the record, as written, or empty for the root.
-        /// \param Output The receiver of the steps, none for the root.
+        /// \param Output Receives the steps, none for the root.
         static void Locate(Text Scope, Ref<Path> Output);
 
         /// \brief Creates a writer handing a value to a setter taking a flag, a number or a colour.
@@ -235,6 +224,9 @@ namespace ZyPlugin::UI
             Bool         Declared = false;
         };
 
+        /// The room a value written into a text is given up front, in bytes, enough for any number.
+        static constexpr UInt kRoom = 24;
+
         /// \brief Gets the readers of the records facets keep, made the first time they are asked for.
         ///
         /// \return The readers, by the index of the kind of facet they read.
@@ -246,12 +238,12 @@ namespace ZyPlugin::UI
         /// \return The feed of the tree.
         static Ref<Feed> Supply(Ref<Tree> Owner);
 
-        /// \brief Reads the texts again if the lexicon changed, then shows the model's changed values, as a stage.
+        /// \brief Reads the texts again if the lexicon changed, then shows the model's changed values.
         ///
         /// \param Owner The interface whose bindings are shown.
         static void OnRefresh(Ref<Interface> Owner, Real32);
 
-        /// \brief Stores a widget's new value into the model before any handler reads it there, as a listener.
+        /// \brief Stores a widget's new value into the model before any handler reads it.
         ///
         /// \param Owner   The interface the event is heard on.
         /// \param Message The event, whose target is written back on \ref Signal::kChange.
@@ -275,15 +267,12 @@ namespace ZyPlugin::UI
         template<void (* Setter)(Element, Text)>
         static void OnPutText(Element Target, ConstRef<Datum> Value)
         {
-            // Text is handed on as it is held; only another form is written out first.
             if (Value.GetForm() == Form::Text)
             {
                 Setter(Target, Value.GetText());
                 return;
             }
-
-            const Str Words = Value.Print();
-            Setter(Target, Words);
+            Setter(Target, Value.Print());
         }
 
         /// \brief Turns a state of an element on or off by a value read as a flag.
@@ -354,7 +343,7 @@ namespace ZyPlugin::UI
         /// \param Source The text of the binding, as `Gold: {Player.Gold:0}`.
         /// \param Scope  The path relative paths are read from, or empty for the root.
         /// \param Plain  `true` to take a text naming no value as plain text, `false` to reject one doubling no brace.
-        /// \param Output The receiver of the pieces.
+        /// \param Output Receives the pieces.
         /// \return `true` if every value is named well and the text is not rejected for naming none, `false` otherwise.
         static Bool Parse(Text Source, Text Scope, Bool Plain, Ref<Sequence<Piece>> Output);
 
@@ -362,7 +351,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Source The text the lexicon gives.
         /// \param Scope  The path relative paths are read from, or empty for the root.
-        /// \param Output The receiver of the pieces.
+        /// \param Output Receives the pieces.
         static void Speak(Text Source, Text Scope, Ref<Sequence<Piece>> Output);
 
         /// \brief Gets the text the lexicon of an element's tree gives a key.
@@ -389,7 +378,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Source The text between the braces.
         /// \param Scope  The path relative paths are read from, or empty for the root.
-        /// \param Output The receiver of the piece.
+        /// \param Output Receives the piece.
         /// \return `true` if it names a value, `false` otherwise.
         static Bool ParseHole(Text Source, Text Scope, Ref<Piece> Output);
 
@@ -417,7 +406,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Target The element holding the binding.
         /// \param Index  The index of the binding.
-        /// \param Force  The flag, `true` to show it whatever its stamp, `false` to show it only when changed.
+        /// \param Force  `true` to show it whatever its stamp, `false` to show it only when changed.
         static void Show(Element Target, UInt Index, Bool Force);
 
         /// \brief Writes back one binding of an element to the model, when it goes both ways.
@@ -463,7 +452,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree holding them.
         /// \param Target The element the panes were opened for.
-        /// \param Output The receiver of the roots.
+        /// \param Output Receives the roots.
         static void Gather(ConstRef<Tree> Owner, Handle Target, Ref<Sequence<Handle>> Output);
 
         /// \brief Adds the text kept so far as a piece of its own, when there is any.

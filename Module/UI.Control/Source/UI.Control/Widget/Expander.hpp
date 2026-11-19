@@ -33,12 +33,12 @@ namespace ZyPlugin::UI
         ///
         /// \param Parent   The element to hold it.
         /// \param Title    The text on its header.
-        /// \param Expanded The flag, `true` to start open, `false` to start closed.
+        /// \param Expanded `true` to start open, `false` to start closed.
         /// \param Style    The name of the style it wears, its parts adding `.Header`, `.Arrow` and `.Content`.
         /// \return The expander, which reports \ref Signal::kChange when it opens or closes.
         static Element Create(Element Parent, Text Title, Bool Expanded = false, Text Style = "Expander");
 
-        /// \brief Creates an expander from a layout node, under its `Title`, open by `Expanded`; a `Name` remembers it.
+        /// \brief Creates an expander from a layout node, under its `Title`, open by `Expanded`, remembered by `Name`.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
@@ -50,7 +50,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner    The interface it stands in.
         /// \param Target   The expander to open or close.
-        /// \param Expanded The flag, `true` to open it, `false` to close it.
+        /// \param Expanded `true` to open it, `false` to close it.
         static void SetExpanded(Ref<Interface> Owner, Handle Target, Bool Expanded);
 
         /// \brief Checks whether an expander is open.
@@ -69,7 +69,7 @@ namespace ZyPlugin::UI
         /// \brief Shows an expander open or closed, reporting nothing, as a bound flag of the model does.
         ///
         /// \param Target   The expander to show.
-        /// \param Expanded The flag, `true` to show it open, `false` to show it closed.
+        /// \param Expanded `true` to show it open, `false` to show it closed.
         static void Show(Element Target, Bool Expanded);
 
         /// \brief Changes the title on an expander's header.

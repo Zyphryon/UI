@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Keyframe.hpp"
-#include "Skin.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -24,16 +23,16 @@ namespace ZyPlugin::UI
     /// \brief Represents an animation a theme names, as CSS's `@keyframes`, with the values an element moves through.
     struct Animation final
     {
-        /// How long one run takes, in seconds.
+        /// The time one run takes, in seconds.
         Real32             Duration  = 1.0f;
 
-        /// How many runs it plays, where nought plays forever.
+        /// The count of runs it plays, where nought plays forever.
         UInt32             Repeat    = 1;
 
-        /// `true` to play every second run backward, so a loop swings to and fro.
+        /// `true` to play every second run backward, so a loop swings to and fro, `false` to play each forward.
         Bool               Alternate = false;
 
-        /// How each stretch between one key and the next eases.
+        /// The easing of each stretch between one key and the next.
         Easing             Curve     = Easing::Linear;
 
         /// The keys, in the order of the share they stand at.

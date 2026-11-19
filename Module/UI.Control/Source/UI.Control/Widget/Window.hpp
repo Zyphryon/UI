@@ -12,12 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -29,16 +23,16 @@ namespace ZyPlugin::UI
     /// \brief Represents the hold the pointer keeps on a window while it drags or sizes it, and the parts it holds.
     struct Grip final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The pointer's distance from the window's top left corner on a drag, or bottom right on a sizing, in pixels.
         Vector2 Offset;
 
-        /// `true` while the pointer holds the window by its title bar.
+        /// `true` while the pointer holds the window by its title bar, `false` otherwise.
         Bool    Held    = false;
 
-        /// `true` while the pointer sizes the window by one of its edges.
+        /// `true` while the pointer sizes the window by one of its edges, `false` otherwise.
         Bool    Sizing  = false;
 
         /// The axes the edge held sizes the window along, one for the width and one for the height.
@@ -63,16 +57,10 @@ namespace ZyPlugin::UI
     public:
 
         /// The band windows open in.
-        static constexpr Layer  kLayer  = { 64, Layer::Trait::Cycled };
+        static constexpr Layer  kLayer = { 64, Layer::Trait::Cycled };
 
-        /// The event reported before the close button closes a window; a handler stopping it leaves the window open.
-        static constexpr UInt64 kClose  = Identify("Close");
-
-        /// The thickness of the right and bottom edges a resizable window is sized by, in pixels.
-        static constexpr Real32 kEdge   = 5.0f;
-
-        /// The size of the grip at the bottom right corner of a resizable window, in pixels.
-        static constexpr Real32 kCorner = 14.0f;
+        /// The event reported before the close button closes a window, which stays open when a handler stops it.
+        static constexpr UInt64 kClose = Identify("Close");
 
     public:
 
@@ -85,7 +73,7 @@ namespace ZyPlugin::UI
         /// \return The window, reporting \ref Window::kClose on its close button, then \ref Signal::kChange on hiding.
         static Element Open(Ref<Tree> Target, Text Title, Text Style = "Window", Layer Band = kLayer);
 
-        /// \brief Creates a window from a node with `Title` and `Resizable`, placed by `Left` and `Top`.
+        /// \brief Creates a window from a node with `Title`, `Minimum` and `Resizable`, placed by `Left` and `Top`.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element holding the node, whose tree the window opens in.
@@ -133,7 +121,7 @@ namespace ZyPlugin::UI
         /// \brief Lets the pointer size a window by its right and bottom edges and the grip at its corner, or stops it.
         ///
         /// \param Target    The window to make resizable.
-        /// \param Resizable The flag, `true` to let the pointer size it, `false` otherwise.
+        /// \param Resizable `true` to let the pointer size it, `false` otherwise.
         static void SetResizable(Element Target, Bool Resizable);
 
         /// \brief Checks whether the pointer can size a window.
@@ -154,6 +142,12 @@ namespace ZyPlugin::UI
         /// \return The grip, or one naming nothing while the window is not resizable.
         static Element GetGrip(Element Target);
 
+        /// \brief Gets the close button of a window.
+        ///
+        /// \param Target The window whose close button is wanted.
+        /// \return The button at the end of its title bar.
+        static Element GetClose(Element Target);
+
         /// \brief Runs a window, where its title bar moves it, its edges size it, and its close button closes it.
         ///
         /// \param Owner   The interface it stands in.
@@ -162,13 +156,13 @@ namespace ZyPlugin::UI
         /// \return `true` if the event moved, sized, held, let go or closed it, `false` otherwise.
         static Bool OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
 
-        /// \brief Gets the close button of a window.
-        ///
-        /// \param Target The window whose close button is wanted.
-        /// \return The button at the end of its title bar.
-        static Element GetClose(Element Target);
-
     private:
+
+        /// The thickness of the right and bottom edges a resizable window is sized by, in pixels.
+        static constexpr Real32 kEdge   = 5.0f;
+
+        /// The size of the grip at the bottom right corner of a resizable window, in pixels.
+        static constexpr Real32 kCorner = 14.0f;
 
         /// \brief Takes hold of a window when a press lands on its title bar, away from the close button, or an edge.
         ///

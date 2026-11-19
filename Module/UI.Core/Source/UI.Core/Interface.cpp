@@ -11,16 +11,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Interface.hpp"
-#include "Element.hpp"
-#include "Event.hpp"
 #include "Facet/Layout/Virtual.hpp"
-#include "Paint/Canvas.hpp"
-#include "Pane.hpp"
-#include "Shortcut.hpp"
-#include "Style/Theme.hpp"
-#include "System/Dispatcher.hpp"
-#include "System/Dresser.hpp"
-#include "System/Layout.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -46,13 +37,11 @@ namespace ZyPlugin::UI
           mSurface    { nullptr },
           mStaging    { false }
     {
-        // A popup made for an element that died since goes with it, before its bindings are shown again.
+        // A popup whose opener died goes with it, before its bindings are shown again.
         AddStage(Phase::Prepare, 10, Stage::Create<&Interface::OnPrune>());
 
-        // A list making only the rows in view makes them for where it was scrolled since the last layout.
         AddStage(Phase::Prepare, 30, Stage::Create<&Interface::OnRealize>());
 
-        // The pointer's own clock moves on, which tells a double click from two clicks.
         AddStage(Phase::Prepare, 40, Stage::Create<&Interface::OnTick>());
     }
 
@@ -63,7 +52,7 @@ namespace ZyPlugin::UI
     {
         ZY_PROFILE_SCOPE("UI::Interface::Update");
 
-        // A larger pixel ratio leaves the panes less room, and the pointer's pixel is another point of the layout.
+        // A larger pixel ratio leaves the panes less room.
         const Real32 Ratio    = GetPixelRatio();
         const Bool   Rescaled = (Ratio != mRatio);
         mRatio = Ratio;
@@ -77,10 +66,9 @@ namespace ZyPlugin::UI
         const Bool    Resized = (Room != mLayout.GetSize());
         mLayout.SetSize(Room);
 
-        // A theme that changed dresses every element again.
         const Bool Restyled = mDresser.Revise();
 
-        // What modules prepare runs first, then the backdrop of a modal pane is made before anything is dressed.
+        // What modules prepare runs first, then a modal pane's backdrop is made before anything is dressed.
         Run(Phase::Prepare, Delta);
         mDispatcher.Guard();
 
@@ -99,7 +87,7 @@ namespace ZyPlugin::UI
             mDispatcher.Sound(Entry.Element, Entry.Moment);
         }
 
-        // A move a restyle just started takes this frame's time too; an exit that ends here lays its pane out at once.
+        // A move a restyle just started takes this frame's time too, and an exit ending here lays out at once.
         mAnimator.Tick(Delta);
 
         // A pane may be sized as a share of the target, so a new size lays all of it out again.
@@ -109,7 +97,7 @@ namespace ZyPlugin::UI
         }
         Reflow();
 
-        // Rows made for the room a layout just gave are dressed and laid out at once, so none shows up a frame late.
+        // Rows made for the room a layout just gave are laid out at once, so none shows up a frame late.
         for (UInt32 Pass = 0; Pass < Layout::kPasses && Realize(); ++Pass)
         {
             for (const UInt16 Index : GetOrder())
@@ -119,25 +107,24 @@ namespace ZyPlugin::UI
             Reflow();
         }
 
-        // An element asked into view before it was laid out is scrolled to now, and the scroll laid out at once.
+        // An element asked into view before it was laid out is scrolled to now.
         if (mFocus.Settle())
         {
             Reflow();
         }
 
-        // Only a layout tells how large a tooltip or a menu came out, so one past an edge is moved back after it.
+        // Only a layout tells how large a tooltip or menu came out, so one past an edge is moved back after it.
         if (mPointer.Fence())
         {
             Reflow();
         }
 
-        // What the pointer rests on moved under it with the new ratio, so the hover follows it there.
+        // What the pointer rests on moved under it with the new ratio, so the hover follows it.
         if (Rescaled)
         {
             mPointer.Repick();
         }
 
-        // What modules settle runs once every pane is laid out.
         Run(Phase::Settle, Delta);
     }
 
@@ -146,7 +133,7 @@ namespace ZyPlugin::UI
 
     void Interface::AddStage(Phase When, UInt32 Order, Stage Code)
     {
-        // A stage added while the stages run waits, so the walk over them never shifts under it.
+        // A stage added while the stages run waits, so the walk over them never shifts.
         if (mStaging)
         {
             mWaiting.Append(When, Order, ::Move(Code));
@@ -168,7 +155,7 @@ namespace ZyPlugin::UI
     {
         ZY_PROFILE_SCOPE("UI::Interface::Draw");
 
-        // The canvas scales every length to the target's pixels, so corners, blurs and glyphs are not stretched.
+        // The canvas scales every length to target pixels, so corners, blurs and glyphs are not stretched.
         const Real32 Previous = Canvas.GetScale();
         Canvas.SetScale(Previous * mRatio);
 
@@ -231,17 +218,9 @@ namespace ZyPlugin::UI
     {
         if (mSurface)
         {
-            // Text another program copied may end its lines in carriage returns, which no text here holds.
-            const Str Copied = mSurface->GetClipboard();
+            // Text copied from another program may end lines in carriage returns, which no text here holds.
             mClipboard.Clear();
-
-            for (const Char Character : Text(Copied))
-            {
-                if (Character != '\r')
-                {
-                    mClipboard.Append(Character);
-                }
-            }
+            Unicode::Clean(mSurface->GetClipboard(), true, kMaximum<UInt>, mClipboard);
         }
         return mClipboard;
     }
@@ -298,7 +277,7 @@ namespace ZyPlugin::UI
 
     Bool Interface::OnWindowFocus(Bool Focused)
     {
-        // A button let go of while another window holds the keyboard never comes up here, so none is kept held.
+        // A button let go while another window holds the keyboard never comes up here, so none is kept held.
         if (!Focused)
         {
             mPointer.Abandon();
@@ -311,7 +290,7 @@ namespace ZyPlugin::UI
 
     Bool Interface::Realize()
     {
-        // Taken first, since one may make another that realizes or destroy one that did; the list is reused.
+        // Taken first, since one may make another that realizes or destroy one that did.
         mRealizing.Clear();
         GetFacets<Virtual>().ForEach([this](UInt32 Slot, Ref<Virtual>)
         {
@@ -392,16 +371,17 @@ namespace ZyPlugin::UI
 
     void Interface::React(Text Action, UInt64 Kind, Reaction Code)
     {
-        // What bubbles up from a control's parts, and every other kind of event, passes on untouched.
-        Bind(Action, Handler::Create([Kind, Code = ::Move(Code)](Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
+        // What bubbles up from a control's parts, and any other event, passes on untouched.
+        auto Hear = [Kind, Code = ::Move(Code)](Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
         {
-            // The event goes on bubbling, as a menu or a dialog holding the control waits for it to close.
+            // The event keeps bubbling, as a menu or dialog holding the control waits for it to close.
             if (Message.Kind == Kind && Message.Target == Self)
             {
                 Code(Element(Owner, Self));
             }
             return false;
-        }));
+        };
+        Bind(Action, Handler::Create(::Move(Hear)));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

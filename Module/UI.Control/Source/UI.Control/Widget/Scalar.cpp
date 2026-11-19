@@ -15,13 +15,7 @@
 #include "Label.hpp"
 #include "Panel.hpp"
 #include "Textbox.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -38,7 +32,6 @@ namespace ZyPlugin::UI
         Result.EditBox().Items = Align::Center;
         Widget::Govern(Result, Handler::Create<&Scalar::OnEvent>(), false);
 
-        // The tag stands first, hidden until it is given a text.
         const Element Chip = Label::Create(Result, Text(), Widget::Part(Style, "Tag"));
         Chip.SetState(State::Hidden, true);
 

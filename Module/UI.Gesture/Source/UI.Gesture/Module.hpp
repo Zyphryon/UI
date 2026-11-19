@@ -12,7 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Interface.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -21,7 +20,7 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Provides the gesture module, which brings drag and drop, tooltips and context menus to any element.
+    /// \brief Provides drag and drop, tooltips and context menus to any element.
     class GestureModule final
     {
     public:

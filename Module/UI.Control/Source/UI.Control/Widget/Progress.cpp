@@ -15,12 +15,9 @@
 #include "Label.hpp"
 #include "Panel.hpp"
 #include "Slider.hpp"
-#include "UI.Core/Element.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Bar.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -87,7 +84,7 @@ namespace ZyPlugin::UI
 
         if (const Element Readout(Target.GetTree(), Target.Get<Gauge>()->Readout); Readout.IsAlive())
         {
-            // Written on the stack, since a bar fed every frame would otherwise take memory for it every frame.
+            // Written on the stack, since a bar may be fed every frame.
             String<16> Percent;
             Percent.Format("{0}%", static_cast<UInt32>(::Round(Share * 100.0f)));
             Label::SetText(Readout, Percent);

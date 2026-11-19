@@ -12,13 +12,10 @@
 
 #include "Dispatcher.hpp"
 #include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Handle.hpp"
 #include "UI.Core/Interface.hpp"
 #include "UI.Core/Pane.hpp"
-#include "UI.Core/Shortcut.hpp"
 #include "UI.Core/Style/Theme.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -181,7 +178,7 @@ namespace ZyPlugin::UI
     {
         const ConstSpan Order = mOwner.GetOrder();
 
-        // The front-most one shown wins; the backdrop and the popups opened from a modal pane are no modal panes.
+        // The front-most one shown wins, and neither the backdrop nor a modal pane's popups count.
         for (UInt Index = Order.GetSize(); Index-- > 0;)
         {
             ConstRef<Pane> Target = mOwner.GetPane(Order[Index]);
@@ -212,7 +209,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // The backdrop covers the target, dressed by the theme as `Modal.Backdrop`, made the first time it is needed.
+        // The backdrop covers the target, dressed as `Modal.Backdrop`, and is made the first time it is needed.
         if (!mOwner.IsAlive(mBackdrop))
         {
             mBackdrop = mOwner.Open(Layers::kModal);

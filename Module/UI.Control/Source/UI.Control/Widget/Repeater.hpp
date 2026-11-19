@@ -19,6 +19,7 @@
 #include "UI.Core/Tree.hpp"
 #include "UI.Core/Types.hpp"
 #include "UI.Data/Datum.hpp"
+#include "UI.Data/Model.hpp"
 #include "UI.Data/Path.hpp"
 #include "UI.Markup/Markup.hpp"
 
@@ -40,7 +41,7 @@ namespace ZyPlugin::UI
         /// The position of the record in the list, or of the one it last showed while it is parked.
         UInt32 Record;
 
-        /// `true` while the row is hidden and kept for a record coming into view.
+        /// `true` while the row is hidden and kept for a record coming into view, `false` while it shows its record.
         Bool   Parked;
 
         /// The path of the record the row's bindings read, kept for records named one by one.
@@ -60,7 +61,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an item list, with where its records come from, how a row is made, and the rows that exist.
     struct Items final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The code filling a row, or empty to fill it from a template.
@@ -126,13 +127,13 @@ namespace ZyPlugin::UI
         /// The position a pick made with shift reaches from, or below nought for none.
         SInt32             Anchor     = -1;
 
-        /// `true` when control and shift pick several records together.
+        /// `true` when control and shift pick several records together, `false` when one is picked at a time.
         Bool               Multiple   = false;
 
-        /// `true` when a right press on a row picks its record before the menu opens, unless it is picked already.
+        /// `true` when a right press on a row picks its record before the menu opens, `false` when it picks nothing.
         Bool               RightPick  = true;
 
-        /// `true` when the records are named one by one rather than counted from one list.
+        /// `true` when the records are named one by one, `false` when they are counted from one list.
         Bool               Named      = false;
     };
 
@@ -141,7 +142,7 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// The pick was asked to be renamed, as by `F2`; `Content` names its record and `Other` its row.
+        /// The event reported when the pick is asked to be renamed, as by `F2`, `Content` naming its record.
         static constexpr UInt64 kRename = Identify("Rename");
 
     public:
@@ -225,7 +226,7 @@ namespace ZyPlugin::UI
         /// \return The count, as the model last showed it.
         static UInt32 GetCount(Element List);
 
-        /// \brief Gets how many rows show a record, parked ones aside, which is what the list costs whatever its count.
+        /// \brief Gets how many rows show a record, parked ones aside.
         ///
         /// \param List The item list whose rows are counted.
         /// \return The count of rows showing a record.
@@ -274,7 +275,7 @@ namespace ZyPlugin::UI
         /// \brief Lets control and shift pick several records together, and control and `A` pick them all.
         ///
         /// \param List    The item list to pick in.
-        /// \param Enabled The flag, `true` to pick several, `false` to pick one at a time.
+        /// \param Enabled `true` to pick several, `false` to pick one at a time.
         static void SetMultiple(Element List, Bool Enabled);
 
         /// \brief Checks whether the list picks several records together.
@@ -287,7 +288,7 @@ namespace ZyPlugin::UI
         ///
         /// \param List    The item list to pick in.
         /// \param Record  The position of the record.
-        /// \param Enabled The flag, `true` to pick it, `false` to let it go.
+        /// \param Enabled `true` to pick it, `false` to let it go.
         static void SetPicked(Element List, UInt32 Record, Bool Enabled);
 
         /// \brief Checks whether a record is picked.
@@ -306,7 +307,7 @@ namespace ZyPlugin::UI
         /// \brief Lets a right press pick a row's record before its context menu, keeping a pick it is already in.
         ///
         /// \param List    The item list to pick in.
-        /// \param Enabled The flag, `true` to pick by a right press, `false` to leave the pick to the left button.
+        /// \param Enabled `true` to pick by a right press, `false` to leave the pick to the left button.
         static void SetRightPick(Element List, Bool Enabled);
 
         /// \brief Turns a state on rows while a record's value reads set, the state declared by \ref States::Declare.
@@ -316,7 +317,7 @@ namespace ZyPlugin::UI
         /// \param Key  The name of the value in each record, as `Sown`, or `!Usable` to wear it while clear.
         static void AddRowState(Element List, State Bit, Text Key);
 
-        /// \brief Reads the shared list fields of a node, as `RightPick`, `RowStates` and `Name`.
+        /// \brief Reads the list fields a node shares, as `ItemHeight`, `Multiple`, `RightPick`, `RowStates`, `Name`.
         ///
         /// \param Reader The markup reading the layout, whose scope the name is remembered within.
         /// \param List   The item list read into, as a grid's or a tree view's list.
@@ -331,13 +332,13 @@ namespace ZyPlugin::UI
 
         /// \brief Gets the state of a row its record marks, declaring it the first time.
         ///
-        /// \return The state a theme dresses a marked row by, as an entry among several being scattered.
+        /// \return The state a theme dresses a marked row by.
         static State Marked();
 
         /// \brief Takes the path out of a binding naming one list alone, as `{Inventory}`.
         ///
         /// \param Source The text of the binding, as a layout writes it.
-        /// \param Output The variable receiving the path between the braces.
+        /// \param Output Receives the path between the braces.
         /// \return `true` if the text is one path in braces and nothing more, `false` otherwise.
         static Bool Unwrap(Text Source, Ref<Text> Output);
 
@@ -347,6 +348,13 @@ namespace ZyPlugin::UI
         /// \param Scope  The path of the record the path is read from, or empty for the root.
         /// \return The path from the root, as `Party[2].Inventory`.
         static Str Resolve(Text Source, Text Scope);
+
+        /// \brief Gets the key of a record named by its path, as \ref Model::Mirror gave it.
+        ///
+        /// \param Data  The model holding the record, or `nullptr` for none.
+        /// \param Scope The path of the record from the root, ending in its index, as `Scene[0].Children[2]`.
+        /// \return The key, nought when the path names no record of a list or the record was given none.
+        static UInt64 GetKey(ConstPtr<Model> Data, Text Scope);
 
         /// \brief Copies the shape rows or cells are made from, logging one that is no shape.
         ///
@@ -388,7 +396,7 @@ namespace ZyPlugin::UI
             /// The room between rows, across and down, in pixels.
             Real32 Gap;
 
-            /// How far the rows are scrolled, in pixels.
+            /// The distance the rows are scrolled, in pixels.
             Real32 Offset;
 
             /// The height of the room the rows are seen through, in pixels.
@@ -443,26 +451,19 @@ namespace ZyPlugin::UI
         /// \param Value  The list of the model, read by its count of records.
         static void OnItems(Element Target, ConstRef<Datum> Value);
 
-        /// \brief Picks a record, brings it into view and reports it, when it is not picked already.
-        ///
-        /// \param Owner The interface it stands in.
-        /// \param List  The list to pick in.
-        /// \param Index The position of the record.
-        static void Choose(Ref<Interface> Owner, Element List, SInt32 Index);
-
         /// \brief Picks a record as the pointer or the keyboard asks, brings it into view and reports a changed pick.
         ///
         /// \param Owner  The interface it stands in.
         /// \param List   The list to pick in.
         /// \param Index  The position of the record.
-        /// \param Toggle The flag, `true` to add the record to the pick or take it away, `false` to replace the pick.
-        /// \param Extend The flag, `true` to pick every record from the anchor to it, `false` to pick only it.
+        /// \param Toggle `true` to add the record to the pick or take it away, `false` to replace the pick.
+        /// \param Extend `true` to pick every record from the anchor to it, `false` to pick only it.
         static void Gather(Ref<Interface> Owner, Element List, SInt32 Index, Bool Toggle, Bool Extend);
 
         /// \brief Works out where the rows stand, keeping what the keyboard and scrolling read of it.
         ///
         /// \param List The list to survey.
-        /// \return Where the rows stand.
+        /// \return The place of the rows, as the last layout and the scroll left them.
         static Grid Survey(Element List);
 
         /// \brief Measures the row showing the first record, once it was laid out, when no height is given.
@@ -495,9 +496,9 @@ namespace ZyPlugin::UI
         /// \param List  The list the rows stand in.
         /// \param Free  The indices of the cells no record in view needs, lowest first.
         /// \param Limit The most rows a view may need.
-        /// \param Gone  The variable receiving the rows to destroy once nothing more is read of the list's facet.
+        /// \param Gone  Receives the rows to destroy once nothing more is read of the list's facet.
         /// \return `true` if a row was hidden or taken out, `false` otherwise.
-        static Bool Park(Element List, ConstRef<Sequence<UInt>> Free, UInt Limit, Ref<Sequence<Handle>> Gone);
+        static Bool Park(Element List, ConstSpan<UInt> Free, UInt Limit, Ref<Sequence<Handle>> Gone);
 
         /// \brief Places a row where its record stands, and marks it picked or not.
         ///
@@ -511,7 +512,7 @@ namespace ZyPlugin::UI
         ///
         /// \param List   The list holding the record.
         /// \param Record The position of the record.
-        /// \param Output The variable receiving the path, its last step naming the record.
+        /// \param Output Receives the path, its last step naming the record.
         /// \return `true` if the list is bound to one, `false` otherwise.
         static Bool Locate(Element List, UInt32 Record, Ref<Path> Output);
 
@@ -519,12 +520,5 @@ namespace ZyPlugin::UI
         ///
         /// \param List The list whose rows are destroyed.
         static void Reset(Element List);
-
-        /// \brief Checks whether two lengths come to the same size, so a row standing where it should is left alone.
-        ///
-        /// \param First  The length the row stands at.
-        /// \param Second The length the row should stand at.
-        /// \return `true` if they do, `false` otherwise.
-        static Bool Same(ConstRef<Length> First, ConstRef<Length> Second);
     };
 }

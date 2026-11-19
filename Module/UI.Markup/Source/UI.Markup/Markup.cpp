@@ -10,10 +10,9 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+#include "Markup.hpp"
 #include "Facet/Host.hpp"
 #include "Interpreter.hpp"
-#include "Markup.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Layers.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -27,9 +26,9 @@ namespace ZyPlugin::UI
 
     Markup::Markup(Ptr<ZyContent::Service> Content)
         : mContent { Content },
-          mLayer { Layers::kBase }
+          mLayer   { Layers::kBase }
     {
-        // A node naming no widget is a `Panel`, a plain element until a module teaches the markup its own.
+        // A node naming no widget is a plain `Panel`.
         Register("Panel", Builder::Create<&Markup::Plain>());
     }
 
@@ -54,7 +53,7 @@ namespace ZyPlugin::UI
 
     void Markup::AddField(Field Reader)
     {
-        // A field added again, as by a module declared twice on the markup, is still read once.
+        // A module declared twice still adds its field once.
         if (!mFields.Contains(Reader))
         {
             mFields.Append(Move(Reader));
@@ -105,7 +104,7 @@ namespace ZyPlugin::UI
 
     Bool Markup::Dress(Ref<Theme> Target, Text Source, Ref<Str> Error)
     {
-        // The game's theme is the layer read last, over every layer a module added.
+        // The game's theme is read last, over every module's layer.
         Sequence<Text> Layers(mThemes);
         Layers.Append(Source);
         return Interpreter::Dress(* this, Target, Layers, mThemes.GetSize(), mFonts, Error);
@@ -133,11 +132,11 @@ namespace ZyPlugin::UI
             return Element();
         }
 
-        // A template no parameter changes is built as it was read, so most are never copied.
+        // A template no parameter changes is used as read, so most are never copied.
         JsonValue           Copied;
         ConstRef<JsonValue> Expanded = UI::Template::Expand(* Found, JsonValue(), Copied);
 
-        // Only a named band is the pane's, since an `Image` root reads a number there as the slice it shows.
+        // Only a named band is the pane's, since an `Image` root reads a number there as its slice.
         Layer Band = mLayer;
 
         if (const ConstPtr<JsonValue> Named = Parser::Find(Expanded, "Layer"); Named && Named->IsString())
@@ -148,7 +147,7 @@ namespace ZyPlugin::UI
         const Element Root(Target, Target.Open(Band));
         Element       Made = Root;
 
-        // A root naming no widget is the pane's own, given what the template gives.
+        // A root naming no widget is the pane itself.
         if (!Parser::Find(Expanded, "Widget"))
         {
             mTemplates.Enter(Key);
@@ -157,7 +156,7 @@ namespace ZyPlugin::UI
         }
         else
         {
-            // A root naming a widget is made inside the pane, unless it opens a pane of its own, as a window does.
+            // A root naming a widget is made inside the pane, unless it opens its own, as a window does.
             Made = Expand(Key, Root, Expanded);
 
             if (!Made.IsAlive() || Made.GetRoot() != Root)
@@ -183,7 +182,7 @@ namespace ZyPlugin::UI
             return Element();
         }
 
-        // A template spawned while it is being made, as by a context menu naming it, would be made forever.
+        // A template spawned while it is made, as by a context menu naming it, would recurse forever.
         if (mTemplates.IsExpanding(Key))
         {
             LOG_W("The template '{0}' holds itself, so it is left out", Template);
@@ -203,7 +202,7 @@ namespace ZyPlugin::UI
         const Element Result = Spawn(Parent, Template);
         PopScope();
 
-        // Made reading the record as it was named, then moved to the record its row shows now, as a list's row is.
+        // Made reading the record as named, then moved to the record its row shows now.
         Path From;
         Binder::Locate(Scope, From);
 
@@ -243,11 +242,11 @@ namespace ZyPlugin::UI
         }
         else if (const ConstPtr<JsonValue> Template = mTemplates.Find(Key); Template && !mTemplates.IsExpanding(Key))
         {
-            // A template's fields start where it sets them, a parameter reaching only fields naming it, as `"$Title"`.
+            // A parameter reaches only the template fields naming it, as `"$Title"`.
             JsonValue Copied;
             Result = Expand(Key, Parent, UI::Template::Expand(* Template, Node, Copied));
 
-            // The node's own children are the caller's, so they are made once the template is done and may use it.
+            // The node's own children are made once the template is done, so they may use it.
             if (Result.IsAlive())
             {
                 Nest(Result, Node);
@@ -275,7 +274,7 @@ namespace ZyPlugin::UI
     {
         const ConstPtr<JsonValue> Value = Parser::Find(Node, Key);
 
-        // A key of the lexicon binds as a value does, so it is read again whenever the language changes.
+        // A lexicon key binds as a value does, so a language change reads it again.
         const Bool Named = Value && Value->IsString();
 
         if (!Named || (!Binder::IsBound(Value->GetString()) && !Binder::IsLocalized(Value->GetString())))
@@ -292,7 +291,7 @@ namespace ZyPlugin::UI
     {
         const Text Outer = GetScope();
 
-        // A scope inside another reads from the record the outer one names, unless it climbs back to the root.
+        // A nested scope reads from the outer one's record unless it climbs to the root.
         if (StrStartsWith(Record, "/"))
         {
             mScopes.Append(Str(Record.Slice(1)));
@@ -361,7 +360,7 @@ namespace ZyPlugin::UI
             Target.SetStyle(Style->GetString());
         }
 
-        // The layout fields sit on the node itself, as a theme's do on a style, and only those it gives change.
+        // Only the layout fields the node gives change.
         Ref<Box> Shape = Target.EditBox();
         ReadShape(Node, "Placement", Shape.Placement, Parser::ParseEnum<Position>);
         ReadShape(Node, "Flow",      Shape.Flow,      Parser::ParseEnum<Direction>);
@@ -391,23 +390,23 @@ namespace ZyPlugin::UI
             Target.SetState(State::Disabled, Disabled->GetBool());
         }
 
-        // Either state may follow a flag of the model instead, as `"Hidden": "{Ui.HideHud}"`.
+        // Either state may follow a model flag, as `"Hidden": "{Ui.HideHud}"`.
         Bind(Target, Node, "Hidden", Binder::PutState<State::Hidden>());
         Bind(Target, Node, "Disabled", Binder::PutState<State::Disabled>());
 
-        // A control's action is only a name, so the game binds it whenever it likes, before or after the template.
+        // An action is only a name, so the game may bind it before or after the template.
         if (const ConstPtr<JsonValue> Action = Parser::Find(Node, "Action"); Action && Action->IsString())
         {
             Target.Obtain<Control>().Action = Identify(Action->GetString());
         }
 
-        // Any node may give the fields a module reads, as a tooltip or a menu at a right press.
+        // Any node may give the fields a module reads, as a tooltip or a context menu.
         for (ConstRef<Field> Reader : mFields)
         {
             Reader(* this, Target, Node);
         }
 
-        // A widget whose children stand in one of its parts, as a window's in its content, names that part.
+        // Children go to the part the widget names, as a window's content.
         Nest(Target, Node);
     }
 
@@ -436,6 +435,14 @@ namespace ZyPlugin::UI
                 Build(Content, Child);
             }
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Element Markup::Plain(Ref<Markup>, Element Parent, ConstRef<JsonValue>)
+    {
+        return Parent.Create();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -489,13 +496,5 @@ namespace ZyPlugin::UI
         const ConstPtr<Host> Found = Owner.Get<Host>();
         const Element        Content(Owner.GetTree(), Found ? Found->Content : Handle());
         return Content.IsAlive() ? Content : Owner;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Element Markup::Plain(Ref<Markup>, Element Parent, ConstRef<JsonValue>)
-    {
-        return Parent.Create();
     }
 }

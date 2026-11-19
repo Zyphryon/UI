@@ -12,7 +12,6 @@
 
 #include "Animator.hpp"
 #include "UI.Core/Element.hpp"
-#include "UI.Core/Facet/Style/Motion.hpp"
 #include "UI.Core/Facet/Visual/Backdrop.hpp"
 #include "UI.Core/Facet/Visual/Bar.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
@@ -20,13 +19,8 @@
 #include "UI.Core/Facet/Visual/Look.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
 #include "UI.Core/Interface.hpp"
-#include "UI.Core/Pane.hpp"
-#include "UI.Core/Style/Animation.hpp"
-#include "UI.Core/Style/Appearance.hpp"
 #include "UI.Core/Style/Keyframe.hpp"
-#include "UI.Core/Style/Skin.hpp"
 #include "UI.Core/Style/Theme.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -62,7 +56,7 @@ namespace ZyPlugin::UI
         // A skin giving what the last one gave starts no transition, and leaves one that runs to run on.
         const Bool Changed = Lay(State.Goal, Values) != Skin::Field::None;
 
-        // An element already shown moves from its own values to the new ones; one dressed the first time snaps.
+        // An element already shown moves from its own values to the new ones, and one dressed the first time snaps.
         if (!Dressed || Values.Transition.Duration <= 0.0f)
         {
             State.Own      = State.Goal;
@@ -75,21 +69,20 @@ namespace ZyPlugin::UI
             State.Curve    = Values.Transition.Curve;
             State.Shifting = true;
 
-            // The delay is waited out as the time before nought, through which the transition stands at its start.
+            // The delay runs as time before zero, through which the transition stands at its start.
             State.Clock.Seek(-Values.Transition.Delay);
 
             // Only what starts apart from where it ends is eased, the rest already standing at its end.
             State.Moving = Apart(State.From, State.Goal) & Motion::kMoving;
         }
 
-        // A new name starts the loop over, and none stops it.
         if (Values.Animation != State.Loop)
         {
             State.Loop      = Values.Animation;
             State.LoopClock = Playback();
         }
 
-        // Only the element's own hidden state plays it in or out; what it holds goes along with it.
+        // Only the element's own hidden state plays it in or out, and what it holds goes along with it.
         if (const Bool Hidden = Target.IsHidden(Row); Hidden != State.Hidden)
         {
             const UInt64 Once = Hidden ? Values.Exit : Values.Enter;
@@ -138,7 +131,6 @@ namespace ZyPlugin::UI
     {
         ZY_PROFILE_SCOPE("UI::Animator::Tick");
 
-        // Every clock of every element runs against this one, which moves on only here.
         mClock += Delta;
 
         mMoving.RemoveFastSomeIf([this](Handle Element)
@@ -160,6 +152,79 @@ namespace ZyPlugin::UI
             }
             return true;
         });
+
+        // What was dismissed goes once it is not playing its way out, after the walk over the list that may name it.
+        mDismissed.RemoveFastSomeIf([this](Handle Element)
+        {
+            const Ptr<Motion> State = mOwner.Get<Motion>(Element);
+
+            if (State && State->Leaving)
+            {
+                return false;
+            }
+
+            if (mOwner.IsAlive(Element))
+            {
+                mOwner.Destroy(Element);
+            }
+            return true;
+        });
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Bool Animator::Play(Handle Element, Text Name)
+    {
+        const UInt64              Identifier = Identify(Name);
+        const ConstPtr<Animation> Clip       = Seek(Identifier);
+        Ref<Motion>               Track      = Hold(Element, mOwner.HasState(Element, State::Hidden));
+
+        // An element playing its way out keeps its exit, as it is about to go.
+        if (!Clip || Track.Leaving)
+        {
+            return false;
+        }
+
+        Track.Once      = Identifier;
+        Track.OnceClock = Playback(Clip->Duration);
+
+        if (!Track.Listed)
+        {
+            mMoving.Append(Element);
+            Track.Listed = true;
+        }
+        Resume(Track.OnceClock);
+        return true;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Animator::Dismiss(Handle Element)
+    {
+        // Hiding dresses the element again before the next tick, which starts its exit when its style gives one.
+        mOwner.SetState(Element, State::Hidden, true);
+        mDismissed.Append(Element);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Ref<Motion> Animator::Hold(Handle Element, Bool Hidden)
+    {
+        if (const Ptr<Motion> Found = mOwner.Get<Motion>(Element))
+        {
+            return * Found;
+        }
+
+        // A new motion starts where the element stands, so nothing moves until a skin or an animation says so.
+        Ref<Motion> Track = mOwner.Add<Motion>(Element);
+        Track.Shown  = Capture(Element.GetSlot());
+        Track.Own    = Track.Shown;
+        Track.Goal   = Track.Shown;
+        Track.Hidden = Hidden;
+        return Track;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -300,7 +365,6 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The way in or out plays over the loop, a single run forward.
         if (const ConstPtr<Animation> Once = Seek(State.Once); Once && Once->Duration > 0.0f)
         {
             const Appearance Beneath = State.Shown;
@@ -351,7 +415,7 @@ namespace ZyPlugin::UI
         UInt Before = kNone;
         UInt After  = kNone;
 
-        // The keys around the share that give the value; past the first or the last, the values beneath stand in.
+        // The keys around the share give the value, the values beneath standing in past either end.
         for (UInt Index = 0; Index < Clip.Keys.GetSize(); ++Index)
         {
             ConstRef<Keyframe> Key = Clip.Keys[Index];
@@ -726,7 +790,6 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // A new size or typeface changes what the text measures, the rest only how it is drawn.
         Bool Sized = false;
 
         if (Values.Has(Skin::Field::Size) && Text->Size != Values.Size)

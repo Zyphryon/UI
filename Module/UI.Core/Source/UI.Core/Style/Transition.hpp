@@ -23,13 +23,13 @@ namespace ZyPlugin::UI
     /// \brief Represents how an element moves to the values a new state gives, as CSS's `transition` does.
     struct Transition final
     {
-        /// How long the move takes, in seconds, where nought changes at once.
+        /// The time the move takes, in seconds, where nought changes at once.
         Real32 Duration = 0.0f;
 
-        /// How long the move waits before it starts, in seconds.
+        /// The time the move waits before it starts, in seconds.
         Real32 Delay    = 0.0f;
 
-        /// How the move eases along the way.
+        /// The easing the move follows along the way.
         Easing Curve    = Easing::OutQuad;
     };
 }

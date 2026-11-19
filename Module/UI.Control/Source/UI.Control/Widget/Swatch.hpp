@@ -28,7 +28,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the colour a swatch shows, over a board of light and dark squares so transparency shows.
     struct Checker final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Paint;
 
         /// The colour shown, kept apart from the look a style animates so a transition never puts an old one back.
@@ -70,7 +70,7 @@ namespace ZyPlugin::UI
         /// \brief Gets the colour a swatch shows.
         ///
         /// \param Target The swatch to read.
-        /// \return The colour, its fill.
+        /// \return The colour it shows, or transparent for an element that is no swatch.
         static Color GetValue(Element Target);
 
     private:

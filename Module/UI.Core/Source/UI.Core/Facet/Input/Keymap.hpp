@@ -24,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the shortcuts an element keeps, which go with it and run where their scope says.
     struct Keymap final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The shortcuts, in the order they were added.

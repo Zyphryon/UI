@@ -48,7 +48,6 @@ namespace ZyPlugin::UI
         Shape.Grow  = 1.0f;
         Shape.Basis = Length::Pixels(0.0f);
 
-        // The top, the middle and the bottom stand one over another, the left, the centre and the right side by side.
         const Str     Split  = Widget::Part(Style, "Split");
         const Element Outer  = Splitter::Create(Result, Direction::Column, Split);
         const Element Top    = Splitter::AddPane(Outer, 150.0f, 60.0f, Split);
@@ -64,7 +63,7 @@ namespace ZyPlugin::UI
         Own.Middle = Middle.GetHandle();
         Own.Style  = Style;
 
-        // Made in the order the sides are counted, each region a tab control filling its pane.
+        // Made in the order the sides are counted.
         const Array<Element, 5> Panes(Left, Right, Top, Bottom, Main);
         const Str               Region = Widget::Part(Style, "Region");
 
@@ -73,7 +72,7 @@ namespace ZyPlugin::UI
             const Element Book = Tabs::Create(Pane, Region);
             Book.EditBox().Grow = 1.0f;
 
-            // Found again, as making the region may move this facet; counted unseen, so the first update shows each.
+            // Found again, as making the region may move this facet, and counted unseen so the first update shows each.
             const Ptr<Harbor> Kept = Result.Get<Harbor>();
             Kept->Regions.Append(Book.GetHandle());
             Kept->Counts.Append(kMaximum<UInt32>);
@@ -306,7 +305,7 @@ namespace ZyPlugin::UI
         JsonObject Fields(Root);
         JsonArray  Sizes = Fields.SetArray("Sizes");
 
-        // Each edge keeps the size its pane, the parent of its region, was given, laid out or not.
+        // Each edge keeps the size its pane was given, laid out or not.
         for (UInt32 Region = 0; Region < static_cast<UInt32>(Side::Center); ++Region)
         {
             const Element Pane = Element(Owned, Own->Regions[Region]).GetParent();
@@ -316,7 +315,6 @@ namespace ZyPlugin::UI
         // Added once the sizes are in, since adding a field may move the one added before it.
         JsonArray Listed = Fields.SetArray("Panels");
 
-        // Docked panels in the order of their region's tabs, then the floating ones.
         for (UInt32 Region = 0; Region < Own->Regions.GetSize(); ++Region)
         {
             const Element Book(Owned, Own->Regions[Region]);
@@ -451,7 +449,7 @@ namespace ZyPlugin::UI
         const Element     Tab(Owner, Message.Target);
         const Ptr<Harbor> Own = Owner.Get<Harbor>(Self);
 
-        // Only a tab of one of its regions is dragged out; the tab is a child of its region's header.
+        // Only a tab of one of its regions is dragged out, the tab being a child of its region's header.
         const Element Header = Tab.GetParent();
         const Element Region = Header.GetParent();
 
@@ -462,6 +460,8 @@ namespace ZyPlugin::UI
             return false;
         }
 
+        const SInt32 Found = Find(Root, Tab);
+
         if (Message.Kind == Signal::kRelease)
         {
             if (Own->Lifted != Message.Target)
@@ -470,7 +470,6 @@ namespace ZyPlugin::UI
             }
 
             // The tab dragged out goes at the next update, its panel docked where it was let go or left floating.
-            const SInt32 Found = Find(Root, Tab);
             Own->Loose   = true;
             Own->Carried = Handle();
 
@@ -486,11 +485,6 @@ namespace ZyPlugin::UI
 
         if (Own->Lifted == Message.Target)
         {
-            const SInt Found = Own->Berths.Find([Own](ConstRef<Berth> Entry)
-            {
-                return Entry.Content == Own->Carried;
-            });
-
             if (Found >= 0)
             {
                 Ref<Berth> Entry = Own->Berths[Found];
@@ -506,8 +500,7 @@ namespace ZyPlugin::UI
         }
 
         // A tab floats its panel once dragged past its region's tabs.
-        const Rect   Reach = Header.GetFrame().Expand(kTear);
-        const SInt32 Found = Find(Root, Tab);
+        const Rect Reach = Header.GetFrame().Expand(kTear);
 
         if (Reach.Contains(Message.Position) || Found < 0 || Own->Lifted.IsValid())
         {
@@ -604,7 +597,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        // A region shows only while it holds a panel, the middle always; its pane hides with it, its bar with that.
+        // A region but the middle shows only while it holds a panel, its pane hiding with it and its bar with that.
         const Ptr<Harbor> Own = Root.Get<Harbor>();
 
         for (UInt32 Region = 0; Region < Own->Regions.GetSize(); ++Region)
@@ -627,7 +620,6 @@ namespace ZyPlugin::UI
             Changed = true;
         }
 
-        // A panel just docked shows its tab over the others.
         for (Ref<Berth> Entry : Own->Berths)
         {
             const Element Content(Owned, Entry.Content);
@@ -670,7 +662,6 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Where it stands now, in a window or on a tab's page in a region.
         const Element Opened(Owned, Entry.Window);
         const Bool    Docked  = Entry.Where != Side::Float && !Opened.IsAlive();
         const Element Page    = Docked ? Content.GetParent() : Element();
@@ -680,7 +671,6 @@ namespace ZyPlugin::UI
 
         if (Entry.Goal == Side::Float)
         {
-            // A floating panel only moves its window.
             if (Opened.IsAlive())
             {
                 Window::MoveTo(Opened, Entry.Spot);
@@ -856,7 +846,6 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The room the panel would take is lit under the targets.
         const Element Preview(Owned, Own->Preview);
 
         if (!Preview.IsAlive())
@@ -972,7 +961,7 @@ namespace ZyPlugin::UI
 
     Rect Dock::Shade(Rect Frame, Side Where)
     {
-        // A side takes the band of three tenths along it; the middle stands half a band in from every edge.
+        // A side takes the band of three tenths along it, and the middle stands half a band in from every edge.
         static constexpr Array kShares(Rect(0.0f, 0.0f, 0.3f, 1.0f),
                                        Rect(0.7f, 0.0f, 1.0f, 1.0f),
                                        Rect(0.0f, 0.0f, 1.0f, 0.3f),
@@ -1031,10 +1020,15 @@ namespace ZyPlugin::UI
         // The tab's page stands at the same place among the pages as the tab among the tabs.
         const Element Region = Tab.GetParent().GetParent();
         const Element Page   = Tabs::GetPage(Region, Tab.GetIndex());
-        const SInt    Found  = Page.IsAlive() ? Own->Berths.Find([Root, Page](ConstRef<Berth> Entry)
+        SInt          Found  = -1;
+
+        if (Page.IsAlive())
         {
-            return Element(Root.GetTree(), Entry.Content).GetParent() == Page;
-        }) : -1;
+            Found = Own->Berths.Find([Root, Page](ConstRef<Berth> Entry)
+            {
+                return Element(Root.GetTree(), Entry.Content).GetParent() == Page;
+            });
+        }
 
         if (Found >= 0)
         {

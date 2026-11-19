@@ -12,11 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -28,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the state of a scroll bar, with the element it scrolls, its thumb, and where it was grabbed.
     struct Rail final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The element it scrolls, which holds a scroll, or one naming nothing.
@@ -43,10 +38,10 @@ namespace ZyPlugin::UI
         /// `true` when it runs up and down, `false` when it runs sideways.
         Bool   Vertical  = true;
 
-        /// `true` when it hides while what it scrolls fits.
+        /// `true` when it hides while what it scrolls fits, `false` when it always shows.
         Bool   Automatic = false;
 
-        /// How far along the thumb the pointer took it, in pixels.
+        /// The distance along the thumb the pointer took it at, in pixels.
         Real32 Grab      = 0.0f;
     };
 
@@ -55,21 +50,10 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// How thick a bar is when its style gives no size, in pixels.
-        static constexpr Real32 kThickness = 12.0f;
-
-        /// How short a thumb gets over a very long content, in pixels, so it can still be taken.
-        static constexpr Real32 kShortest  = 16.0f;
-
-        /// How far one notch of the wheel over a bar scrolls, in pixels.
-        static constexpr Real32 kNotch     = 40.0f;
-
-    public:
-
         /// \brief Creates a scroll bar.
         ///
         /// \param Parent   The element to hold it.
-        /// \param Vertical The flag, `true` to run it up and down, `false` to run it sideways.
+        /// \param Vertical `true` to run it up and down, `false` to run it sideways.
         /// \param Style    The name of the style it wears, its thumb wearing it followed by `.Thumb`.
         /// \return The bar, twelve pixels thick unless its style gives its width, or its height when it runs sideways.
         static Element Create(Element Parent, Bool Vertical = true, Text Style = "Scrollbar");
@@ -97,7 +81,7 @@ namespace ZyPlugin::UI
         /// \brief Sets whether a scroll bar hides while what it scrolls fits, or always shows.
         ///
         /// \param Bar       The bar to change.
-        /// \param Automatic The flag, `true` to hide it while nothing is left to scroll, `false` to always show it.
+        /// \param Automatic `true` to hide it while nothing is left to scroll, `false` to always show it.
         static void SetAutomatic(Element Bar, Bool Automatic);
 
         /// \brief Gets the thumb of a scroll bar.
@@ -109,7 +93,7 @@ namespace ZyPlugin::UI
         /// \brief Scrolls an element along one axis, held within what it holds, without reporting it.
         ///
         /// \param Target   The element, which holds a scroll.
-        /// \param Vertical The flag, `true` to scroll it up and down, `false` to scroll it sideways.
+        /// \param Vertical `true` to scroll it up and down, `false` to scroll it sideways.
         /// \param Offset   The distance from the start, in pixels.
         /// \return `true` if it moved, `false` otherwise.
         static Bool ScrollTo(Element Target, Bool Vertical, Real32 Offset);
@@ -117,25 +101,34 @@ namespace ZyPlugin::UI
         /// \brief Gets how far an element is scrolled along one axis.
         ///
         /// \param Target   The element, which holds a scroll.
-        /// \param Vertical The flag, `true` to read it up and down, `false` to read it sideways.
-        /// \return How far from the start, in pixels, or nought when it does not scroll.
+        /// \param Vertical `true` to read it up and down, `false` to read it sideways.
+        /// \return The distance from the start, in pixels, or nought when it does not scroll.
         static Real32 GetOffset(Element Target, Bool Vertical);
 
         /// \brief Gets how far an element can scroll along one axis, as the last layout found it.
         ///
         /// \param Target   The element, which holds a scroll.
-        /// \param Vertical The flag, `true` to read it up and down, `false` to read it sideways.
+        /// \param Vertical `true` to read it up and down, `false` to read it sideways.
         /// \return The farthest offset, in pixels, or nought when everything fits.
         static Real32 GetLimit(Element Target, Bool Vertical);
 
         /// \brief Gets how much of an element is seen along one axis, as the last layout found it.
         ///
         /// \param Target   The element, which holds a scroll.
-        /// \param Vertical The flag, `true` to get its height, `false` to get its width.
+        /// \param Vertical `true` to get its height, `false` to get its width.
         /// \return The room it is seen through, in pixels.
         static Real32 GetView(Element Target, Bool Vertical);
 
     private:
+
+        /// The thickness of a bar whose style gives no size, in pixels.
+        static constexpr Real32 kThickness = 12.0f;
+
+        /// The shortest a thumb gets over a very long content, in pixels, so it can still be taken.
+        static constexpr Real32 kShortest  = 16.0f;
+
+        /// The distance one notch of the wheel over a bar scrolls, in pixels.
+        static constexpr Real32 kNotch     = 40.0f;
 
         /// \brief Runs a bar, where a press on its track pages toward the pointer and the wheel scrolls along it.
         ///
@@ -179,12 +172,5 @@ namespace ZyPlugin::UI
         /// \param Bar The bar, which was laid out.
         /// \return The track, in pixels of the target.
         static Rect GetTrack(Element Bar);
-
-        /// \brief Checks whether a length stands at so many pixels, near enough that moving it changes nothing seen.
-        ///
-        /// \param Value  The length to check.
-        /// \param Pixels The count of pixels it should stand at.
-        /// \return `true` if it does, `false` otherwise.
-        static Bool Near(ConstRef<Length> Value, Real32 Pixels);
     };
 }

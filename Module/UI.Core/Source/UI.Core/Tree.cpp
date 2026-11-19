@@ -11,10 +11,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Tree.hpp"
-#include "Element.hpp"
-#include "Facet/Layout/Box.hpp"
-#include "Facet/Visual/Sketch.hpp"
-#include "Pane.hpp"
+#include "Facet/Input/Control.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -31,6 +28,9 @@ namespace ZyPlugin::UI
           mDepth { 0 }
     {
     }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     Handle Tree::Open(Layer Band, UInt64 Name)
     {
@@ -239,7 +239,6 @@ namespace ZyPlugin::UI
         const UInt32           Row   = mSlots[Scope.GetSlot()].Row;
         const ConstPtr<UInt64> Names = Pane.Names.GetData();
 
-        // The subtree is the run of rows after the scope's own.
         const ConstPtr<UInt64> Hit = ::Find(Names + Row + 1, static_cast<UInt>(Pane.Spans[Row] - 1), Name);
         return Hit ? GetHandle(Pane.Slots[static_cast<UInt32>(Hit - Names)]) : Handle();
     }
@@ -261,7 +260,7 @@ namespace ZyPlugin::UI
             Pane.States[Row] = After;
             Pane.Restyle(Row, Row + 1);
 
-            // The parts of a widget wear its states, but a control it holds wears only its own, as all beneath it does.
+            // A widget's parts wear its states, but a control it holds wears only its own, as all beneath it do.
             for (UInt32 Cursor = Row + 1, End = Row + Pane.Spans[Row]; Cursor < End;)
             {
                 if (mSlots[Pane.Slots[Cursor]].Facets.Test(Facets::Index<Control>()))
@@ -274,7 +273,6 @@ namespace ZyPlugin::UI
                 }
             }
 
-            // Hiding takes the element out of the layout, and showing it puts it back.
             if (HasBit(After ^ Before, State::Hidden))
             {
                 Pane.Marks[Row] |= Dirty::Measure;
@@ -422,7 +420,6 @@ namespace ZyPlugin::UI
             Release(Pane.Slots[Cursor]);
         }
 
-        // A root takes its whole pane with it.
         if (Parent == Pane::kNoParent)
         {
             Pane.Clear();
@@ -458,7 +455,6 @@ namespace ZyPlugin::UI
         ZY_ASSERT(!Before.IsValid() || GetParent(Before) == Parent,
                   "An element can only go before a child of its parent");
 
-        // The rows it lands in front of, counted before anything moves.
         const UInt32 Target = Before.IsValid() ? mSlots[Before.GetSlot()].Row : Above + Pane.Spans[Above];
 
         if (Before == Element || (Old == Parent.GetSlot() && Target == Row + Count))

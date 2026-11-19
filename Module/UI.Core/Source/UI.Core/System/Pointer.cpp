@@ -11,12 +11,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Pointer.hpp"
-#include "Dispatcher.hpp"
-#include "Layout.hpp"
 #include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Backdrop.hpp"
 #include "UI.Core/Facet/Visual/Effect.hpp"
 #include "UI.Core/Facet/Visual/Look.hpp"
@@ -24,7 +20,6 @@
 #include "UI.Core/Facet/Visual/Scroll.hpp"
 #include "UI.Core/Interface.hpp"
 #include "UI.Core/Layers.hpp"
-#include "UI.Core/Pane.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -93,14 +88,12 @@ namespace ZyPlugin::UI
         mCursor  = Vector2(X, Y);
         mPointer = mCursor / Ratio;
 
-        // A thumb held follows the pointer, and nothing else hears the move.
         if (mGrip.IsValid())
         {
             Slide();
             return true;
         }
 
-        // A module's gesture may take the move, as a drag carrying something does.
         if (Offer<&Hook::Move>())
         {
             return true;
@@ -147,7 +140,6 @@ namespace ZyPlugin::UI
     {
         const UInt Index = ZyEnum::Cast(Button);
 
-        // The button is down from here, whatever takes its press.
         mHeld.Set(Index);
 
         // A module's gesture may take the press first, as another button letting a drag go does.
@@ -198,7 +190,7 @@ namespace ZyPlugin::UI
 
         if (Target.IsValid() && mOwner.IsAlive(Target))
         {
-            // Only the left button lights a control; another holds and counts only on one taking every button.
+            // Only the left button lights a control, and another holds and counts only on one taking every button.
             const Bool Left  = (Button == ZyInput::Button::Left);
             const Bool Holds = Left || TakesAny(Target);
 
@@ -242,7 +234,6 @@ namespace ZyPlugin::UI
         // A pane may have closed under a still pointer since the press, so what it rests on is found again.
         Repick();
 
-        // A module's gesture may take the release, as letting go of what is carried does.
         if (Offer<&Hook::Release>(Button))
         {
             return true;
@@ -341,7 +332,7 @@ namespace ZyPlugin::UI
         const Handle Target  = Nearest(mOver, false);
         const Bool   Stopped = Target.IsValid() && mDispatcher.Dispatch(Message);
 
-        // What no control took scrolls the innermost scrolling element; with shift held the wheel turns sideways.
+        // What no control took scrolls the innermost scrolling element, sideways with shift held.
         if (!Stopped)
         {
             const Bool Sideways = Shift && DeltaX == 0.0f;
@@ -429,7 +420,6 @@ namespace ZyPlugin::UI
     {
         mOver = Pick(mPointer);
 
-        // Every control holding what the pointer rests on is hovered, and each one it left is not.
         mReached.Clear();
 
         for (Handle Current = mOver; Current.IsValid(); Current = mOwner.GetParent(Current))
@@ -498,7 +488,6 @@ namespace ZyPlugin::UI
             }
         }
 
-        // A summoned popup that died is no longer one to close.
         mSummoned.RemoveFastSomeIf([this](Handle Root)
         {
             return !mOwner.IsAlive(Root);
@@ -617,7 +606,7 @@ namespace ZyPlugin::UI
 
         mBlocked = false;
 
-        // Panes are tried front to back; tooltips, ghosts and the backdrop of a modal pane are only shown, never hit.
+        // Panes are tried front to back, and tooltips, ghosts and a modal backdrop are only shown, never hit.
         for (UInt Index = Order.GetSize(); Index-- > 0;)
         {
             ConstRef<Pane> Target = mOwner.GetPane(Order[Index]);
@@ -631,12 +620,14 @@ namespace ZyPlugin::UI
 
             for (UInt32 Row = 0; Row < Target.GetSize(); ++Row)
             {
-                const UInt32         Slot  = Target.Slots[Row];
-                const ConstPtr<Look> Shade = mOwner.Peek<Look>(Slot);
-                const Bool           Cuts  = (Shade && Shade->Clip) || mOwner.Peek<Scroll>(Slot);
-                const Bool           Over  = Within(Target.Frames[Row], Shade ? Shade->Radius : 0.0f, Point);
+                const UInt32           Slot  = Target.Slots[Row];
+                const Rect             Frame = Target.Frames[Row];
+                const ConstPtr<Look>   Shade = mOwner.Peek<Look>(Slot);
+                const ConstPtr<Scroll> Roll  = mOwner.Peek<Scroll>(Slot);
+                const Bool             Cuts  = (Shade && Shade->Clip) || Roll;
+                const Bool             Over  = Within(Frame, Shade ? Shade->Radius : 0.0f, Point);
 
-                // Hidden or faded out, it is not there; cutting what it holds, nothing of it is outside its box.
+                // Hidden or faded out it is not there, and when it cuts what it holds nothing outside its box is.
                 if (Target.IsHidden(Row) || (Shade && Shade->Opacity <= 0.0f) || (Cuts && !Over))
                 {
                     Row += Target.Spans[Row] - 1;
@@ -646,14 +637,12 @@ namespace ZyPlugin::UI
                 // Only what draws, or holds a kind of facet that answers the pointer, stops it.
                 const ConstPtr<Effect>   Extra = mOwner.Peek<Effect>(Slot);
                 const ConstPtr<Backdrop> Layer = mOwner.Peek<Backdrop>(Slot);
-                const ConstPtr<Scroll>   Roll  = mOwner.Peek<Scroll>(Slot);
-                const Real32             Top   = Target.Frames[Row].GetMinimumY() + Target.Boxes[Row].Padding.Top;
-                const Bool               Solid = mOwner.IsInteractive(Slot)
-                    || (Shade && (Shade->Background.GetAlpha() > 0.0f || Shade->BorderWidth > 0.0f))
-                    || (Extra && Extra->Fill.IsVisible())
-                    || (Layer && Layer->Source)
-                    || mOwner.Peek<Picture>(Slot)
-                    || (Roll && Roll->GetTrack(Target.Frames[Row], Top).Contains(Point));
+                const Real32             Top   = Frame.GetMinimumY() + Target.Boxes[Row].Padding.Top;
+
+                const Bool Inked = Shade && (Shade->Background.GetAlpha() > 0.0f || Shade->BorderWidth > 0.0f);
+                const Bool Shown = (Extra && Extra->Fill.IsVisible()) || (Layer && Layer->Source);
+                const Bool Thumb = Roll && Roll->GetTrack(Frame, Top).Contains(Point);
+                const Bool Solid = mOwner.IsInteractive(Slot) || Inked || Shown || mOwner.Peek<Picture>(Slot) || Thumb;
 
                 if (Over && Solid)
                 {
@@ -675,7 +664,7 @@ namespace ZyPlugin::UI
                 }
             }
 
-            // A modal pane holds the pointer: whatever stands behind it is out of reach.
+            // A modal pane holds the pointer, so whatever stands behind it is out of reach.
             if (Target.Band.Has(Layer::Trait::Modal) && !Target.IsHidden(0) && !mDispatcher.IsOwned(Root))
             {
                 mBlocked = true;
@@ -707,8 +696,8 @@ namespace ZyPlugin::UI
             const Bool              Summoned = mSummoned.Contains(Root);
 
             // A press on the popup, or on the opener of one not summoned at the pointer, is left to them to handle.
-            const Bool Beyond = !Summoned && Opener && mOwner.IsAlive(Opener->Owner) &&
-                               mDispatcher.IsOpenedFrom(mOver, Opener->Owner);
+            const Bool Linked = !Summoned && Opener && mOwner.IsAlive(Opener->Owner);
+            const Bool Beyond = Linked && mDispatcher.IsOpenedFrom(mOver, Opener->Owner);
             const Bool Kept   = Root == Over || mDispatcher.IsOpenedFrom(mOver, Root) || Beyond;
 
             if (!Kept)
@@ -785,8 +774,8 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            const Real32 Limit  = Max(Found->Overflow - Found->View.GetY(), 0.0f);
-            const Real32 LimitX = Max(Found->OverflowX - Found->View.GetX(), 0.0f);
+            const Real32 Limit  = Found->GetLimit();
+            const Real32 LimitX = Found->GetLimitX();
 
             // One with nowhere to go either way, as a text field holding a short line, passes the turn on.
             if (Limit <= 0.0f && (!Found->Horizontal || LimitX <= 0.0f))
@@ -795,8 +784,8 @@ namespace ZyPlugin::UI
             }
 
             const Real32 Offset  = Clamp(Found->Offset - Down * kNotch, 0.0f, Limit);
-            const Real32 OffsetX = Found->Horizontal ? Clamp(Found->OffsetX + Across * kNotch, 0.0f, LimitX)
-                                                     : Found->OffsetX;
+            const Real32 Shifted = Clamp(Found->OffsetX + Across * kNotch, 0.0f, LimitX);
+            const Real32 OffsetX = Found->Horizontal ? Shifted : Found->OffsetX;
 
             // The innermost one takes the turn, and stops following its end once moved up.
             const Ptr<Scroll> Moved = mOwner.Edit<Scroll>(Current);
@@ -829,7 +818,7 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // A press on the thumb keeps the place it was taken by; one beside it takes the thumb by its middle.
+            // A press on the thumb keeps the place it was taken by, and one beside it takes the thumb by its middle.
             const Rect Knob = Found->GetThumb(Frame, Top);
             const Bool Held = mPointer.GetY() >= Knob.GetMinimumY() && mPointer.GetY() <= Knob.GetMaximumY();
 
@@ -860,7 +849,7 @@ namespace ZyPlugin::UI
 
         const Real32 Top    = GetRoomTop(mGrip);
         const Real32 Room   = Found->View.GetY();
-        const Real32 Limit  = Max(Found->Overflow - Room, 0.0f);
+        const Real32 Limit  = Found->GetLimit();
         const Real32 Travel = Room - Found->GetThumb(mOwner.GetFrame(mGrip), Top).GetHeight();
 
         if (Travel <= 0.0f || Limit <= 0.0f)
@@ -887,7 +876,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Pointer::Within(ConstRef<Rect> Frame, Real32 Radius, Vector2 Point)
+    Bool Pointer::Within(Rect Frame, Real32 Radius, Vector2 Point)
     {
         const Real32 Round  = Min(Radius, Frame.GetWidth() * 0.5f, Frame.GetHeight() * 0.5f);
         const Bool   Inside = Frame.Contains(Point);
@@ -897,12 +886,7 @@ namespace ZyPlugin::UI
             return Inside;
         }
 
-        // Within a corner's square, the point must also lie within the arc drawn there.
-        const Vector2 Inset(Round);
-        const Vector2 Near = Frame.GetPosition() + Inset;
-        const Vector2 Far  = Frame.GetPosition() + Frame.GetSize() - Inset;
-        const Real32  X    = Max(Near.GetX() - Point.GetX(), Point.GetX() - Far.GetX(), 0.0f);
-        const Real32  Y    = Max(Near.GetY() - Point.GetY(), Point.GetY() - Far.GetY(), 0.0f);
-        return X * X + Y * Y <= Round * Round;
+        const Rect Inner = Frame.Contract(Round);
+        return (Point - Inner.GetNearest(Point)).GetLengthSquared() <= Round * Round;
     }
 }

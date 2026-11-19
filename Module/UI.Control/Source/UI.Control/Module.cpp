@@ -69,7 +69,7 @@ namespace ZyPlugin::UI
 
     void ControlModule::Declare(Ref<Markup> Reader)
     {
-        // Taught once, so a builder or a band a game gave the markup since stays when the library is declared again.
+        // Taught once, so what a game gave the markup since stays when the library is declared again.
         if (!Reader.Enlist("Control"))
         {
             return;
@@ -77,7 +77,6 @@ namespace ZyPlugin::UI
         GestureModule::Declare(Reader);
         Enroll();
 
-        // A template opens in a window unless it says, and any node may open a menu at a right press.
         Reader.SetLayer(Window::kLayer);
         Reader.AddField(Markup::Field::Create<&Menu::Read>());
 
@@ -96,12 +95,12 @@ namespace ZyPlugin::UI
         Reader.Register("Expander",  Markup::Builder::Create<&Expander::Build>());
         Reader.Register("Window",    Markup::Builder::Create<&Window::Build>());
         Reader.Register("Spinner",   Markup::Builder::Create<&Spinner::Build>());
-        Reader.Register("Scalar", Markup::Builder::Create<&Scalar::Build>());
+        Reader.Register("Scalar",    Markup::Builder::Create<&Scalar::Build>());
         Reader.Register("Swatch",    Markup::Builder::Create<&Swatch::Build>());
         Reader.Register("Textbox",   Markup::Builder::Create<&Textbox::Build>());
         Reader.Register("Menu",      Markup::Builder::Create<&Menu::Build>());
         Reader.Register("Menubar",   Markup::Builder::Create<&Menubar::Build>());
-        Reader.Register("Dropdown", Markup::Builder::Create<&Dropdown::Build>());
+        Reader.Register("Dropdown",  Markup::Builder::Create<&Dropdown::Build>());
         Reader.Register("Dialog",    Markup::Builder::Create<&Dialog::Build>());
         Reader.Register("Scrollbar", Markup::Builder::Create<&Scrollbar::Build>());
         Reader.Register("Scroller",  Markup::Builder::Create<&Scroller::Build>());
@@ -110,7 +109,7 @@ namespace ZyPlugin::UI
         Reader.Register("Outline",   Markup::Builder::Create<&Outline::Build>());
         Reader.Register("Dock",      Markup::Builder::Create<&Dock::Build>());
 
-        // Every widget wears the theme built into the library, read over the gesture module's.
+        // The library's theme is read over the gesture module's.
         Reader.AddTheme(Text(reinterpret_cast<ConstPtr<Char>>(kTheme), sizeof(kTheme)));
     }
 

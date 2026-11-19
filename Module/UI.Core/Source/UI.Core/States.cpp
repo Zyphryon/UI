@@ -28,12 +28,11 @@ namespace ZyPlugin::UI
             return Found;
         }
 
-        Ref<Registry> Names = GetRegistry();
-        ZY_ASSERT(Names.Next < 32, "Every bit of a state is taken");
+        Ref<Sequence<Str>> Names = GetNames();
+        ZY_ASSERT(Names.GetSize() < 32, "Every bit of a state is taken");
 
-        const State Bit = static_cast<State>(1u << Names.Next++);
-        Names.Entries.Append(Str(Name), Bit);
-        return Bit;
+        Names.Append(Name);
+        return static_cast<State>(1u << (Names.GetSize() - 1));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -41,41 +40,39 @@ namespace ZyPlugin::UI
 
     Bool States::Find(Text Name, Ref<State> Output)
     {
-        ConstRef<Sequence<Entry>> Entries = GetRegistry().Entries;
-
-        const SInt Found = Entries.Find([Name](ConstRef<Entry> Named)
+        const SInt Found = GetNames().Find([Name](ConstRef<Str> Named)
         {
-            return StrEqualCaseInsensitive(Named.Name, Name);
+            return StrEqualCaseInsensitive(Named, Name);
         });
 
         if (Found < 0)
         {
             return false;
         }
-        Output = Entries[static_cast<UInt>(Found)].Bit;
+        Output = static_cast<State>(1u << static_cast<UInt32>(Found));
         return true;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Ref<States::Registry> States::GetRegistry()
+    Ref<Sequence<Str>> States::GetNames()
     {
-        static Registry Instance = Seed();
+        static Sequence<Str> Instance = Seed();
         return Instance;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    States::Registry States::Seed()
+    Sequence<Str> States::Seed()
     {
-        Registry Result;
-        Result.Entries.Append("Hidden",   State::Hidden);
-        Result.Entries.Append("Disabled", State::Disabled);
-        Result.Entries.Append("Hover",    State::Hover);
-        Result.Entries.Append("Press",    State::Press);
-        Result.Entries.Append("Focus",    State::Focus);
+        Sequence<Str> Result;
+        Result.Append("Hidden");
+        Result.Append("Disabled");
+        Result.Append("Hover");
+        Result.Append("Press");
+        Result.Append("Focus");
         return Result;
     }
 }

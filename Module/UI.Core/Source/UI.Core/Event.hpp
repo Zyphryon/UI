@@ -29,13 +29,13 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// A pointer button went down over the control.
+        /// The pointer's button went down over the control.
         static constexpr UInt64 kPress    = Identify("Press");
 
         /// The button that went down over the control came up, wherever the pointer was.
         static constexpr UInt64 kRelease  = Identify("Release");
 
-        /// A press and release over the same control.
+        /// The pointer pressed and released the same button over the control.
         static constexpr UInt64 kClick    = Identify("Click");
 
         /// The pointer moved while the button that went down over the control is held.
@@ -50,16 +50,16 @@ namespace ZyPlugin::UI
         /// The control lost the keyboard.
         static constexpr UInt64 kBlur     = Identify("Blur");
 
-        /// A key went down while the control holds the keyboard.
+        /// The key went down while the control holds the keyboard.
         static constexpr UInt64 kKey      = Identify("Key");
 
-        /// Text was typed while the control holds the keyboard.
+        /// The text was typed while the control holds the keyboard.
         static constexpr UInt64 kType     = Identify("Type");
 
         /// The control's value changed, as a box checked or an item picked.
         static constexpr UInt64 kChange   = Identify("Change");
 
-        /// The popup was opened at the pointer; `Other` names what it was opened over.
+        /// The popup was opened at the pointer, with `Other` naming what it was opened over.
         static constexpr UInt64 kOpen     = Identify("Open");
 
         /// The pointer came over the control, sent only to a control that asks for hover events.
@@ -87,11 +87,11 @@ namespace ZyPlugin::UI
     /// \brief Represents one event, bubbling from the control it targets up through every control holding it.
     struct Event final
     {
-        /// What happened, as one of \ref Signal's or a signal a module sends.
-        UInt64          Kind;
+        /// The signal of what happened, as one of \ref Signal's or a signal a module sends.
+        UInt64            Kind;
 
         /// The control it happened to.
-        Handle          Target;
+        Handle            Target;
 
         /// The text typed, for text typed into the control.
         Text              Content;
@@ -102,11 +102,11 @@ namespace ZyPlugin::UI
         /// The pointer, in units of the interface.
         Vector2           Position;
 
-        /// How far the wheel turned, in notches, or how far a drag moved, in units.
+        /// The distance the wheel turned, in notches, or a drag moved, in units.
         Vector2           Delta;
 
-        /// How many presses of the button in a row landed on the control, two making a double click.
-        UInt32           Count     = 1;
+        /// The count of presses of the button in a row that landed on the control, two making a double click.
+        UInt32            Count     = 1;
 
         /// The pointer button, for presses, drags, releases and clicks.
         ZyInput::Button   Button    = ZyInput::Button::Left;

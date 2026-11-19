@@ -14,13 +14,6 @@
 
 #include "Facet/Droppable.hpp"
 #include "Filler.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Facet.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Datum.hpp"
-#include "UI.Data/Path.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -37,16 +30,16 @@ namespace ZyPlugin::UI
         /// The pointer picked the control up and carries it.
         static constexpr UInt64 kStart = Identify("DragStart");
 
-        /// A drag the control accepts came over it; `Other` names what is carried.
+        /// A drag the control accepts came over it, with `Other` naming what is carried.
         static constexpr UInt64 kEnter = Identify("DragEnter");
 
-        /// A drag the control accepted left it, or was let go elsewhere; `Other` names what is carried.
+        /// A drag the control accepted left it or was let go elsewhere, with `Other` naming what is carried.
         static constexpr UInt64 kLeave = Identify("DragLeave");
 
-        /// A drag the control accepts was let go over it; `Other` names what is carried.
+        /// A drag the control accepts was let go over it, with `Other` naming what is carried.
         static constexpr UInt64 kDrop  = Identify("DragDrop");
 
-        /// The drag carrying the control ended; `Other` names where it was dropped, or nothing when it was not.
+        /// The drag carrying the control ended, with `Other` naming where it was dropped, or nothing.
         static constexpr UInt64 kEnd   = Identify("DragEnd");
 
         /// The band ghosts are carried in.
@@ -152,19 +145,19 @@ namespace ZyPlugin::UI
 
     private:
 
-        /// How far the pointer moves with a button held before a press on a source becomes a drag, in units.
+        /// The distance a press on a source moves before it becomes a drag, in units.
         static constexpr Real32 kThreshold = 4.0f;
 
         /// The most elements a ghost copies, so dragging a large panel never copies all it holds.
         static constexpr UInt32 kMaxGhost  = 256;
 
-        /// \brief Holds the drag of one interface, as what a press may pick up and what is carried where.
+        /// \brief Holds the drag of one interface.
         struct Session final
         {
             /// The source a left press landed on, picked up once the pointer moves far enough.
             Handle  Candidate;
 
-            /// Where that press went down, in units of the interface.
+            /// The point that press went down at, in units of the interface.
             Vector2 PressAt;
 
             /// The element carried, or one naming nothing while no drag runs.
@@ -176,7 +169,7 @@ namespace ZyPlugin::UI
             /// The root of the pane holding the ghost.
             Handle  Ghost;
 
-            /// Where on the source the pointer took hold of it.
+            /// The offset on the source the pointer took hold of it by.
             Vector2 Hold;
         };
 

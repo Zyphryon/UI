@@ -12,8 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Datum.hpp"
 #include "UI.Gesture/Filler.hpp"
 #include "UI.Markup/Markup.hpp"
 
@@ -26,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an element the pointer can pick up and carry to a target that accepts it.
     struct Draggable final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks       = Dirty::None;
 
         /// `true`, so the pointer stops at an element holding it.

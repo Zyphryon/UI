@@ -28,7 +28,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the value a number field holds and the range and digits it is held to.
     struct Quantity final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The value the field holds, within its range when it has one.
@@ -49,7 +49,7 @@ namespace ZyPlugin::UI
         /// The text field the value is shown and typed in.
         Handle Field;
 
-        /// `true` from the moment the text field takes the keyboard until the first click on it, which selects all.
+        /// `true` from when the text field takes the keyboard until the click that selects all, `false` otherwise.
         Bool   Fresh    = false;
     };
 

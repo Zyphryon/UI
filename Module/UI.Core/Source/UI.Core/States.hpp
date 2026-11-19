@@ -42,43 +42,20 @@ namespace ZyPlugin::UI
         /// \brief Finds a state by name, one of the interface's own or a declared one, in any case.
         ///
         /// \param Name   The name to look for.
-        /// \param Output The receiver of the state.
+        /// \param Output Receives the state, left untouched when no state has the name.
         /// \return `true` if a state has that name, `false` otherwise.
         static Bool Find(Text Name, Ref<State> Output);
 
     private:
 
-        /// The first bit a declared state may take.
-        static constexpr UInt32 kFirst = 5;
-
-        /// \brief Holds one named state.
-        struct Entry final
-        {
-            /// The name the state was declared by, matched in any case.
-            Str   Name;
-
-            /// The bit the name stands for.
-            State Bit = State::None;
-        };
-
-        /// \brief Holds every state declared so far.
-        struct Registry final
-        {
-            /// The named states, the interface's own first.
-            Sequence<Entry> Entries;
-
-            /// The bit the next state takes.
-            UInt32          Next = kFirst;
-        };
-
-        /// \brief Gets the registry, made with the interface's own states the first time it is asked for.
+        /// \brief Gets the name of every state, made with the interface's own the first time they are asked for.
         ///
-        /// \return The registry of every state declared so far.
-        static Ref<Registry> GetRegistry();
+        /// \return The names, the one at each place naming the state of that bit.
+        static Ref<Sequence<Str>> GetNames();
 
-        /// \brief Creates the registry holding the interface's own states.
+        /// \brief Creates the names of the states the interface keeps for itself.
         ///
-        /// \return The registry naming the five states of \ref kCore.
-        static Registry Seed();
+        /// \return The names of the five states of \ref kCore, in the order of their bits.
+        static Sequence<Str> Seed();
     };
 }

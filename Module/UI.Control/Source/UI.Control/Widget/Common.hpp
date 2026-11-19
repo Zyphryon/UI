@@ -31,7 +31,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Target    The element to make a control of.
         /// \param Behaviour The behaviour that answers its events, or empty for none.
-        /// \param Focusable The flag, `true` to let a press move the keyboard to it, `false` otherwise.
+        /// \param Focusable `true` to let a press move the keyboard to it, `false` otherwise.
         static void Govern(Element Target, Handler Behaviour, Bool Focusable);
 
         /// \brief Gets the name of the style a widget's part wears, the widget's style followed by the part's.

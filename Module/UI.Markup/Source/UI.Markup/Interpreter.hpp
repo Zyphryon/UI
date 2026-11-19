@@ -34,9 +34,9 @@ namespace ZyPlugin::UI
         /// \param Owner   The markup reading the theme, which loads its typefaces and images.
         /// \param Target  The theme, left as it was when any layer cannot be read.
         /// \param Layers  The text of each layer, in the order they are read.
-        /// \param Builtin The number of layers, from the first, a module built in, whose mistakes are said to be so.
+        /// \param Builtin The number of leading layers modules built in, whose mistakes say so.
         /// \param Fonts   The typefaces given from code, found by the identifier of their name, under every layer.
-        /// \param Error   The variable receiving why a layer cannot be read.
+        /// \param Error   Receives why a layer cannot be read.
         /// \return `true` if every layer was read, `false` otherwise.
         static Bool Dress(Ref<Markup>                                       Owner,
                           Ref<Theme>                                        Target,
@@ -49,14 +49,14 @@ namespace ZyPlugin::UI
         ///
         /// \param Target The templates, left as they were when the layout cannot be read.
         /// \param Source The text of the layout.
-        /// \param Error  The variable receiving why the layout cannot be read.
+        /// \param Error  Receives why the layout cannot be read.
         /// \return `true` if it was read, `false` otherwise.
         static Bool Read(Ref<Template> Target, Text Source, Ref<Str> Error);
 
     private:
 
-        /// What is put before the first thing wrong with a layer a module built in.
-        static constexpr Text kBuiltin  = "the built-in theme: ";
+        /// The prefix of the first mistake in a layer a module built in.
+        static constexpr Text kBuiltin = "the built-in theme: ";
 
         /// The tables a layer may give, each an object.
         static constexpr Array<Text, 5> kTables { "Colors", "Fonts", "Images", "Styles", "Animations" };
@@ -73,7 +73,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, which notes why the layer cannot be parsed.
         /// \param Source  The text of the layer.
-        /// \param Output  The variable receiving the layer.
+        /// \param Output  Receives the layer.
         static void ParseLayer(Ref<Sheet> Context, Text Source, Ref<JsonValue> Output);
 
         /// \brief Reads every entry of one table a layer gives, when it gives the table.
@@ -93,7 +93,7 @@ namespace ZyPlugin::UI
         /// \param Where   The name of the style giving the field.
         /// \param Key     The name of the field.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the value, and the bit of its mask.
+        /// \param Output  Receives the value, and the bit of its mask.
         static void ReadField(Ref<Sheet> Context, Text Where, Text Key, ConstRef<JsonValue> Value, Ref<Skin> Output);
 
         /// \brief Reads every field of a skin.
@@ -101,7 +101,7 @@ namespace ZyPlugin::UI
         /// \param Context The theme being read.
         /// \param Where   The name of the style giving the fields.
         /// \param Node    The object giving the fields.
-        /// \param Output  The variable receiving the values.
+        /// \param Output  Receives the values.
         static void ReadSkin(Ref<Sheet> Context, Text Where, ConstRef<JsonValue> Node, Ref<Skin> Output);
 
         /// \brief Reads one variant of a style, the states it is worn in and the skin it wears.
@@ -160,7 +160,7 @@ namespace ZyPlugin::UI
         /// \param Where   The name of the animation.
         /// \param Key     The name of the field.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the value, and the bit of its mask.
+        /// \param Output  Receives the value, and the bit of its mask.
         static void ReadKeyField(Ref<Sheet>          Context,
                                  Text                Where,
                                  Text                Key,

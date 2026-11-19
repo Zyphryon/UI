@@ -46,7 +46,7 @@ namespace ZyPlugin::UI
 
         /// \brief Adds code that hears every event before any handler, as the binder storing a changed value does.
         ///
-        /// \param Code The code, handed the event and its target as the control; what it returns is not heard.
+        /// \param Code The code, handed the event and its target as the control, whose answer is not heard.
         void AddListener(Handler Code);
 
         /// \brief Runs code on the events of every control naming an action, after the control's observers.
@@ -120,7 +120,7 @@ namespace ZyPlugin::UI
         /// \brief Checks whether a control is alive with nothing holding it, hidden or disabled.
         ///
         /// \param Element The control checked.
-        /// \return `true` if it can, `false` otherwise.
+        /// \return `true` if it is, `false` otherwise.
         Bool IsUsable(Handle Element) const;
 
         /// \brief Checks whether an element is alive with neither it nor anything holding it hidden.

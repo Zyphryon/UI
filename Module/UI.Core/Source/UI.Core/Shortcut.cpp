@@ -11,7 +11,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Shortcut.hpp"
-#include "Handle.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -23,7 +22,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     Shortcut::Shortcut(Text Chord, Text Action)
-        : Action { Action.IsEmpty() ? 0 : Identify(Action) }
+        : Action { Identify(Action) }
     {
         if (!Parse(Chord, Key, Modifiers))
         {
@@ -67,7 +66,7 @@ namespace ZyPlugin::UI
             });
         }
 
-        // A digit alone names the key above the letters; any other name must read back as the key it names.
+        // A digit alone names the key above the letters, and any other name must read back as its key.
         ZyInput::Key Found = ZyInput::Key::Unknown;
 
         if (Name.GetSize() == 1 && StrIsDigit(Name[0]))

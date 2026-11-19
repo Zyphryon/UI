@@ -18,9 +18,7 @@
 #include "Summon.hpp"
 #include "Tooltip.hpp"
 #include "UI.Core/Layers.hpp"
-#include "UI.Data/Binder.hpp"
 #include "UI.Gesture/Theme.inl"
-#include "UI.Markup/Markup.hpp"
 #include "UI.Markup/Module.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -53,14 +51,12 @@ namespace ZyPlugin::UI
         }
         Enroll();
 
-        // Any node may be carried or dropped on, or explain itself in a tooltip.
         Reader.AddField(Markup::Field::Create<&Drag::Read>());
         Reader.AddField(Markup::Field::Create<&Tooltip::Read>());
 
-        // Any node may ask for hover events, every button or typing, and keep shortcuts.
         Reader.AddField(Markup::Field::Create<&Input::Read>());
 
-        // The ghost and the tooltip wear the theme built into the module, which a game's theme changes field by field.
+        // The ghost and tooltip wear the built-in theme, which a game's theme overrides field by field.
         Reader.AddTheme(Text(reinterpret_cast<ConstPtr<Char>>(kTheme), sizeof(kTheme)));
     }
 
@@ -76,7 +72,7 @@ namespace ZyPlugin::UI
         Layers::Declare("Tooltip", Tooltip::kLayer);
         Layers::Declare("Drag",    Drag::kLayer);
 
-        // A tooltip or a ghost made later from a template reads from the record its row shows by then.
+        // A tooltip or ghost made later from a template reads the record its row shows by then.
         Binder::AddScoped<Hint>(Binder::Scoped::Create<&Tooltip::GetWithin>());
         Binder::AddScoped<Draggable>(Binder::Scoped::Create<&Drag::GetWithin>());
     }

@@ -12,16 +12,8 @@
 
 #include "Scrollbar.hpp"
 #include "Common.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Layout/Virtual.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -36,7 +28,7 @@ namespace ZyPlugin::UI
     {
         const Element Result = Parent.Create();
 
-        // Only the thickness is set; the length comes from the parent stretching the bar.
+        // Only the thickness is set, the length coming from the parent stretching the bar.
         Ref<Box> Shape = Result.EditBox();
         Shape.Flow = Vertical ? Direction::Column : Direction::Row;
         (Vertical ? Shape.Width : Shape.Height) = Length::Pixels(kThickness);
@@ -134,7 +126,7 @@ namespace ZyPlugin::UI
             Own->Automatic = Automatic;
         }
 
-        // A bar always shown is shown at once; one hiding itself finds out at the next update.
+        // A bar always shown is shown at once, while one hiding itself finds out at the next update.
         if (!Automatic && Bar.HasState(State::Hidden))
         {
             Bar.SetState(State::Hidden, false);
@@ -205,7 +197,7 @@ namespace ZyPlugin::UI
         {
             return 0.0f;
         }
-        return Max((Vertical ? Found->Overflow : Found->OverflowX) - GetView(Target, Vertical), 0.0f);
+        return Vertical ? Found->GetLimit() : Found->GetLimitX();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -223,13 +215,14 @@ namespace ZyPlugin::UI
     Bool Scrollbar::OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
     {
         const Element Bar(Owner, Self);
-        const Element Target   = GetTarget(Bar);
-        const Bool    Vertical = Bar.Get<Rail>()->Vertical;
+        const Element Target = GetTarget(Bar);
 
         if (!Target.IsAlive())
         {
             return false;
         }
+
+        const Bool Vertical = Bar.Get<Rail>()->Vertical;
 
         // The wheel over a bar scrolls along it, a sideways bar taking an upward turn as one to the left.
         if (Message.Kind == Signal::kWheel)
@@ -334,7 +327,6 @@ namespace ZyPlugin::UI
             return Changed;
         }
 
-        // The thumb is as long against the track as the view against the content, and stands where the offset does.
         const Rect   Track = GetTrack(Bar);
         const Real32 Run   = Vertical ? Track.GetHeight() : Track.GetWidth();
 
@@ -388,15 +380,20 @@ namespace ZyPlugin::UI
         ConstRef<Box>   Now      = Owner.GetBox(Thumb.GetHandle());
 
         // Absolute children are placed against the bar's box, so the track's padding is added back here.
-        const Real32 Lead   = (Vertical ? Padding.Top : Padding.Left) + Start;
-        const Real32 Before = Vertical ? Padding.Left : Padding.Top;
-        const Real32 After  = Vertical ? Padding.Right : Padding.Bottom;
+        const Length Lead   = Length::Pixels((Vertical ? Padding.Top : Padding.Left) + Start);
+        const Length Extent = Length::Pixels(Size);
+        const Length Before = Length::Pixels(Vertical ? Padding.Left : Padding.Top);
+        const Length After  = Length::Pixels(Vertical ? Padding.Right : Padding.Bottom);
 
-        const Bool Same = Vertical
-            ? Near(Now.Top, Lead) && Near(Now.Height, Size) && Near(Now.Left, Before) && Near(Now.Right, After)
-            : Near(Now.Left, Lead) && Near(Now.Width, Size) && Near(Now.Top, Before) && Near(Now.Bottom, After);
+        // A thumb within a quarter of a pixel of where it should stand is left alone, since moving it changes nothing.
+        ConstRef<Length> Head   = Vertical ? Now.Top    : Now.Left;
+        ConstRef<Length> Span   = Vertical ? Now.Height : Now.Width;
+        ConstRef<Length> Near   = Vertical ? Now.Left   : Now.Top;
+        ConstRef<Length> Far    = Vertical ? Now.Right  : Now.Bottom;
+        const Bool       Placed = Head.IsNear(Lead, 0.25f) && Span.IsNear(Extent, 0.25f);
+        const Bool       Inset  = Near.IsNear(Before, 0.25f) && Far.IsNear(After, 0.25f);
 
-        if (Same)
+        if (Placed && Inset)
         {
             return false;
         }
@@ -405,17 +402,17 @@ namespace ZyPlugin::UI
 
         if (Vertical)
         {
-            Shape.Top    = Length::Pixels(Lead);
-            Shape.Height = Length::Pixels(Size);
-            Shape.Left   = Length::Pixels(Before);
-            Shape.Right  = Length::Pixels(After);
+            Shape.Top    = Lead;
+            Shape.Height = Extent;
+            Shape.Left   = Before;
+            Shape.Right  = After;
         }
         else
         {
-            Shape.Left   = Length::Pixels(Lead);
-            Shape.Width  = Length::Pixels(Size);
-            Shape.Top    = Length::Pixels(Before);
-            Shape.Bottom = Length::Pixels(After);
+            Shape.Left   = Lead;
+            Shape.Width  = Extent;
+            Shape.Top    = Before;
+            Shape.Bottom = After;
         }
         return true;
     }
@@ -426,13 +423,5 @@ namespace ZyPlugin::UI
     Rect Scrollbar::GetTrack(Element Bar)
     {
         return Bar.GetTree().GetBox(Bar.GetHandle()).Padding.Inset(Bar.GetFrame());
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Scrollbar::Near(ConstRef<Length> Value, Real32 Pixels)
-    {
-        return Value.Measure == Length::Unit::Pixel && Abs(Value.Value - Pixels) < 0.25f;
     }
 }

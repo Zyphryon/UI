@@ -58,9 +58,9 @@ namespace ZyPlugin::UI
 
         /// \brief Runs a toggle button, turning its checked state over on a click.
         ///
-        /// \param Owner   The interface routing the event, through which the turned state is reported as a change.
-        /// \param Message The event climbing through the button; only a click whose target is the button turns it.
-        /// \param Self    The handle of the toggle button whose checked state is turned over.
+        /// \param Owner   The interface it stands in.
+        /// \param Message The event reaching it, of which only a click on the button itself turns it.
+        /// \param Self    The toggle button hearing the event.
         /// \return `false` always, so the click goes on to the button's action.
         static Bool OnToggle(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
     };

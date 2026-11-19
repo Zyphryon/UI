@@ -13,11 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Filler.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Path.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,7 +21,7 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Provides tooltips, a line of text or a template an element shows near the pointer once it rests on it.
+    /// \brief Provides tooltips, a text or a template an element shows near the pointer once it rests on it.
     class Tooltip final
     {
     public:
@@ -108,7 +103,7 @@ namespace ZyPlugin::UI
 
     private:
 
-        /// How far a tooltip stands from the pointer, in units, clear of the cursor's arrow.
+        /// The distance a tooltip stands from the pointer, in units, clear of the cursor's arrow.
         static constexpr Real32 kGap = 16.0f;
 
         /// \brief Holds the tooltips of one interface, as what the pointer rests on and what shows.
@@ -126,10 +121,10 @@ namespace ZyPlugin::UI
             /// The root of the pane the tooltips are shown in.
             Handle Pane;
 
-            /// How long the pointer rested, in seconds.
+            /// The time the pointer rested, in seconds.
             Real32 Clock = 0.0f;
 
-            /// How long it must rest before the tooltip shows, in seconds.
+            /// The time it must rest before the tooltip shows, in seconds.
             Real32 Delay = 0.5f;
         };
 
@@ -153,7 +148,7 @@ namespace ZyPlugin::UI
         /// \brief Hides the tooltip at a turn of the wheel no control took, which scrolls or does nothing.
         ///
         /// \param Owner   The interface the wheel turned over.
-        /// \param Stopped The flag, `true` when a control took the turn, which leaves the tooltip up.
+        /// \param Stopped `true` when a control took the turn, which leaves the tooltip up, `false` otherwise.
         static void OnTurned(Ref<Interface> Owner, Bool Stopped);
 
         /// \brief Follows what the pointer rests on, a tooltip of another element starting its wait over.

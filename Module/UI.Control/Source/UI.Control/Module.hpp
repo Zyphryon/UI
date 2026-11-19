@@ -31,7 +31,7 @@ namespace ZyPlugin::UI
         /// \param Target The interface the library runs in.
         static void Declare(Ref<Interface> Target);
 
-        /// \brief Teaches a markup every widget, node field and look of the library; a template opens in a window.
+        /// \brief Teaches a markup every widget, node field and look of the library, opening a template in a window.
         ///
         /// \param Reader The markup to teach, given the library's theme as a layer over the gesture module's.
         static void Declare(Ref<Markup> Reader);

@@ -13,18 +13,7 @@
 #include "Splitter.hpp"
 #include "Common.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Layout/Virtual.hpp"
-#include "UI.Core/Facet/Visual/Look.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
-#include "UI.Markup/Parser.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -56,8 +45,8 @@ namespace ZyPlugin::UI
     Element Splitter::Build(Ref<Markup> Reader, Element Parent, ConstRef<JsonValue> Node)
     {
         const Text      Style  = Markup::GetText(Node, "Style", "Splitter");
-        const Direction Flow   = Markup::GetText(Node, "Orientation") == "Vertical"
-            ? Direction::Column : Direction::Row;
+        const Bool      Column = Markup::GetText(Node, "Orientation") == "Vertical";
+        const Direction Flow   = Column ? Direction::Column : Direction::Row;
         const Element   Result = Create(Parent, Flow, Style);
 
         Result.Get<Split>()->Name = Markup::GetText(Node, "Name");
@@ -314,16 +303,15 @@ namespace ZyPlugin::UI
 
     Bool Splitter::OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
     {
-        // Only its own bars answer; whatever a pane holds belongs to that pane.
-        const Bool Foreign = Message.Target == Self || Owner.GetParent(Message.Target) != Self;
+        // Only its own bars answer, whatever a pane holds belonging to that pane.
+        const Element Bar(Owner, Message.Target);
 
-        if (Foreign || !IsBar(Element(Owner, Message.Target)))
+        if (Owner.GetParent(Message.Target) != Self || !IsBar(Bar))
         {
             return false;
         }
 
         const Element Root(Owner, Self);
-        const Element Bar(Owner, Message.Target);
 
         switch (Message.Kind)
         {
@@ -351,7 +339,8 @@ namespace ZyPlugin::UI
         }
         case Signal::kDrag:
         {
-            if (Drag(Root, Bar, Message.Position))
+            // Only a hold the press took moves the bar, so a drag after a double click reports nothing.
+            if (Owner.Get<Split>(Self)->Held && Drag(Root, Bar, Message.Position))
             {
                 Owner.Dispatch(Event(Signal::kChange, Self));
             }
@@ -437,7 +426,7 @@ namespace ZyPlugin::UI
         const Real32 Highest = Max(Far - Own->Quotas[Second].Minimum, 0.0f);
         const Real32 Delta   = Clamp(Wanted, Lowest, Highest);
 
-        if (Abs(Delta) < 0.5f)
+        if (IsAlmostZero(Delta, 0.5f))
         {
             return false;
         }
@@ -445,7 +434,7 @@ namespace ZyPlugin::UI
         const Bool Sharing = Own->Quotas[First].IsSharing();
         const Bool Yields  = Own->Quotas[Second].IsSharing();
 
-        // A pane keeping a size takes the room and a sharing one gives way; of two sharing, the first keeps it.
+        // A pane keeping a size takes the room and a sharing one gives way, the first keeping it of two sharing.
         if (!Sharing || Yields)
         {
             Resize(Root, static_cast<UInt32>(First), Max(Near + Delta, 1.0f));
@@ -472,7 +461,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // A pane folded beside the bar opens again; else the one keeping a size folds, or the smaller of two.
+        // A pane folded beside the bar opens again, or else the one keeping a size folds, or the smaller of two.
         const Bool Near = IsFolded(Root, static_cast<UInt32>(First));
 
         if (Near || IsFolded(Root, static_cast<UInt32>(Second)))
@@ -642,10 +631,9 @@ namespace ZyPlugin::UI
 
     Real32 Splitter::GetRoom(Element Root)
     {
-        ConstRef<Box> Shape   = Root.GetTree().GetBox(Root.GetHandle());
-        const Real32  Padding = Shape.Flow == Direction::Row
-            ? Shape.Padding.Left + Shape.Padding.Right
-            : Shape.Padding.Top + Shape.Padding.Bottom;
+        ConstRef<Box>   Shape   = Root.GetTree().GetBox(Root.GetHandle());
+        ConstRef<Edges> Inner   = Shape.Padding;
+        const Real32    Padding = Shape.Flow == Direction::Row ? Inner.Left + Inner.Right : Inner.Top + Inner.Bottom;
         return Max(Along(Root, Root.GetFrame()) - Padding, 0.0f);
     }
 
@@ -654,8 +642,8 @@ namespace ZyPlugin::UI
 
     void Splitter::Flank(Element Root, Element Bar, Ref<SInt32> Before, Ref<SInt32> After)
     {
-        SInt32    Index  = 0;
-        Bool      Passed = false;
+        SInt32 Index  = 0;
+        Bool   Passed = false;
 
         Before = -1;
         After  = -1;
@@ -713,7 +701,7 @@ namespace ZyPlugin::UI
 
     Bool Splitter::IsBar(Element Child)
     {
-        // A bar is governed so the pointer can take hold of it; a pane is a plain panel.
+        // A bar is governed so the pointer can take hold of it, while a pane is a plain panel.
         return Child.Has<Control>();
     }
 
@@ -730,8 +718,8 @@ namespace ZyPlugin::UI
 
     Real32 Splitter::Start(Element Root, Rect Frame)
     {
-        return Root.GetTree().GetBox(Root.GetHandle()).Flow == Direction::Row
-            ? Frame.GetMinimumX() : Frame.GetMinimumY();
+        const Bool Row = Root.GetTree().GetBox(Root.GetHandle()).Flow == Direction::Row;
+        return Row ? Frame.GetMinimumX() : Frame.GetMinimumY();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -33,7 +33,7 @@ namespace ZyPlugin::UI
 
     Bool Lexicon::Read(Text Language, Text Source, Ref<Str> Error)
     {
-        // Every value is checked before any is kept, so a table with a mistake in it leaves the one in use alone.
+        // Checked whole before any is kept, so a bad table leaves the one in use alone.
         Phrases Fresh;
 
         if (!Parse(Source, Fresh, Error))
@@ -120,7 +120,7 @@ namespace ZyPlugin::UI
             return * Found;
         }
 
-        // A language still loading lacks every key, so only one that was read reports what it lacks, once a key.
+        // A language still loading lacks every key, so only a read one reports a missing key, once each.
         if (const Digest Missing(HashCombine(mSpoken, Identify(Key))); Spoken && mMissing.Insert(Missing))
         {
             LOG_W("The language '{0}' gives no text for '{1}', so the key is shown", mLanguage, Key);
@@ -186,7 +186,7 @@ namespace ZyPlugin::UI
 
     Bool Lexicon::Take(ConstRef<Str> Key, ConstRef<JsonValue> Value, Ref<Phrases> Output, Ref<Str> Error)
     {
-        // An object is a group of keys, so a table can be laid out by screen or by window.
+        // An object groups keys, so a table can be laid out by screen or window.
         if (Value.IsObject())
         {
             return Gather(Key, Value, Output, Error);

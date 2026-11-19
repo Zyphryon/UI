@@ -11,7 +11,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Canvas.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include <Zyphryon.Content/Service.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -45,6 +44,9 @@ namespace ZyPlugin::UI
     {
     }
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     void Canvas::Initialize(Ref<ZyEngine::Subsystem::Host> Host, Colorspace Space)
     {
         mGraphics   = Host.GetService<ZyGraphic::Service>();
@@ -52,22 +54,21 @@ namespace ZyPlugin::UI
 
         ConstRetainer<ZyContent::Service> Content = Host.GetService<ZyContent::Service>();
 
-        // One technique declares every colour space as a feature, and preloads each of them.
         mTechnique = Content->Load<ZyGraphic::Technique>("Embedded://Technique/UI/Canvas.vfx");
 
-        // The first frame to find the technique loaded resolves the variant, as a callback could outlive the canvas.
+        // Resolved on the first frame that finds the technique loaded, as a callback could outlive the canvas.
         mPipeline = 0;
 
         mSampler = mGraphics->ObtainSampler(ZyGraphic::Sampler {
-            .Filter = ZyGraphic::TextureFilter::Linear
+            .Filter = ZyGraphic::TextureFilter::LinearMipLinear
         });
 
-        // Pixel art and tiles are read texel by texel, so a zoomed preview keeps its edges.
+        // Point sampling keeps the edges of pixel art and tiles in a zoomed preview.
         mPoint = mGraphics->ObtainSampler(ZyGraphic::Sampler {
             .Filter = ZyGraphic::TextureFilter::Point
         });
 
-        // A slot no quad of a batch claims still holds a texture of the kind the shader declares there.
+        // A slot no quad claims still needs a texture of the kind the shader declares there.
         constexpr Array<Byte, 4> kWhite(0xFF, 0xFF, 0xFF, 0xFF);
 
         Blob Flat    = Blob::Copy<Byte>(kWhite);
@@ -127,7 +128,6 @@ namespace ZyPlugin::UI
 
         mPipeline = mTechnique->Obtain(* mGraphics, Decoded | Encoded);
 
-        // Drawing with depth takes two variants more, the opaque pass and the one tested against it.
         const ZyGraphic::Technique::Key Solid  = mDepth ? mTechnique->ResolveByName("Solid") : 0;
         const ZyGraphic::Technique::Key Behind = mDepth ? mTechnique->ResolveByName("Behind") : 0;
 
@@ -143,7 +143,7 @@ namespace ZyPlugin::UI
         const UInt16 Code = Drawn.Shape[3];
         const UInt16 Kind = (Code >> 2u) & 3u;
 
-        // Only a box square to its edges covers all of its quad; a rounded edge, a line or a figure fades.
+        // Only a plain box covers its whole quad, as a rounded edge, a line or a figure fades.
         if ((Code & 3u) != ZyEnum::Cast(Cut::Plain) || ((Code >> kFormShift) & 3u) != 0u)
         {
             return false;
@@ -169,10 +169,9 @@ namespace ZyPlugin::UI
         mMaterials.Clear();
         mAffines.Clear();
 
-        // The first transform of a block stands for none, so a quad square to the target reads it from any block.
+        // A block's first transform is the identity, so a quad square to the target reads it from any block.
         mAffines.Append(kIdentity);
 
-        // The quads are kept from frame to frame, so a frame only grows them past the most any frame drew.
         mCount      = 0;
         mSlot       = 0;
         mViewport   = Rect(0.0f, 0.0f, Width, Height);
@@ -192,7 +191,7 @@ namespace ZyPlugin::UI
         ZY_PROFILE_INTEGER("UI::Quads",   mCount);
 
 #if defined(ZY_PROFILE_BACKEND_TRACY)
-        // The pixels each kind of quad shades, and all of them over the target's, which tells overdraw from the rest.
+        // The pixels each kind of quad shades, and the target's, which tells overdraw from the rest.
         Real64 Plain   = 0.0;
         Real64 Shaped  = 0.0;
         Real64 Images  = 0.0;
@@ -206,8 +205,7 @@ namespace ZyPlugin::UI
         for (UInt Index = 0; Index < mCount; ++Index)
         {
             ConstRef<Quad> Drawn = mQuads[Index];
-            const Real64   Area  = static_cast<Real64>(Drawn.Area.GetWidth()) *
-                                   static_cast<Real64>(Drawn.Area.GetHeight());
+            const Real64   Area  = static_cast<Real64>(Drawn.Area.GetWidth()) * Drawn.Area.GetHeight();
             const UInt16   Kind  = (Drawn.Shape[3] >> 2u) & 3u;
 
             if (Kind == ZyEnum::Cast(Paint::Glyph))
@@ -237,8 +235,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        const Real64 Screen = Max(static_cast<Real64>(mViewport.GetWidth()) *
-                                  static_cast<Real64>(mViewport.GetHeight()), 1.0);
+        const Real64 Screen = Max(static_cast<Real64>(mViewport.GetWidth()) * mViewport.GetHeight(), 1.0);
 
         ZY_PROFILE_REAL("UI::Pixels::Plain",  Plain);
         ZY_PROFILE_REAL("UI::Pixels::Shaped", Shaped);
@@ -252,13 +249,12 @@ namespace ZyPlugin::UI
         ZY_PROFILE_REAL("UI::Overdraw",       (Plain + Shaped + Images + Glyphs) / Screen);
 #endif
 
-        // Nothing is drawn until the technique has uploaded its variants.
         if (mCount == 0 || !mTechnique || !mTechnique->HasCompleted())
         {
             return;
         }
 
-        // The first frame to find the technique loaded resolves its variant; one with no program has nothing to draw.
+        // A variant with no program has nothing to draw.
         if (!mPipeline)
         {
             ObtainPipeline();
@@ -272,10 +268,10 @@ namespace ZyPlugin::UI
         static_assert(sizeof(Quad) == 60, "The quad must match the technique's layout");
         static_assert(sizeof(Material) == 48, "The material must match an element of the shader's array");
 
-        // The quads go up in one copy, and every one reads the same six corners, two triangles across its four.
+        // Every quad reads the same six corners, two triangles across its four.
         constexpr Array<UInt16, 6> kCorners(0, 1, 2, 2, 1, 3);
 
-        // With depth, opaque quads go first nearest first, then the rest in order; a batch is at most two commands.
+        // With depth, opaque quads go first, nearest first, then the rest in order.
         const Bool Layered = mDepth && mSolid && mBehind;
 
         mPasses.Clear();
@@ -294,9 +290,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        const ConstSpan<Quad>      Sent  = Layered
-            ? ConstSpan(mOrdered.GetData(), mOrdered.GetSize())
-            : ConstSpan(mQuads.GetData(), mCount);
+        const ConstSpan<Quad>      Sent  = Layered ? ConstSpan<Quad>(mOrdered) : ConstSpan(mQuads.GetData(), mCount);
         ZyGraphic::Transient<Quad> Quads = mGraphics->AllocateInFlightVertices<Quad>(
             static_cast<UInt32>(Sent.GetSize()));
         Quads.Copy(Sent, 0);
@@ -305,7 +299,7 @@ namespace ZyPlugin::UI
         const ZyGraphic::Stream Corners = mGraphics->AllocateInFlightIndices<UInt16>(Strip);
         const ZyGraphic::Stream Camera  = mGraphics->AllocateInFlightUniforms<Matrix4x4>(ConstSpan(mProjection));
 
-        // Materials and transforms go up in whole blocks the shader's arrays fill, each batch pointing at its own.
+        // Materials and transforms go up in whole blocks the shader's arrays fill.
         constexpr UInt32 kMaterialBlock  = kMaterials * sizeof(Material);
         constexpr UInt32 kTransformBlock = kTransforms * sizeof(Affine);
 
@@ -345,7 +339,6 @@ namespace ZyPlugin::UI
                 static_cast<UInt16>(Run.Scissor.GetHeight()));
             Command.Pipeline = Layered ? (Step.Solid ? mSolid : mBehind) : mPipeline;
 
-            // Each quad is one instance, so a run starts its stream at its first.
             ZyGraphic::Stream Own = Instances;
             Own.Offset += Step.Offset * sizeof(Quad);
             Own.Stride  = sizeof(Quad);
@@ -368,7 +361,7 @@ namespace ZyPlugin::UI
             Command.Textures.Append(Run.Textures[1] ? Run.Textures[1] : mBlank);
             Command.Textures.Append(Run.Textures[2] ? Run.Textures[2] : mSheet);
 
-            // A sampler is bound per texture unit, so the image and the layer each read the way the run chose for them.
+            // Samplers bind per texture unit, so the image and the layer each read as their run chose.
             Command.Samplers.Append(mSampler);
             Command.Samplers.Append(Run.Filters[1] == Filter::Point ? mPoint : mSampler);
             Command.Samplers.Append(Run.Filters[2] == Filter::Point ? mPoint : mSampler);
@@ -388,11 +381,11 @@ namespace ZyPlugin::UI
 
     void Canvas::Arrange()
     {
-        // A later quad stands nearer, every one at a depth of its own between nought and one.
+        // A later quad stands nearer, each at a depth of its own between zero and one.
         const Real32 Step = 1.0f / static_cast<Real32>(mCount + 1);
         const UInt32 Real = static_cast<UInt32>(mBatches.GetSize());
 
-        // Opaque quads go last batch first, nearest first, so nothing behind is shaded; like batches join a run.
+        // Opaque quads go last batch first, nearest first, so nothing behind is shaded.
         for (UInt32 Number = Real; Number-- > 0;)
         {
             ConstRef<Batch> Run   = mBatches[Number];
@@ -435,11 +428,11 @@ namespace ZyPlugin::UI
                 ConstRef<Batch> Before   = mBatches[Previous.Batch];
                 ConstRef<Batch> Now      = mBatches[Number];
 
-                const Bool Placed = Before.Scissor == Scissor && Before.Transforms == Transforms;
-                const Bool Images = !Image || !Before.Textures[1]
-                    || (Before.Textures[1] == Now.Textures[1] && Before.Filters[1] == Now.Filters[1]);
-                const Bool Layers = !Layer || !Before.Textures[2]
-                    || (Before.Textures[2] == Now.Textures[2] && Before.Filters[2] == Now.Filters[2]);
+                const Bool Placed    = Before.Scissor == Scissor && Before.Transforms == Transforms;
+                const Bool SameImage = Before.Textures[1] == Now.Textures[1] && Before.Filters[1] == Now.Filters[1];
+                const Bool SameLayer = Before.Textures[2] == Now.Textures[2] && Before.Filters[2] == Now.Filters[2];
+                const Bool Images    = !Image || !Before.Textures[1] || SameImage;
+                const Bool Layers    = !Layer || !Before.Textures[2] || SameLayer;
 
                 Joined = Placed && Images && Layers;
 
@@ -455,7 +448,7 @@ namespace ZyPlugin::UI
                 mBatches.Append(Array<ZyGraphic::Object, 3>(), Array<Filter, 3>(), Scissor, Materials, Transforms, 0u);
             }
 
-            // The run takes up the image or layer the batch's opaque quads read, which no batch before it claimed.
+            // The run takes the image or layer the batch's opaque quads read, which no earlier batch claimed.
             const UInt32 Owner = mPasses.GetBack().Batch;
 
             if (Image && !mBatches[Owner].Textures[1])
@@ -471,7 +464,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The rest in the order asked, each tested against nearer opaque quads; batches reading alike join their run.
+        // The rest in the order asked, each tested against nearer opaque quads.
         for (UInt32 Number = 0; Number < Real; ++Number)
         {
             const UInt32 First = mBatches[Number].Offset;
@@ -502,8 +495,8 @@ namespace ZyPlugin::UI
 
                 const Bool Follows = !Previous.Solid && Previous.Offset + Previous.Count == Start;
                 const Bool Reads   = Before.Textures == Now.Textures && Before.Filters == Now.Filters;
-                const Bool Placed  = Before.Scissor == Now.Scissor && Before.Materials == Now.Materials
-                    && Before.Transforms == Now.Transforms;
+                const Bool Bound   = Before.Materials == Now.Materials && Before.Transforms == Now.Transforms;
+                const Bool Placed  = Before.Scissor == Now.Scissor && Bound;
 
                 if (Follows && Reads && Placed)
                 {
@@ -521,16 +514,14 @@ namespace ZyPlugin::UI
 
     void Canvas::PushClip(Rect Box)
     {
-        // The scissor stands square to the target, so a turned box is cut to the square around it.
+        // The scissor is square to the target, so a turned box is cut to the square around it.
         if (mTransform)
         {
             Box = Rect::Transform(Box, * mTransform);
         }
 
-        // The cut is in pixels of the target, so the box is scaled as every quad is.
         Box = Box * mScale;
 
-        // The cut only ever narrows, so a box reaching past the one it sits in is held to it.
         mClip = Rect::Intersection(Rect::Floor(Box), mClip);
         mClips.Append(mClip);
     }
@@ -552,7 +543,7 @@ namespace ZyPlugin::UI
 
     void Canvas::PushTransform(ConstRef<Matrix3x2> Transform)
     {
-        // The new one sits inside the last, so a point is moved by it first and by the earlier ones after.
+        // A point is moved by the new transform first and by the earlier ones after.
         mTransforms.Append(mTransform ? (* mTransform) * Transform : Transform);
         mTransform = AddressOf(mTransforms.GetBack());
         mSlot      = 0;
@@ -576,7 +567,7 @@ namespace ZyPlugin::UI
 
     void Canvas::DrawShadow(Rect Box, Color Tint, Real32 Radius, Real32 Blur, Rect Hole)
     {
-        // Half a pixel of fade is what any edge gets, so no blur still draws an anti-aliased box.
+        // Every edge fades at least half a pixel, so an unblurred box is still anti-aliased.
         const Real32 Fade  = Max(Blur, 0.5f);
         const Rect   Whole = Box.Expand(Fade);
         const Steps  Shape = Measure(Cut::Shadow, Paint::Colour, Radius, 0.0f, Fade);
@@ -589,13 +580,12 @@ namespace ZyPlugin::UI
         const UInt32 Packed = Tint.ToRGBA8();
         const Rect   Cut    = Rect::Intersection(Hole, Whole);
 
-        // A blur inside the rounded edge is solid, so a large unhidden middle is drawn plain and only the rim fades.
+        // A blur inside the rounded edge is solid, so a large unhidden middle is drawn plain.
         const Rect Solid = Box.Contract(Fade + Max(Radius, 0.0f));
 
-        // A large hidden part is left out whole, rim and all; the solid middle is split off only when little hides it.
+        // A large hidden part is left out whole, and the middle is split off only when little hides it.
         if (!IsLarge(Solid) || IsLarge(Cut))
         {
-            // The quad reaches as far past the box as the fade does, and the shader takes the box back out of it.
             Hollow(Whole, Cut, Packed, Shape);
             return;
         }
@@ -621,7 +611,7 @@ namespace ZyPlugin::UI
         }
 
         // Nothing deeper than the corner and the fade shows, so a large box leaves its middle out.
-        const Real32 Depth = Max(Radius, 0.0f) + Fade + 1.0f / Max(mScale, 1.0e-6f);
+        const Real32 Depth = Max(Radius, 0.0f) + Fade + GetPixel();
 
         Hollow(Box, Box.Contract(Depth), Tint.ToRGBA8(), Shape);
     }
@@ -632,19 +622,15 @@ namespace ZyPlugin::UI
     void Canvas::DrawGradient(Rect Box, ConstRef<Gradient> Fill, Real32 Radius, Rect Hole)
     {
         // An end fading to nothing keeps the other end's hue, as a blend of premultiplied colours would.
-        const Color From = (Fill.From.GetAlpha() > 0.0f)
-            ? Fill.From
-            : Color::WithAlpha(Fill.To, 0.0f);
-        const Color To   = (Fill.To.GetAlpha() > 0.0f)
-            ? Fill.To
-            : Color::WithAlpha(Fill.From, 0.0f);
+        const Color From = (Fill.From.GetAlpha() > 0.0f) ? Fill.From : Color::WithAlpha(Fill.To, 0.0f);
+        const Color To   = (Fill.To.GetAlpha() > 0.0f) ? Fill.To : Color::WithAlpha(Fill.From, 0.0f);
 
         if (!Open(Paint::Colour, 0))
         {
             return;
         }
 
-        // The shader runs the line through the box at the angle, a whole turn spread over 16 bits.
+        // A whole turn of the angle spans 16 bits.
         const Real32 Turn = Wrap(Fill.Angle, 360.0f);
 
         Steps Shape = Measure(Cut::Plain, Paint::Colour, Radius, 0.0f, 0.0f);
@@ -680,7 +666,7 @@ namespace ZyPlugin::UI
         }
 
         // Nothing deeper than the corner, the outline and a pixel of edge shows, so a large box leaves its middle out.
-        const Real32 Depth = Max(Radius, 0.0f) + Max(Width, 0.0f) + 1.0f / Max(mScale, 1.0e-6f);
+        const Real32 Depth = Max(Radius, 0.0f) + Max(Width, 0.0f) + GetPixel();
 
         Hollow(Box, Box.Contract(Depth), Tint.ToRGBA8(), Shape);
     }
@@ -730,10 +716,9 @@ namespace ZyPlugin::UI
 
     void Canvas::DrawTexture(ConstRef<Surface> Texture, Rect Box, Rect Source, Color Tint, Real32 Radius)
     {
-        const Paint  Kind   = (Texture.Layout == ZyGraphic::TextureLayout::Texture2DArray)
-            ? Paint::Layered
-            : Paint::Image;
-        const UInt32 Packed = Tint.ToRGBA8();
+        const Bool   Stacked = Texture.Layout == ZyGraphic::TextureLayout::Texture2DArray;
+        const Paint  Kind    = Stacked ? Paint::Layered : Paint::Image;
+        const UInt32 Packed  = Tint.ToRGBA8();
 
         if (!Open(Kind, Texture.Handle, Texture.Filter))
         {
@@ -743,9 +728,12 @@ namespace ZyPlugin::UI
         const Steps Shape = ShapeOf(Texture, Kind, Radius);
 
         // Read upside down, the box's top edge takes the texture's bottom row.
-        const Rect Read = Texture.Flip
-            ? Rect(Source.GetMinimumX(), Source.GetMaximumY(), Source.GetMaximumX(), Source.GetMinimumY())
-            : Source;
+        Rect Read = Source;
+
+        if (Texture.Flip)
+        {
+            Read = Rect(Source.GetMinimumX(), Source.GetMaximumY(), Source.GetMaximumX(), Source.GetMinimumY());
+        }
 
         Pave(Box, Rect(), Rect::EncodeNormalized<UInt16>(Read), Packed, Packed, Shape);
     }
@@ -755,22 +743,20 @@ namespace ZyPlugin::UI
 
     void Canvas::DrawSliced(ConstRef<Surface> Texture, Vector2 Size, Rect Box, Rect Source, Edges Slice, Color Tint)
     {
-        const Paint  Kind   = (Texture.Layout == ZyGraphic::TextureLayout::Texture2DArray)
-            ? Paint::Layered
-            : Paint::Image;
-        const UInt32 Packed = Tint.ToRGBA8();
-        const Steps  Shape  = ShapeOf(Texture, Kind, 0.0f);
+        const Bool   Stacked = Texture.Layout == ZyGraphic::TextureLayout::Texture2DArray;
+        const Paint  Kind    = Stacked ? Paint::Layered : Paint::Image;
+        const UInt32 Packed  = Tint.ToRGBA8();
+        const Steps  Shape   = ShapeOf(Texture, Kind, 0.0f);
 
         if (!Open(Kind, Texture.Handle, Texture.Filter))
         {
             return;
         }
 
-        // Read upside down, the bottom border of the texture stands at the top of the box.
         const Real32 Upper = Texture.Flip ? Slice.Bottom : Slice.Top;
         const Real32 Lower = Texture.Flip ? Slice.Top : Slice.Bottom;
 
-        // The border stands on screen at the size it has in the image, halved where the box is too small for both.
+        // The border keeps its image size on screen, halved where the box is too small for both.
         const Real32 Wide = Box.GetWidth();
         const Real32 Tall = Box.GetHeight();
 
@@ -804,7 +790,6 @@ namespace ZyPlugin::UI
             {
                 const Rect Piece(X[Column], Y[Row], X[Column + 1], Y[Row + 1]);
 
-                // A side the slice leaves no room for has nothing to draw.
                 if (!Piece.IsEmpty())
                 {
                     const Rect Region(U[Column], V[Row], U[Column + 1], V[Row + 1]);
@@ -840,8 +825,8 @@ namespace ZyPlugin::UI
 
         const Pen Brush = PenOf(Tint, Width, Ends);
 
-        // Ends cut square overlap half a pixel at a joint, so the fades of the two lines meeting there leave no seam.
-        const Real32 Overlap = (Ends == Cap::Butt) ? 0.5f / Max(mScale, 1.0e-6f) : 0.0f;
+        // Butt ends overlap half a pixel at a joint, so the fades of the two lines leave no seam.
+        const Real32 Overlap = (Ends == Cap::Butt) ? 0.5f * GetPixel() : 0.0f;
         const UInt   Lines   = Closed ? Count : Count - 1;
 
         for (UInt Index = 0; Index < Lines; ++Index)
@@ -883,7 +868,6 @@ namespace ZyPlugin::UI
 
     void Canvas::DrawCircle(Vector2 Center, Real32 Radius, Color Tint)
     {
-        // A box rounded by half its side is a circle, so a disc costs what a rounded box does.
         const Real32 Size = Max(Radius, 0.0f);
 
         DrawRect(Rect(Center, Center).Expand(Size), Tint, Size);
@@ -894,7 +878,6 @@ namespace ZyPlugin::UI
 
     void Canvas::DrawRing(Vector2 Center, Real32 Radius, Color Tint, Real32 Width)
     {
-        // An outline of no width would fill the whole disc, so it draws nothing.
         if (Width <= 0.0f || !Open(Paint::Colour, 0))
         {
             return;
@@ -905,7 +888,7 @@ namespace ZyPlugin::UI
         const Steps  Shape = Measure(Cut::Rounded, Paint::Colour, Outer, Width, 0.0f);
 
         // Nothing shows within the square the ring's hole holds, so a large ring leaves that square out.
-        const Real32 Hole = Max(Outer - Width - 1.0f / Max(mScale, 1.0e-6f), 0.0f) * 0.70710678f;
+        const Real32 Hole = Max(Outer - Width - GetPixel(), 0.0f) * 0.70710678f;
 
         Hollow(Rect(Center, Center).Expand(Outer), Rect(Center, Center).Expand(Hole), Tint.ToRGBA8(), Shape);
     }
@@ -923,7 +906,6 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // A whole turn or more closes on itself, leaving no end open.
         const Bool   Closed = Abs(Sweep) >= kTwoPI<Real32>;
         const Real32 Turn   = Closed ? kTwoPI<Real32> : Sweep;
 
@@ -983,37 +965,9 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Rect Canvas::GetPlace(UInt32 Index) const
-    {
-        ConstRef<Quad> Drawn = mQuads[Index];
-        const UInt32   Slot  = (Drawn.Shape[3] >> 5) & (kTransforms - 1);
-
-        if (Slot == 0)
-        {
-            return Drawn.Area;
-        }
-
-        // The quad's transform sits in the block of the batch holding it.
-        UInt32 Block = 0;
-
-        for (ConstRef<Batch> Run : mBatches)
-        {
-            if (Run.Offset <= Index)
-            {
-                Block = Run.Transforms;
-            }
-        }
-
-        ConstRef<Affine> Rows = mAffines[Block * kTransforms + Slot];
-        return Rect::Transform(Drawn.Area, Matrix3x2(Rows[0], Rows[1], Rows[2], Rows[4], Rows[5], Rows[6]));
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     void Canvas::Run::operator()(ConstRef<ZyRender::Font::Placement> Placement)
     {
-        // Glyphs of one line nearly always share a page, so its texture, its material and its batch are found once.
+        // Glyphs of a line nearly always share a page, so its texture, material and batch are found once.
         if (Placement.Page != Page)
         {
             Page = Placement.Page;
@@ -1061,7 +1015,7 @@ namespace ZyPlugin::UI
                                 Color                          Tint,
                                 ConstRef<ZyRender::FontEffect> Effect)
     {
-        // The shader reads the outline's offset and bias in pixels of the target, so they scale as every length does.
+        // The shader reads the outline's offset and bias in target pixels, so they scale as every length does.
         return Run {
             .Owner  = this,
             .Font   = AddressOf(Font),
@@ -1086,26 +1040,24 @@ namespace ZyPlugin::UI
 
     Bool Canvas::Open(Paint Kind, ZyGraphic::Object Texture, Filter Sampling, Bool Uncut)
     {
-        // A quad cut away entirely costs nothing, not even a batch.
         if (mClip.IsEmpty())
         {
             return false;
         }
 
-        // A turned quad or a figure cannot be cut square on the spot, so only they need the scissor at the clip.
+        // A turned quad or a figure cannot be cut square on the spot, so only they need the scissor.
         const Bool   Scissored = Uncut || mTransform;
         const UInt32 Slot      = ObtainTransform();
         const UInt32 Materials = mMaterials.IsEmpty() ? 0 : static_cast<UInt32>(mMaterials.GetSize() - 1) / kMaterials;
         const UInt32 Turns     = static_cast<UInt32>(mAffines.GetSize() - 1) / kTransforms;
 
-        // Each kind of texture has a slot of its own, so a colour takes none and an image only the image's.
+        // Each kind of texture has a slot of its own, so a colour takes none.
         const UInt32 Place = SlotOf(Kind);
 
         if (!mBatches.IsEmpty())
         {
             Ref<Batch> Last = mBatches.GetBack();
 
-            // A slot claimed already takes the same texture again only when it is read the same way.
             const Bool Same  = Last.Textures[Place] == Texture && Last.Filters[Place] == Sampling;
             const Bool Free  = (Kind == Paint::Colour) || !Last.Textures[Place] || Same;
             const Bool Cut   = Scissored ? (Last.Scissor == mClip) : Last.Scissor.Contains(mClip);
@@ -1153,18 +1105,13 @@ namespace ZyPlugin::UI
 
     void Canvas::Plot(Rect Area, Rect Box, Rect Bounds, UInt32 Tint, UInt16 Code)
     {
-        // A figure cannot be cut square on the spot, so one the clip misses entirely is all that is left out.
+        // A figure cannot be cut square on the spot, so only one the clip misses entirely is left out.
         if (!IsVisible(Bounds))
         {
             return;
         }
 
-        if (mCount + 1 > mQuads.GetSize())
-        {
-            mQuads.Advance(Max<UInt>(mQuads.GetSize(), 256));
-        }
-
-        Ref<Quad> Drawn = mQuads[mCount++];
+        Ref<Quad> Drawn = Claim();
 
         Drawn.Area   = Area;
         Drawn.Box    = Box;
@@ -1186,7 +1133,7 @@ namespace ZyPlugin::UI
 
     void Canvas::Stroke(Vector2 From, Vector2 To, ConstRef<Pen> Brush, Real32 Lead, Real32 Trail)
     {
-        // The shader cuts the line as a box rounded at its ends, so the code says rounded, a colour and a segment.
+        // The shader cuts a line as a box rounded at its ends.
         constexpr UInt16 kCode = ZyEnum::Cast(Cut::Rounded) | (ZyEnum::Cast(Form::Segment) << kFormShift);
 
         if (Lead > 0.0f || Trail > 0.0f)
@@ -1201,8 +1148,8 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The quad grows a pixel past the line on every side, so the bounds the clip is held against grow as much.
-        const Real32 Margin = (Brush.Half + Brush.Reach + 1.0f) / Max(mScale, 1.0e-6f);
+        // The quad grows a pixel past the line on every side, and so do the bounds held against the clip.
+        const Real32 Margin = (Brush.Half + Brush.Reach + 1.0f) * GetPixel();
         const Rect   Bounds = Rect(Vector2::Min(From, To), Vector2::Max(From, To)).Expand(Margin);
 
         Plot(Rect(From * mScale, To * mScale), Rect(Brush.Half, Brush.Reach, Brush.Radius, 0.0f), Bounds, Brush.Tint,
@@ -1222,11 +1169,11 @@ namespace ZyPlugin::UI
                        ConstRef<Pen> Brush,
                        Cap           Ends)
     {
-        // Each point is turned from the last by one step, costing a sine and a cosine only for the start and step.
+        // Each point turns from the last by one step, so only the start and the step cost a sine and a cosine.
         const Real32 Step     = Sweep / static_cast<Real32>(Max(Steps, 1u));
         const Real32 StepCos  = Cosine(Step);
         const Real32 StepSin  = Sine(Step);
-        const Real32 Overlap  = (Ends == Cap::Butt) ? 0.5f / Max(mScale, 1.0e-6f) : 0.0f;
+        const Real32 Overlap  = (Ends == Cap::Butt) ? 0.5f * GetPixel() : 0.0f;
 
         Real32  Across = Cosine(Start);
         Real32  Down   = Sine(Start);
@@ -1240,7 +1187,6 @@ namespace ZyPlugin::UI
 
             const Vector2 Point = Center + AxisX * Across + AxisY * Down;
 
-            // Ends cut square overlap half a pixel at a joint, as a polyline's do.
             const Real32 Lead  = (Closed || Index > 0) ? Overlap : 0.0f;
             const Real32 Trail = (Closed || Index + 1 < Steps) ? Overlap : 0.0f;
 
@@ -1254,13 +1200,13 @@ namespace ZyPlugin::UI
 
     void Canvas::Fill(Vector2 First, Vector2 Second, Vector2 Third, Vector2 Fourth, UInt32 Tint)
     {
-        // The shader cuts the figure at its edges, so the code says a plain polygon; the inset cut never reaches it.
+        // The shader cuts a figure at its edges, which the inset cut never reaches.
         constexpr UInt16 kCode = ZyEnum::Cast(Cut::Inset) | (ZyEnum::Cast(Form::Polygon) << kFormShift);
 
         // The triangles share the line from the second corner to the fourth, so the fourth comes before the third.
         const Rect Bounds = Rect(
             Vector2::Min(Vector2::Min(First, Second), Vector2::Min(Third, Fourth)),
-            Vector2::Max(Vector2::Max(First, Second), Vector2::Max(Third, Fourth))).Expand(1.0f / Max(mScale, 1.0e-6f));
+            Vector2::Max(Vector2::Max(First, Second), Vector2::Max(Third, Fourth))).Expand(GetPixel());
 
         Plot(Rect(First * mScale, Second * mScale), Rect(Fourth * mScale, Third * mScale), Bounds, Tint, kCode);
     }
@@ -1279,13 +1225,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // The quads are grown ahead in large steps, so a quad only writes its own.
-        if (mCount + 1 > mQuads.GetSize())
-        {
-            mQuads.Advance(Max<UInt>(mQuads.GetSize(), 256));
-        }
-
-        Ref<Quad> Drawn = mQuads[mCount++];
+        Ref<Quad> Drawn = Claim();
 
         Drawn.Area   = Clipped;
         Drawn.Box    = Box * mScale;
@@ -1307,7 +1247,7 @@ namespace ZyPlugin::UI
 
     void Canvas::Hollow(Rect Box, Rect Inner, UInt32 Tint, Steps Shape)
     {
-        // The bands meet the inner part exactly, so leaving it out costs three quads and saves shading all of it.
+        // Leaving the inner part out costs three quads and saves shading all of it.
         if (IsLarge(Inner))
         {
             Surround(Box, Box, Inner, kWhole, Tint, Tint, Shape);
@@ -1323,9 +1263,9 @@ namespace ZyPlugin::UI
 
     void Canvas::Pave(Rect Box, Rect Hole, ConstRef<Texels> Source, UInt32 Tint, UInt32 Other, Steps Shape)
     {
-        // Past its corners and a pixel of fading edge a rounded, unoutlined box is solid, so a large one draws plain.
+        // Past its corners and a pixel of edge a rounded, unoutlined box is solid, so a large one draws plain.
         const Bool   Rounded = (Shape[3] & 3u) == ZyEnum::Cast(Cut::Rounded) && Shape[1] == 0;
-        const Real32 Depth   = Shape[0] / (kSubpixel * mScale) + 1.0f / Max(mScale, 1.0e-6f);
+        const Real32 Depth   = Shape[0] / (kSubpixel * mScale) + GetPixel();
         const Rect   Middle  = Rounded ? Box.Contract(Depth) : Box;
         const Rect   Cover   = Rect::Intersection(Hole, Middle);
         const Bool   Hollow  = IsLarge(Cover);
@@ -1344,7 +1284,6 @@ namespace ZyPlugin::UI
             Surround(Box, Box, Middle, Source, Tint, Other, Shape);
         }
 
-        // A large hole something opaque covers later is left out of the middle as well.
         if (Hollow)
         {
             Surround(Box, Middle, Cover, Source, Tint, Other, Plain);
@@ -1366,7 +1305,6 @@ namespace ZyPlugin::UI
                           UInt32           Other,
                           Steps            Shape)
     {
-        // The bands share their edges with each other and with the inner box, so they cover the rest exactly.
         const Rect Upper(Outer.GetMinimumX(), Outer.GetMinimumY(), Outer.GetMaximumX(), Inner.GetMinimumY());
         const Rect Left(Outer.GetMinimumX(), Inner.GetMinimumY(), Inner.GetMinimumX(), Inner.GetMaximumY());
         const Rect Right(Inner.GetMaximumX(), Inner.GetMinimumY(), Outer.GetMaximumX(), Inner.GetMaximumY());
@@ -1394,7 +1332,7 @@ namespace ZyPlugin::UI
         // Lengths go down as whole subpixel steps of the target, so the shader rounds and fades in the pixels seen.
         const Real32 Step = kSubpixel * mScale;
 
-        // An outline thinner than a step keeps one, since nought reads as no outline and would fill the whole box.
+        // An outline thinner than a step keeps one, since zero reads as no outline and would fill the box.
         const UInt16 Round = static_cast<UInt16>(Clamp(Radius * Step, 0.0f, 65535.0f));
         const UInt16 Line  = static_cast<UInt16>(Clamp(Outline * Step, (Outline > 0.0f) ? 1.0f : 0.0f, 65535.0f));
         const UInt16 Soft  = static_cast<UInt16>(Clamp(Blur * Step, 0.0f, 65535.0f));
@@ -1436,10 +1374,10 @@ namespace ZyPlugin::UI
 
     Canvas::Pen Canvas::PenOf(Color Tint, Real32 Width, Cap Ends) const
     {
-        // A stroke thinner than a pixel covers one as faintly as it is thin, which keeps a hairline from breaking up.
+        // A stroke thinner than a pixel covers one as faintly as it is thin, so a hairline does not break up.
         const Real32 Pixels = Max(Width, 0.0f) * mScale;
         const Real32 Shown  = Max(Pixels, 1.0f);
-        const Color  Faded  = (Pixels < 1.0f) ? Color::WithAlpha(Tint, Tint.GetAlpha() * Pixels) : Tint;
+        const Color  Faded  = (Pixels < 1.0f) ? Color::Fade(Tint, Pixels) : Tint;
         const Real32 Half   = Shown * 0.5f;
 
         return Pen {
@@ -1498,7 +1436,7 @@ namespace ZyPlugin::UI
 
     UInt32 Canvas::AdoptMaterial(ConstRef<Material> Wanted)
     {
-        // Text alternates between a few effects at most, so only the last few of the current block are looked through.
+        // Text alternates between a few effects, so only the current block's last few are looked through.
         const UInt32 Size   = static_cast<UInt32>(mMaterials.GetSize());
         const UInt32 First  = (Size == 0) ? 0 : (Size - 1) / kMaterials * kMaterials;
         const UInt32 Oldest = Max(First, (Size >= 4) ? Size - 4 : 0);
@@ -1554,7 +1492,7 @@ namespace ZyPlugin::UI
         Kept.Sampling = mSampling;
         Kept.Uncut    = mUncut;
 
-        // A transform or a material standing as it did for the quad before is kept once, so a run of quads shares it.
+        // A transform or material unchanged since the quad before is kept once, so a run of quads shares it.
         if (mTransform)
         {
             if (mTape->Turns.IsEmpty() || mTape->Turns.GetBack() != * mTransform)
@@ -1683,12 +1621,7 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            if (mCount + 1 > mQuads.GetSize())
-            {
-                mQuads.Advance(Max<UInt>(mQuads.GetSize(), 256));
-            }
-
-            Ref<Quad> Drawn = mQuads[mCount++];
+            Ref<Quad> Drawn = Claim();
             Drawn = Step.Drawn;
             Drawn.Shape    = Shape;
             Drawn.Shape[3] = static_cast<UInt16>((Shape[3] & ~((kTransforms - 1) << 5)) | (mSlot << 5));

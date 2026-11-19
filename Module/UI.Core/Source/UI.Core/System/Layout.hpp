@@ -16,9 +16,6 @@
 #include "UI.Core/Facet.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
-#include "UI.Core/Pane.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -30,9 +27,6 @@ namespace ZyPlugin::UI
     class Layout final
     {
     public:
-
-        /// The most times a layout runs over while wrapped text settles to the room it was given.
-        static constexpr UInt32 kPasses = 3;
 
         /// \brief Defines the code measuring what an element holding a kind of facet shows.
         using Measurer = Delegate<Bool(Ref<Tree> Owner, ConstRef<Pane> Target, UInt32 Row, Ref<Vector2> Content)>;
@@ -84,12 +78,6 @@ namespace ZyPlugin::UI
 
     private:
 
-        /// The marks asking for a row to be measured again.
-        static constexpr Dirty kAsked  = Dirty::Measure | Dirty::Resize;
-
-        /// The marks asking for a row, or one it holds, to be arranged again.
-        static constexpr Dirty kSought = Dirty::Arrange | Dirty::Below;
-
         /// \brief Holds one measurer and the kind of facet it measures.
         struct Probe final
         {
@@ -99,6 +87,12 @@ namespace ZyPlugin::UI
             /// The code measuring the content of those holders.
             Measurer Code;
         };
+
+        /// The marks asking for a row to be measured again.
+        static constexpr Dirty kAsked  = Dirty::Measure | Dirty::Resize;
+
+        /// The marks asking for a row, or one it holds, to be arranged again.
+        static constexpr Dirty kSought = Dirty::Arrange | Dirty::Below;
 
         /// \brief Lays out every row of a pane.
         ///
@@ -120,7 +114,7 @@ namespace ZyPlugin::UI
         /// \param Target The pane holding the row.
         /// \param Row    The row to measure.
         /// \param Bits   The marks of the row, with what its children asked of it.
-        /// \return \ref Dirty::Resize when its parent must be measured again, \ref Dirty::None otherwise.
+        /// \return The mark for its parent, \ref Dirty::Resize when it must be measured again or \ref Dirty::None.
         Dirty Refit(Ref<Pane> Target, UInt32 Row, Dirty Bits);
 
         /// \brief Marks every row fit to a new room to be measured again, and forgets them.
@@ -170,6 +164,11 @@ namespace ZyPlugin::UI
         /// \return The width, in pixels.
         Real32 Breadth(Ref<Pane> Target, UInt32 Row) const;
 
+    public:
+
+        /// The most times a layout runs over while wrapped text settles to the room it was given.
+        static constexpr UInt32 kPasses = 3;
+
     private:
 
         /// \brief Checks whether a box is sized in pixels on both axes, so its content never changes its size.
@@ -180,21 +179,21 @@ namespace ZyPlugin::UI
 
         /// \brief Gets the margin an element takes along the axis its parent lays it out on.
         ///
-        /// \param Row    The flag, `true` to lay out in a row, `false` in a column.
+        /// \param Row    `true` to lay out in a row, `false` in a column.
         /// \param Margin The margin of the element.
         /// \return The margin on both sides along the axis, in pixels.
         static Real32 MainOf(Bool Row, ConstRef<Edges> Margin);
 
         /// \brief Gets the margin an element takes across the axis its parent lays it out on.
         ///
-        /// \param Row    The flag, `true` to lay out in a row, `false` in a column.
+        /// \param Row    `true` to lay out in a row, `false` in a column.
         /// \param Margin The margin of the element.
         /// \return The margin on both sides across the axis, in pixels.
         static Real32 SideOf(Bool Row, ConstRef<Edges> Margin);
 
         /// \brief Gets the size an element starts from along its parent's axis, before it grows or shrinks.
         ///
-        /// \param Row      The flag, `true` to lay out in a row, `false` in a column.
+        /// \param Row      `true` to lay out in a row, `false` in a column.
         /// \param Shape    The box of the element.
         /// \param Measured The size the element asked for, in pixels.
         /// \param Room     The room along the axis, which a share is taken of, in pixels.
@@ -211,8 +210,8 @@ namespace ZyPlugin::UI
         /// \param Wanted  The size the element asked for, in pixels.
         /// \param Before  The margin on the near side of the element, in pixels.
         /// \param After   The margin on the far side of the element, in pixels.
-        /// \param Start   The receiver of where the element starts, in pixels.
-        /// \param End     The receiver of where the element ends, in pixels.
+        /// \param Start   Receives where the element starts, in pixels.
+        /// \param End     Receives where the element ends, in pixels.
         static void SpanOf(
             ConstRef<Length> Lead,
             ConstRef<Length> Trail,
@@ -230,7 +229,7 @@ namespace ZyPlugin::UI
         /// \param Owner   The tree holding the picture.
         /// \param Target  The pane holding the element.
         /// \param Row     The row of the element.
-        /// \param Content The receiver of the size the picture asks for, once its image has loaded.
+        /// \param Content Receives the size the picture asks for, once its image has loaded.
         /// \return `true` if its image has not loaded yet, `false` otherwise.
         static Bool MeasurePicture(Ref<Tree> Owner, ConstRef<Pane> Target, UInt32 Row, Ref<Vector2> Content);
 

@@ -11,11 +11,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Popup.hpp"
-#include "UI.Core/Element.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
 #include "UI.Core/Layers.hpp"
 #include "UI.Core/Tree.hpp"
 #include "UI.Core/Types.hpp"
@@ -51,15 +48,13 @@ namespace ZyPlugin::UI
 
         if (Below)
         {
-            Shape.Left  = Length::Pixels(Frame.GetMinimumX());
-            Shape.Top   = Length::Pixels(Frame.GetMaximumY() + 2.0f);
             Shape.Width = Length::Pixels(Frame.GetWidth());
+            Drop(Owner, Target, Anchor);
+            return;
         }
-        else
-        {
-            Shape.Left  = Length::Pixels(Frame.GetMaximumX() + 2.0f);
-            Shape.Top   = Length::Pixels(Frame.GetMinimumY());
-        }
+
+        Shape.Left = Length::Pixels(Frame.GetMaximumX() + 2.0f);
+        Shape.Top  = Length::Pixels(Frame.GetMinimumY());
         Lift(Owner, Target, Anchor);
     }
 

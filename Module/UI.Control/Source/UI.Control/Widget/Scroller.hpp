@@ -53,20 +53,20 @@ namespace ZyPlugin::UI
         /// \brief Gets one of the scroll bars of a scroll viewer.
         ///
         /// \param Viewer   The viewer whose bar is wanted.
-        /// \param Vertical The flag, `true` to get the bar down its side, `false` to get the one along its bottom.
+        /// \param Vertical `true` to get the bar down its side, `false` to get the one along its bottom.
         /// \return The bar, hidden while there is nothing to scroll its way.
         static Element GetBar(Element Viewer, Bool Vertical);
 
         /// \brief Lets a scroll viewer's content keep its width and scroll sideways, or fits it to the viewer's width.
         ///
         /// \param Viewer     The viewer to change.
-        /// \param Horizontal The flag, `true` to scroll sideways, `false` to fit the content to the width.
+        /// \param Horizontal `true` to scroll sideways, `false` to fit the content to the width.
         static void SetHorizontal(Element Viewer, Bool Horizontal);
 
         /// \brief Keeps a scroll viewer at its end however much it holds, as a log, until it is scrolled away from it.
         ///
         /// \param Viewer The viewer to change.
-        /// \param Follow The flag, `true` to keep it at its end, `false` to leave it where it is put.
+        /// \param Follow `true` to keep it at its end, `false` to leave it where it is put.
         static void SetFollow(Element Viewer, Bool Follow);
 
         /// \brief Scrolls a scroll viewer, held within what it holds, without reporting it.
@@ -89,10 +89,10 @@ namespace ZyPlugin::UI
 
     private:
 
-        /// How tall a viewer stands until given a height, in pixels, since one sized by its content never scrolls.
+        /// The height a viewer stands at until given one, in pixels, since one sized by its content never scrolls.
         static constexpr Real32 kHeight = 200.0f;
 
-        /// How far an arrow key scrolls a viewer holding the keyboard, in pixels, as a notch of the wheel does.
+        /// The distance an arrow key scrolls a viewer holding the keyboard, in pixels, as a notch of the wheel does.
         static constexpr Real32 kStep   = 40.0f;
 
         /// \brief Runs a viewer holding the keyboard itself, where the arrows, the page keys, home and end scroll it.
@@ -102,13 +102,6 @@ namespace ZyPlugin::UI
         /// \param Self    The viewer hearing the event.
         /// \return `true` if a key scrolled it, `false` otherwise, so at an end the arrow moves the keyboard on.
         static Bool OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
-
-        /// \brief Scrolls a viewer by a key.
-        ///
-        /// \param Viewer The viewer to scroll.
-        /// \param Key    The key pressed while it holds the keyboard.
-        /// \return `true` if it moved, `false` otherwise.
-        static Bool OnKey(Element Viewer, ZyInput::Key Key);
 
         /// \brief Keeps how far a remembered viewer is scrolled, or brings it back to where it was left.
         ///

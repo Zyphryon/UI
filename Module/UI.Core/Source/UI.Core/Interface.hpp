@@ -13,9 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Element.hpp"
-#include "Event.hpp"
-#include "Handle.hpp"
-#include "Paint/Canvas.hpp"
 #include "Shortcut.hpp"
 #include "Style/Theme.hpp"
 #include "System/Animator.hpp"
@@ -25,8 +22,6 @@
 #include "System/Layout.hpp"
 #include "System/Painter.hpp"
 #include "System/Pointer.hpp"
-#include "Tree.hpp"
-#include "Types.hpp"
 #include <Zyphryon.Input/Service.hpp>
 #include <Zyphryon.Platform/Window.hpp>
 
@@ -279,7 +274,7 @@ namespace ZyPlugin::UI
         /// \brief Runs code when a control naming an action is clicked.
         ///
         /// \param Action The name of the action, which replaces whatever code it ran before.
-        /// \param Code   The code, handed the control clicked; the click bubbles on, so a menu holding it closes.
+        /// \param Code   The code, handed the control clicked while the click bubbles on to close a menu holding it.
         ZY_INLINE void OnClick(Text Action, Reaction Code)
         {
             React(Action, Signal::kClick, ::Move(Code));
@@ -288,7 +283,7 @@ namespace ZyPlugin::UI
         /// \brief Runs code when a control naming an action reports a change of its own value, hearing no other event.
         ///
         /// \param Action The name of the action, which replaces whatever code it ran before.
-        /// \param Code   The code, handed the control changed; the change bubbles on.
+        /// \param Code   The code, handed the control changed while the change bubbles on.
         ZY_INLINE void OnChange(Text Action, Reaction Code)
         {
             React(Action, Signal::kChange, ::Move(Code));
@@ -519,7 +514,7 @@ namespace ZyPlugin::UI
 
         /// \brief Takes the window gaining or losing the keyboard.
         ///
-        /// \param Focused The flag, `true` when the window gained the keyboard, `false` when it lost it.
+        /// \param Focused `true` when the window gained the keyboard, `false` when it lost it.
         /// \return `false` always, so the game hears it too.
         Bool OnWindowFocus(Bool Focused);
 
@@ -534,7 +529,7 @@ namespace ZyPlugin::UI
             /// The phase it runs at.
             Phase  When  = Phase::Prepare;
 
-            /// Its order among the stages of the phase.
+            /// The order among the stages of the phase.
             UInt32 Order = 0;
 
             /// The code run at that phase.
@@ -557,8 +552,6 @@ namespace ZyPlugin::UI
 
         /// \brief Marks every element of every pane to be dressed again, as a new theme asks.
         void Restyle();
-
-    private:
 
         /// \brief Runs code on one kind of event a control naming an action reports of itself.
         ///

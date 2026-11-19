@@ -69,9 +69,7 @@ namespace ZyPlugin::UI
         const Element Result = Create(Parent, Markup::GetText(Node, "Style", "Repeater"));
 
         SetColumns(Result, static_cast<UInt32>(Max(Markup::GetNumber(Node, "Columns", 0.0f), 0.0f)));
-        SetItemHeight(Result, Markup::GetNumber(Node, "ItemHeight", 0.0f));
         SetItemWidth(Result, Markup::GetNumber(Node, "ItemWidth", 0.0f));
-        SetMultiple(Result, Markup::GetBool(Node, "Multiple"));
         BuildRows(Reader, Result, Node);
 
         if (const ConstPtr<JsonValue> Shape = Markup::GetField(Node, "ItemTemplate"))
@@ -79,7 +77,6 @@ namespace ZyPlugin::UI
             SetTemplate(Result, Reader, * Shape);
         }
 
-        // The records are one list in braces, read from the scope the list stands in.
         if (const Text Source = Markup::GetText(Node, "Items"); !Source.IsEmpty())
         {
             if (Text Inside; Unwrap(Source, Inside))
@@ -249,10 +246,16 @@ namespace ZyPlugin::UI
     UInt32 Repeater::GetRealized(Element List)
     {
         const ConstPtr<Items> Own = List.Get<Items>();
-        return Own ? Accumulate(Own->Cells.GetData(), Own->Cells.GetSize(), 0u, [](ConstRef<Cell> Entry)
+
+        if (!Own)
+        {
+            return 0u;
+        }
+
+        return Accumulate(Own->Cells.GetData(), Own->Cells.GetSize(), 0u, [](ConstRef<Cell> Entry)
         {
             return Entry.Parked ? 0u : 1u;
-        }) : 0u;
+        });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -306,11 +309,9 @@ namespace ZyPlugin::UI
 
     UInt64 Repeater::GetKey(Element List, Element Row)
     {
-        const SInt32          Record = GetRecord(List, Row);
-        const ConstPtr<Items> Own    = List.Get<Items>();
-        const ConstPtr<Model> Data   = List.IsAlive() ? Binder::GetModel(List.GetTree()) : nullptr;
-
-        return Record >= 0 && Own && Data ? Data->GetKey(Own->Base, static_cast<UInt32>(Record)) : 0;
+        // Read by the record's path, so a list of records named one by one finds the key of each.
+        const SInt32 Record = GetRecord(List, Row);
+        return Record >= 0 ? GetKey(Binder::GetModel(List.GetTree()), GetScope(List, static_cast<UInt32>(Record))) : 0;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -377,8 +378,12 @@ namespace ZyPlugin::UI
 
         for (const UInt32 Position : Own->Picked)
         {
-            const SInt32 Found = Position < Own->Paths.GetSize()
-                ? static_cast<SInt32>(Paths.Find(Own->Paths[Position])) : static_cast<SInt32>(Position);
+            SInt32 Found = static_cast<SInt32>(Position);
+
+            if (Position < Own->Paths.GetSize())
+            {
+                Found = static_cast<SInt32>(Paths.Find(Own->Paths[Position]));
+            }
 
             if (Found >= 0)
             {
@@ -547,6 +552,8 @@ namespace ZyPlugin::UI
 
     void Repeater::BuildRows(Ref<Markup> Reader, Element List, ConstRef<JsonValue> Node)
     {
+        SetItemHeight(List, Markup::GetNumber(Node, "ItemHeight", 0.0f));
+        SetMultiple(List, Markup::GetBool(Node, "Multiple"));
         SetRightPick(List, Markup::GetBool(Node, "RightPick", true));
 
         if (const ConstPtr<JsonValue> Marks = Markup::GetField(Node, "RowStates"); Marks && Marks->IsObject())
@@ -631,6 +638,23 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    UInt64 Repeater::GetKey(ConstPtr<Model> Data, Text Scope)
+    {
+        const SInt Open = StrFindLast(Scope, '[');
+
+        if (!Data || Open <= 0 || Scope.GetBack() != ']')
+        {
+            return 0;
+        }
+
+        UInt         Cursor = static_cast<UInt>(Open) + 1;
+        const UInt32 Index  = StrExtractNumber<10, UInt32>(Scope, Cursor);
+        return Data->GetKey(Scope.Slice(0, static_cast<UInt>(Open)), Index);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     Unique<JsonValue> Repeater::Mold(ConstRef<JsonValue> Shape)
     {
         if (Shape.IsObject() || (Shape.IsString() && !Shape.GetString().IsEmpty()))
@@ -685,28 +709,22 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // A second press on a row itself activates its record, the first having picked it.
-        const Bool Row   = Message.Target != Self && Owner.GetParent(Message.Target) == Self;
-        const Bool Twice = Message.Kind == Signal::kPress && Message.Button == ZyInput::Button::Left
-            && Message.Count == 2;
-
-        if (Twice && Row)
-        {
-            const SInt32 Record = GetRecord(List, Element(Owner, Message.Target));
-            return Record >= 0 && Announce(Owner, List, static_cast<UInt32>(Record), Signal::kActivate);
-        }
-
-        // Only a click on a row itself picks; one on a control the row holds belongs to that control.
-        if (Message.Kind != Signal::kClick || Message.Target == Self || Owner.GetParent(Message.Target) != Self)
-        {
-            return false;
-        }
-
-        const SInt32 Record = GetRecord(List, Element(Owner, Message.Target));
+        // Only a press or click on a row itself counts, one on a control the row holds belonging to that control.
+        const Bool   Row    = Message.Target != Self && Owner.GetParent(Message.Target) == Self;
+        const Bool   Press  = Message.Kind == Signal::kPress && Message.Button == ZyInput::Button::Left;
+        const Bool   Twice  = Press && Message.Count == 2;
+        const Bool   Hit    = Row && (Twice || Message.Kind == Signal::kClick);
+        const SInt32 Record = Hit ? GetRecord(List, Element(Owner, Message.Target)) : -1;
 
         if (Record < 0)
         {
             return false;
+        }
+
+        // A second press activates the record, the first having picked it.
+        if (Twice)
+        {
+            return Announce(Owner, List, static_cast<UInt32>(Record), Signal::kActivate);
         }
 
         const ZyInput::Modifier Keys = Owner.GetModifiers();
@@ -788,8 +806,8 @@ namespace ZyPlugin::UI
         const SInt32 Count   = static_cast<SInt32>(Own->Count);
         const SInt32 Across  = static_cast<SInt32>(Max(Own->Across, 1u));
         const SInt32 Current = GetIndex(List);
-        const SInt32 Page    = Own->Stride > 0.0f
-            ? Max(static_cast<SInt32>(Own->View / Own->Stride), 1) * Across : Across;
+        const SInt32 Lines   = Own->Stride > 0.0f ? Max(static_cast<SInt32>(Own->View / Own->Stride), 1) : 1;
+        const SInt32 Page    = Lines * Across;
         SInt32       Next    = Current;
 
         switch (Key)
@@ -829,8 +847,8 @@ namespace ZyPlugin::UI
         }
 
         // An arrow that would run past an edge, or sideways in one column, is left alone to move the keyboard on.
-        const Bool Arrow = Key == ZyInput::Key::Up || Key == ZyInput::Key::Down || Key == ZyInput::Key::Left
-            || Key == ZyInput::Key::Right;
+        const Bool Vertical = Key == ZyInput::Key::Up || Key == ZyInput::Key::Down;
+        const Bool Arrow    = Vertical ||Key == ZyInput::Key::Left || Key == ZyInput::Key::Right;
 
         if (Arrow && Next == Current)
         {
@@ -862,7 +880,7 @@ namespace ZyPlugin::UI
         const UInt32 Count  = List.Get<Items>()->Count;
         const UInt32 Lines  = (Count + Layout.Columns - 1) / Layout.Columns;
 
-        // Until a row was measured only the first is made, to be measured; then the lines in view and a margin.
+        // Until a row was measured only the first is made, to be measured, and then the lines in view and a margin.
         UInt32 Begin = 0;
         UInt32 End   = Min(Count, 1u);
 
@@ -881,18 +899,22 @@ namespace ZyPlugin::UI
         const UInt32 Window = Max(End, Begin) - Begin;
 
         // The spacer stands as tall as every row together, so the scroll ranges over the whole list.
-        const Real32  Tall = (Layout.Pitch > 0.0f && Lines > 0)
-            ? static_cast<Real32>(Lines) * Layout.Pitch + static_cast<Real32>(Lines - 1) * Layout.Gap
-            : 0.0f;
+        Real32 Tall = 0.0f;
+
+        if (Layout.Pitch > 0.0f && Lines > 0)
+        {
+            Tall = static_cast<Real32>(Lines) * Layout.Pitch + static_cast<Real32>(Lines - 1) * Layout.Gap;
+        }
+
         const Element Spacer(Owner, List.Get<Items>()->Spacer);
 
-        if (Spacer.IsAlive() && !Same(Owner.GetBox(Spacer.GetHandle()).Height, Length::Pixels(Tall)))
+        if (Spacer.IsAlive() && !Owner.GetBox(Spacer.GetHandle()).Height.IsNear(Length::Pixels(Tall), 0.01f))
         {
             Spacer.EditBox().Height = Length::Pixels(Tall);
             Changed = true;
         }
 
-        // Parked and out-of-range rows are free unless carried or held down; the lists are kept between calls.
+        // Parked and out-of-range rows are free unless carried or held down, the lists kept between calls.
         thread_local Sequence<UInt> Free;
         thread_local Sequence<Bool> Shown;
 
@@ -901,26 +923,26 @@ namespace ZyPlugin::UI
         Shown.Advance(Window);
 
         {
-            ConstRef<Items>          Own     = * List.Get<Items>();
-            ConstRef<Sequence<Cell>> Cells   = Own.Cells;
-            ConstRef<Dispatcher>     Router  = Owner.GetDispatcher();
-            const Handle             Carried = Drag::GetDragged(Owner);
-            const Handle             Pressed = Owner.GetPressed();
+            ConstRef<Items>      Own     = * List.Get<Items>();
+            ConstSpan<Cell>      Cells   = Own.Cells;
+            ConstRef<Dispatcher> Router  = Owner.GetDispatcher();
+            const Handle         Carried = Drag::GetDragged(Owner);
+            const Handle         Pressed = Owner.GetPressed();
 
             for (UInt Index = 0; Index < Cells.GetSize(); ++Index)
             {
-                const UInt32 Record = Cells[Index].Record;
-                const Handle Row    = Cells[Index].Row;
+                ConstRef<Cell> Entry  = Cells[Index];
+                const UInt32   Record = Entry.Record;
+                const Handle   Row    = Entry.Row;
 
                 // A row of records named one by one still shows its record only while that record keeps its place.
-                const Bool Kept = !Own.Named
-                    || (Record < Own.Paths.GetSize() && Cells[Index].Within == Own.Paths[Record]);
+                const Bool Kept = !Own.Named || (Record < Own.Paths.GetSize() && Entry.Within == Own.Paths[Record]);
 
-                if (!Cells[Index].Parked && Kept && Record >= Begin && Record < End && !Shown[Record - Begin])
+                if (!Entry.Parked && Kept && Record >= Begin && Record < End && !Shown[Record - Begin])
                 {
                     Shown[Record - Begin] = true;
                 }
-                else if (Cells[Index].Parked || !(Router.IsWithin(Carried, Row) || Router.IsWithin(Pressed, Row)))
+                else if (Entry.Parked || !(Router.IsWithin(Carried, Row) || Router.IsWithin(Pressed, Row)))
                 {
                     Free.Append(Index);
                 }
@@ -959,7 +981,7 @@ namespace ZyPlugin::UI
         Changed = Park(List, Free, Limit, Gone) || Changed;
 
         // Placing a row only moves it, so the cells stay as they are while they are read.
-        ConstRef<Sequence<Cell>> Placing = List.Get<Items>()->Cells;
+        ConstSpan<Cell> Placing = List.Get<Items>()->Cells;
 
         for (ConstRef<Cell> Entry : Placing)
         {
@@ -991,40 +1013,22 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Repeater::Choose(Ref<Interface> Owner, Element List, SInt32 Index)
-    {
-        ScrollTo(List, static_cast<UInt32>(Index));
-
-        if (Index == GetIndex(List))
-        {
-            return;
-        }
-
-        SetIndex(List, Index);
-        Owner.Dispatch(Event(Signal::kChange, List.GetHandle()));
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     void Repeater::Gather(Ref<Interface> Owner, Element List, SInt32 Index, Bool Toggle, Bool Extend)
     {
         const Ptr<Items> Own = List.Get<Items>();
 
+        ScrollTo(List, static_cast<UInt32>(Index));
+
         // A plain pick leaves only its record, even one already selected among several others.
         if (!Own->Multiple || (!Toggle && !Extend))
         {
-            if (Index == GetIndex(List) && Own->Picked.GetSize() > 1)
+            if (Index != GetIndex(List) || Own->Picked.GetSize() > 1)
             {
                 SetIndex(List, Index);
                 Owner.Dispatch(Event(Signal::kChange, List.GetHandle()));
-                return;
             }
-            Choose(Owner, List, Index);
             return;
         }
-
-        ScrollTo(List, static_cast<UInt32>(Index));
 
         const Sequence<UInt32> Before = Own->Picked;
         const SInt32           Was    = Own->Selected;
@@ -1067,9 +1071,9 @@ namespace ZyPlugin::UI
             }
         }
 
-        const Ptr<Items> After = List.Get<Items>();
-        const Bool       Moved = After->Selected != Was || After->Picked.GetSize() != Before.GetSize()
-            || !Compare(After->Picked.GetData(), Before.GetData(), Before.GetSize());
+        const Ptr<Items> After  = List.Get<Items>();
+        const Bool       Spread = After->Selected != Was || After->Picked.GetSize() != Before.GetSize();
+        const Bool       Moved  = Spread ||!Compare(After->Picked.GetData(), Before.GetData(), Before.GetSize());
 
         if (Moved)
         {
@@ -1097,7 +1101,7 @@ namespace ZyPlugin::UI
         Result.View   = Max(Frame.GetHeight() - Shape.Padding.Top - Shape.Padding.Bottom, 0.0f);
         Result.Pitch  = Own->ItemHeight > 0.0f ? Own->ItemHeight : Own->Measured;
 
-        // The spacer spans the room the scroll leaves beside its thumb; before it was laid out, the padded box does.
+        // The spacer spans the room the scroll leaves beside its thumb, or the padded box does before it was laid out.
         const Real32 Room = Wide > 0.0f ? Wide : Max(Frame.GetWidth() - Shape.Padding.Left - Shape.Padding.Right, 0.0f);
 
         // A width given fits as many columns as the room holds, unless a count is given too.
@@ -1115,8 +1119,8 @@ namespace ZyPlugin::UI
         }
 
         const Real32 Across = static_cast<Real32>(Result.Columns);
-        Result.Width = Own->ItemWidth > 0.0f
-            ? Own->ItemWidth : Max((Room - Result.Gap * (Across - 1.0f)) / Across, 0.0f);
+        const Real32 Share  = Max((Room - Result.Gap * (Across - 1.0f)) / Across, 0.0f);
+        Result.Width = Own->ItemWidth > 0.0f ? Own->ItemWidth : Share;
 
         // Kept for the keyboard and for scrolling a record into view, which run between layouts.
         Own->Across = Result.Columns;
@@ -1202,7 +1206,7 @@ namespace ZyPlugin::UI
         Cells.Append(Row.GetHandle(), Record, false);
         Fill(List, Row, Record);
 
-        // Found again, since filling the row may have moved the facet; only the list's own cells keep their places.
+        // Found again, since filling the row may have moved the facet.
         if (const Ptr<Items> Own = List.Get<Items>(); Own->Named && Record < Own->Paths.GetSize())
         {
             Own->Cells[Index].Within = Own->Paths[Record];
@@ -1215,14 +1219,14 @@ namespace ZyPlugin::UI
     void Repeater::Fill(Element List, Element Row, UInt32 Record)
     {
         // Copied, since the code or the template may make another list and move this facet.
-        const Ptr<Items>          Own      = List.Get<Items>();
-        const Maker               Code     = Own->Make;
-        const Ptr<Markup>         Reader   = Own->Reader;
-        const Str                 Base     = Own->Base;
-        const ConstPtr<JsonValue> Node     = Own->Shape ? Own->Shape.Grab() : nullptr;
-        const Bool                Named    = Own->Named;
-        const Str                 Scope    = GetScope(List, Record);
-        const Sequence<RowState>  Marks    = Own->RowStates;
+        const Ptr<Items>          Own    = List.Get<Items>();
+        const Maker               Code   = Own->Make;
+        const Ptr<Markup>         Reader = Own->Reader;
+        const Str                 Base   = Own->Base;
+        const ConstPtr<JsonValue> Node   = Own->Shape ? Own->Shape.Grab() : nullptr;
+        const Bool                Named  = Own->Named;
+        const Str                 Scope  = GetScope(List, Record);
+        const Sequence<RowState>  Marks  = Own->RowStates;
 
         if (!Code.IsEmpty())
         {
@@ -1301,7 +1305,7 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Repeater::Park(Element List, ConstRef<Sequence<UInt>> Free, UInt Limit, Ref<Sequence<Handle>> Gone)
+    Bool Repeater::Park(Element List, ConstSpan<UInt> Free, UInt Limit, Ref<Sequence<Handle>> Gone)
     {
         Ref<Sequence<Cell>> Cells   = List.Get<Items>()->Cells;
         UInt                Excess  = Max(Cells.GetSize(), Limit) - Limit;
@@ -1348,7 +1352,6 @@ namespace ZyPlugin::UI
             Row.SetState(Widget::Selected(), Chosen);
         }
 
-        // Rows stand over the spacer, each at its record's line and column, moved up by the scroll.
         const Real32 Line   = static_cast<Real32>(Entry.Record / Layout.Columns);
         const Real32 Column = static_cast<Real32>(Entry.Record % Layout.Columns);
         const Length Left   = Length::Pixels(Layout.Left + Column * (Layout.Width + Layout.Gap));
@@ -1359,9 +1362,9 @@ namespace ZyPlugin::UI
         ConstRef<Box> Shape = List.GetTree().GetBox(Entry.Row);
 
         // A row already standing where it should is left alone, since an edit lays the pane out again.
-        const Bool Placed = Same(Shape.Left, Left) && Same(Shape.Top, Top);
+        const Bool Placed = Shape.Left.IsNear(Left, 0.01f) && Shape.Top.IsNear(Top, 0.01f);
 
-        if (Placed && Same(Shape.Width, Width) && Same(Shape.Height, Height))
+        if (Placed && Shape.Width.IsNear(Width, 0.01f) && Shape.Height.IsNear(Height, 0.01f))
         {
             return false;
         }
@@ -1393,10 +1396,16 @@ namespace ZyPlugin::UI
 
         // The binding of the records is the list's own, the one showing them through the list's writer.
         const ConstPtr<Binding> Found = List.Get<Binding>();
-        const SInt              Index = Found ? Found->Links.Find([](ConstRef<Link> Entry)
+
+        if (!Found)
+        {
+            return false;
+        }
+
+        const SInt Index = Found->Links.Find([](ConstRef<Link> Entry)
         {
             return Entry.Write.IsBoundTo<&Repeater::OnItems>() && Entry.Pieces.GetSize() == 1 && Entry.Pieces[0].Hole;
-        }) : -1;
+        });
 
         if (Index < 0)
         {
@@ -1431,13 +1440,5 @@ namespace ZyPlugin::UI
                 Row.Destruct();
             }
         }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Repeater::Same(ConstRef<Length> First, ConstRef<Length> Second)
-    {
-        return First.Measure == Second.Measure && Abs(First.Value - Second.Value) < 0.01f;
     }
 }

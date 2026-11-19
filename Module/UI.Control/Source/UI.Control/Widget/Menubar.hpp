@@ -12,11 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -28,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents what a menu bar keeps, the part at its far end and the title whose menu stands open.
     struct Strip final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The name of the style the bar wears, its titles wearing it followed by `.Title`.
@@ -56,7 +51,7 @@ namespace ZyPlugin::UI
         /// \return The menu bar.
         static Element Create(Element Parent, Text Style = "Menubar");
 
-        /// \brief Creates a menu bar from a layout node, with its `Menus` and the `Children` at its far end.
+        /// \brief Creates a menu bar from a layout node, with its `Menus` in `MenuStyle` and the `Children` at its end.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
@@ -100,7 +95,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner    The interface it stands in.
         /// \param Title    The title whose menu opens.
-        /// \param Keyboard The flag, `true` to light the menu's first item, as the keyboard opens it, `false` for none.
+        /// \param Keyboard `true` to light the menu's first item, as the keyboard opens it, `false` to light none.
         static void Open(Ref<Interface> Owner, Handle Title, Bool Keyboard = false);
 
         /// \brief Closes the menu of a menu bar that stands open, giving the keyboard back to what held it before.
@@ -136,11 +131,11 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner     The interface it stands in.
         /// \param Self      The menu bar whose titles are stepped through.
-        /// \param Direction The direction, one to go right or minus one to go left.
+        /// \param Direction The step, one to go right or minus one to go left.
         /// \return `true` if a menu stands open to move from, `false` otherwise.
         static Bool Shift(Ref<Interface> Owner, Handle Self, SInt32 Direction);
 
-        /// \brief Checks whether a title of a menu bar can open its menu, as one that is neither hidden nor disabled.
+        /// \brief Checks whether a title of a menu bar is neither hidden nor disabled.
         ///
         /// \param Owner The interface it stands in.
         /// \param Title The element to check.

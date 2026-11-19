@@ -29,7 +29,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the parts a dialog answers through, and where it puts the keyboard back once answered.
     struct Verdict final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The name of the style the dialog wears, its buttons wearing it followed by theirs.
@@ -50,10 +50,10 @@ namespace ZyPlugin::UI
         /// The control that held the keyboard before the dialog took it.
         Handle Return;
 
-        /// `true` once the dialog stands where it should, centred on the target or where it was put.
+        /// `true` once the dialog stands where it should, `false` while it waits for a layout to centre it.
         Bool   Placed = false;
 
-        /// `true` when it was put somewhere, so it is never centred.
+        /// `true` when it was put somewhere, so it is never centred, `false` to centre it each time it shows.
         Bool   Pinned = false;
     };
 
@@ -71,7 +71,7 @@ namespace ZyPlugin::UI
         /// \return The dialog, whose children go in its body, between its message and its buttons.
         static Element Open(Ref<Tree> Target, Text Title, Text Message, Text Style = "Dialog");
 
-        /// \brief Creates a dialog from a node's `Title`, `Message`, `Buttons`; `Left` or `Top` stops centring.
+        /// \brief Creates a dialog from a node's `Title`, `Message` and `Buttons`, kept uncentred by a `Left` or `Top`.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element holding the node, whose tree the dialog opens in.
@@ -84,8 +84,8 @@ namespace ZyPlugin::UI
         /// \param Target  The dialog to add the button to.
         /// \param Content The text on the button.
         /// \param Action  The name of the action clicking it runs, or empty for none.
-        /// \param Default The flag, `true` to make it the button enter clicks, worn as `.Default`, `false` otherwise.
-        /// \param Cancel  The flag, `true` to make it the button escape and the close button click, `false` otherwise.
+        /// \param Default `true` to make it the button enter clicks, worn as `.Default`, `false` otherwise.
+        /// \param Cancel  `true` to make it the button escape and the close button click, `false` otherwise.
         /// \return The button, standing last in the dialog's row of buttons.
         static Element AddButton(
             Element Target, Text Content, Text Action = Text(), Bool Default = false, Bool Cancel = false);

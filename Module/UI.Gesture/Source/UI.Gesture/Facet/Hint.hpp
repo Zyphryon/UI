@@ -12,7 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Types.hpp"
 #include "UI.Gesture/Filler.hpp"
 #include "UI.Markup/Markup.hpp"
 
@@ -25,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the tooltip an element shows once the pointer rests on it, as text or what its filler makes.
     struct Hint final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks       = Dirty::None;
 
         /// `true`, so the pointer stops at an element holding it.

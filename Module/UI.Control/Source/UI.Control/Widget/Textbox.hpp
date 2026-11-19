@@ -12,12 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
 #include "UI.Core/Text/Block.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 #include <Zyphryon.Math/Range.hpp>
 
@@ -30,7 +25,7 @@ namespace ZyPlugin::UI
     /// \brief Represents what a text field takes and where its caret and selection stand.
     struct Entry final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The text the field held when it took the keyboard or last committed, which escape puts back.
@@ -45,25 +40,25 @@ namespace ZyPlugin::UI
         /// The other end of the selection, as a byte of the text, the caret's own place while nothing is selected.
         UInt32 Anchor    = 0;
 
-        /// How far along its line the caret aims as it moves up and down, in pixels, negative while it aims nowhere.
+        /// The distance along its line the caret aims at as it moves up and down, in pixels, negative to aim nowhere.
         Real32 Goal      = -1.0f;
 
-        /// `true` when the field holds several lines, which wrap and scroll up and down.
+        /// `true` when the field holds several lines, which wrap and scroll up and down, `false` for one line.
         Bool   Multiline = false;
 
-        /// `true` while a press of the pointer drags the selection out.
+        /// `true` while a press of the pointer drags the selection out, `false` otherwise.
         Bool   Selecting = false;
 
-        /// `true` from the first change since the field took the keyboard or committed, until it commits or reverts.
+        /// `true` from the first change since the field took the keyboard or committed, `false` once it commits.
         Bool   Editing   = false;
 
-        /// `true` when nothing typed, cut or pasted changes the text, which can still be selected and copied.
+        /// `true` when nothing typed, cut or pasted changes the text, `false` when the text can be changed.
         Bool   Immutable = false;
 
-        /// `true` when typing and pasting keep only digits, minus signs and points.
+        /// `true` when typing and pasting keep only digits, minus signs and points, `false` when they keep any.
         Bool   Numeric   = false;
 
-        /// `true` when the field shows a mask for each character, and holds the text it masks in \ref Secret.
+        /// `true` when the field shows a mask for each character of \ref Secret, `false` when it shows its text.
         Bool   Password  = false;
 
         /// The text a password field holds, which its own text shows only as a mask.
@@ -75,11 +70,6 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// The height a field of several lines starts at, in pixels.
-        static constexpr Real32 kHeight = 96.0f;
-
-    public:
-
         /// \brief Creates a text field holding one line.
         ///
         /// \param Parent  The element to hold it.
@@ -89,7 +79,7 @@ namespace ZyPlugin::UI
         /// \return The text field, which reports \ref Signal::kChange on every edit made in it.
         static Element Create(Element Parent, Text Content = Text(), Text Hint = Text(), Text Style = "Textbox");
 
-        /// \brief Creates a text field from a node with `Text`, `Hint`, `Limit`, `Multiline`, `Immutable`, `Numeric`, `Password`.
+        /// \brief Creates a text field from a node, reading `Text`, `Hint`, `Limit` and the flags its setters take.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
@@ -97,7 +87,7 @@ namespace ZyPlugin::UI
         /// \return The text field, which reports \ref Signal::kChange on every edit made in it.
         static Element Build(Ref<Markup> Reader, Element Parent, ConstRef<JsonValue> Node);
 
-        /// \brief Replaces a text field's text silently, the caret after it; the limit holds back typing only.
+        /// \brief Replaces a text field's text without reporting it, the caret after it, even past the limit.
         ///
         /// \param Target  The text field whose text is replaced.
         /// \param Content The text it holds from now on.
@@ -118,38 +108,38 @@ namespace ZyPlugin::UI
         /// \brief Sets whether a text field holds one line or several, several given \ref kHeight if none is set.
         ///
         /// \param Target  The text field to change.
-        /// \param Enabled The flag, `true` to hold several lines, `false` to hold one.
+        /// \param Enabled `true` to hold several lines, `false` to hold one.
         static void SetMultiline(Element Target, Bool Enabled);
 
         /// \brief Sets whether a text field can be changed, or only selected and copied from.
         ///
         /// \param Target  The text field to change.
-        /// \param Enabled The flag, `true` to keep typing, cutting and pasting from changing it, `false` to let them.
+        /// \param Enabled `true` to keep typing, cutting and pasting from changing it, `false` to let them.
         static void SetImmutable(Element Target, Bool Enabled);
 
         /// \brief Sets whether a text field takes only what writes a number, as digits, minus signs and points.
         ///
         /// \param Target  The text field to change.
-        /// \param Enabled The flag, `true` to drop every other character typed or pasted, `false` to take any.
+        /// \param Enabled `true` to drop every other character typed or pasted, `false` to take any.
         static void SetNumeric(Element Target, Bool Enabled);
 
         /// \brief Sets whether a text field shows each character as a mask, holding the text it masks apart.
         ///
         /// \param Target  The text field to change.
-        /// \param Enabled The flag, `true` to show a mask for each character, `false` to show the text.
+        /// \param Enabled `true` to show a mask for each character, `false` to show the text.
         static void SetPassword(Element Target, Bool Enabled);
 
         /// \brief Selects part of the text of a text field, or places its caret.
         ///
         /// \param Target The text field whose selection is set.
         /// \param Anchor The end of the selection that stays, as a byte of the text.
-        /// \param Caret  The end the caret stands at, as a byte of the text; the same as the anchor selects nothing.
+        /// \param Caret  The end the caret stands at, as a byte of the text, at the anchor to select nothing.
         static void Select(Element Target, UInt32 Anchor, UInt32 Caret);
 
         /// \brief Gets the mask a password shows for a text, one asterisk for each byte of it.
         ///
         /// \param Content The text to mask.
-        /// \return The mask, as many asterisks as the text has bytes, so its caret and selection line up with the text's.
+        /// \return The mask, an asterisk per byte, so its caret and selection line up with the text's.
         static Str Mask(Text Content);
 
         /// \brief Gets the place the caret of a text field stands at.
@@ -165,6 +155,9 @@ namespace ZyPlugin::UI
         static Text GetSelected(Element Target);
 
     private:
+
+        /// The height a field of several lines starts at, in pixels.
+        static constexpr Real32 kHeight = 96.0f;
 
         /// \brief Runs a text field, where typing replaces the selection, keys edit, enter commits and escape reverts.
         ///
@@ -186,7 +179,7 @@ namespace ZyPlugin::UI
         /// \param Owner  The interface it stands in.
         /// \param Target The text field the key goes down in.
         /// \param Key    The key going down.
-        /// \param Edited The flag receiving `true` when the key changed the text.
+        /// \param Edited Receives `true` when the key changed the text, left alone otherwise.
         /// \return `true` if the field keeps the key, `false` otherwise.
         static Bool OnKey(Ref<Interface> Owner, Element Target, ZyInput::Key Key, Ref<Bool> Edited);
 
@@ -194,7 +187,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The interface it stands in.
         /// \param Target The text field to commit.
-        /// \param Always The flag, `true` to report the commit even with the text unchanged, `false` otherwise.
+        /// \param Always `true` to report the commit even with the text unchanged, `false` otherwise.
         static void Commit(Ref<Interface> Owner, Element Target, Bool Always);
 
         /// \brief Puts back the text a field last committed or took the keyboard with, ending the edit and the focus.
@@ -221,8 +214,8 @@ namespace ZyPlugin::UI
         /// \brief Takes the selection of a text field away, or the character or word before or after the caret.
         ///
         /// \param Target The text field to erase from.
-        /// \param Ahead  The flag, `true` to take what follows the caret, `false` to take what comes before it.
-        /// \param Words  The flag, `true` to take a whole word, `false` to take a character.
+        /// \param Ahead  `true` to take what follows the caret, `false` to take what comes before it.
+        /// \param Words  `true` to take a whole word, `false` to take a character.
         /// \return `true` if the text changed, `false` otherwise.
         static Bool Erase(Element Target, Bool Ahead, Bool Words);
 
@@ -237,7 +230,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Target The text field whose caret moves.
         /// \param Offset The place the caret moves to, as a byte of the text.
-        /// \param Extend The flag, `true` to select from where the selection started, `false` to select nothing.
+        /// \param Extend `true` to select from where the selection started, `false` to select nothing.
         static void Move(Element Target, UInt Offset, Bool Extend);
 
         /// \brief Moves the caret of a text field of several lines up or down by lines, as near as it can to its aim.
@@ -245,14 +238,14 @@ namespace ZyPlugin::UI
         /// \param Owner  The interface it stands in.
         /// \param Target The text field whose caret moves.
         /// \param Lines  The count of lines, negative to move up.
-        /// \param Extend The flag, `true` to select from where the selection started, `false` to select nothing.
+        /// \param Extend `true` to select from where the selection started, `false` to select nothing.
         static void Step(Ref<Interface> Owner, Element Target, SInt32 Lines, Bool Extend);
 
         /// \brief Reads where the text of a text field stands on screen, broken into the lines it shows.
         ///
         /// \param Owner  The interface it stands in.
         /// \param Target The text field to read.
-        /// \param Output The variable receiving the lines and where they stand.
+        /// \param Output Receives the lines and where they stand.
         /// \return `true` if the field shows a text or a hint to read, `false` otherwise.
         static Bool Survey(Ref<Interface> Owner, Element Target, Ref<Block> Output);
 
@@ -269,14 +262,14 @@ namespace ZyPlugin::UI
         /// \param Part   The part to place, as the caret or a band of the selection.
         /// \param Corner The top left corner of the field, in pixels.
         /// \param Box    The place the part goes, in pixels.
-        /// \param Sized  The flag, `true` to size the part to the box too, `false` to keep the size its style gives.
+        /// \param Sized  `true` to size the part to the box too, `false` to keep the size its style gives.
         /// \return `true` if the part moved or was sized, `false` otherwise.
         static Bool Put(Element Part, Vector2 Corner, Rect Box, Bool Sized);
 
         /// \brief Shows or hides a part of a text field.
         ///
         /// \param Part  The part to show or hide.
-        /// \param Shown The flag, `true` to show it, `false` to hide it.
+        /// \param Shown `true` to show it, `false` to hide it.
         /// \return `true` if it changed, `false` otherwise.
         static Bool Show(Element Part, Bool Shown);
 
@@ -297,12 +290,5 @@ namespace ZyPlugin::UI
         /// \param Size The size of the text, in bytes.
         /// \return The selection from its lower end to its upper, a single place while nothing is selected.
         static AnyRange<UInt> GetSelection(ConstRef<Entry> Data, UInt Size);
-
-        /// \brief Checks whether a length stands at so many pixels, within a hundredth of a pixel.
-        ///
-        /// \param Value  The length to check.
-        /// \param Pixels The count of pixels it should stand at.
-        /// \return `true` if it does, `false` otherwise.
-        static Bool Near(ConstRef<Length> Value, Real32 Pixels);
     };
 }

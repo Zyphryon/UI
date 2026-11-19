@@ -35,7 +35,7 @@ namespace ZyPlugin::UI
         /// The radius of the corners, in pixels.
         Real32       Radius      = 0.0f;
 
-        /// How opaque the element and all it holds are, over nought through one.
+        /// The opacity of the element and all it holds, over nought through one.
         Real32       Opacity     = 1.0f;
 
         /// The colour of the text.
@@ -65,13 +65,13 @@ namespace ZyPlugin::UI
         /// The glow just inside the box's edge.
         Halo         InnerGlow;
 
-        /// How much larger the element and all it holds are drawn on each axis, about its middle.
+        /// The scale the element and all it holds are drawn at on each axis, about its middle.
         Vector2      Scale       = Vector2(1.0f, 1.0f);
 
-        /// How far the element and all it holds are drawn turned, clockwise, in degrees.
+        /// The turn the element and all it holds are drawn at, clockwise, in degrees.
         Real32       Rotate      = 0.0f;
 
-        /// How far the element and all it holds are drawn moved, in pixels.
+        /// The distance the element and all it holds are drawn moved, in pixels.
         Vector2      Translate;
 
         /// The colour the image a theme lays over the box is multiplied by.

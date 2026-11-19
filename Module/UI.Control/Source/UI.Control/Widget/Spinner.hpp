@@ -25,10 +25,10 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Represents how far one step moves a scalar, and how many decimals it shows its value with.
+    /// \brief Represents how far one step moves a spinner, and how many decimals it shows its value with.
     struct Stepper final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The amount one step adds or takes away.
@@ -38,12 +38,12 @@ namespace ZyPlugin::UI
         UInt32 Decimals = 0;
     };
 
-    /// \brief Represents a scalar, a value between a button taking a step away and one adding a step.
+    /// \brief Represents a spinner, a value between a button taking a step away and one adding a step.
     class Spinner final
     {
     public:
 
-        /// \brief Creates a scalar.
+        /// \brief Creates a spinner.
         ///
         /// \param Parent   The element to hold it.
         /// \param Value    The value it starts at.
@@ -52,7 +52,7 @@ namespace ZyPlugin::UI
         /// \param Step     The amount one step adds or takes away.
         /// \param Decimals The digits shown after the point.
         /// \param Style    The name of the style it wears, its parts adding `.Decrease`, `.Label` and `.Increase`.
-        /// \return The scalar, reporting \ref Signal::kChange between \ref Signal::kBegin and \ref Signal::kEnd.
+        /// \return The spinner, reporting \ref Signal::kChange between \ref Signal::kBegin and \ref Signal::kEnd.
         static Element Create(Element Parent,
                               Real32  Value,
                               Real32  Minimum,
@@ -61,35 +61,35 @@ namespace ZyPlugin::UI
                               UInt32  Decimals = 0,
                               Text    Style    = "Spinner");
 
-        /// \brief Creates a scalar from a node, at `Value` within `Minimum` and `Maximum`, moving by `Step`.
+        /// \brief Creates a spinner from a node, at `Value` within `Minimum` and `Maximum`, moving by `Step`.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
-        /// \param Node   The layout node the scalar is read from.
-        /// \return The scalar, made as \ref Create makes one.
+        /// \param Node   The layout node the spinner is read from.
+        /// \return The spinner, made as \ref Create makes one.
         static Element Build(Ref<Markup> Reader, Element Parent, ConstRef<JsonValue> Node);
 
-        /// \brief Moves a scalar's value and shows it, without reporting it.
+        /// \brief Moves a spinner's value and shows it, without reporting it.
         ///
-        /// \param Target The scalar to move.
+        /// \param Target The spinner to move.
         /// \param Value  The value, held within the range.
         static void SetValue(Element Target, Real32 Value);
 
-        /// \brief Gets a scalar's value.
+        /// \brief Gets a spinner's value.
         ///
-        /// \param Target The scalar to read.
+        /// \param Target The spinner to read.
         /// \return The value it stands at, within its range.
         static Real32 GetValue(Element Target);
 
-        /// \brief Sets the lowest value a scalar steps to, holding its value within the range without reporting it.
+        /// \brief Sets the lowest value a spinner steps to, holding its value within the range without reporting it.
         ///
-        /// \param Target  The scalar whose range is set.
+        /// \param Target  The spinner whose range is set.
         /// \param Minimum The lowest value it steps to.
         static void SetMinimum(Element Target, Real32 Minimum);
 
-        /// \brief Sets the highest value a scalar steps to, holding its value within the range without reporting it.
+        /// \brief Sets the highest value a spinner steps to, holding its value within the range without reporting it.
         ///
-        /// \param Target  The scalar whose range is set.
+        /// \param Target  The spinner whose range is set.
         /// \param Maximum The highest value it steps to.
         static void SetMaximum(Element Target, Real32 Maximum);
 
@@ -98,31 +98,31 @@ namespace ZyPlugin::UI
         /// The most digits a value is shown with after the point, beyond which the digits overflow.
         static constexpr UInt32 kMaxDecimals = 6;
 
-        /// \brief Runs a scalar, stepping its value on a press on a button, a turn of the wheel or an up or down key.
+        /// \brief Runs a spinner, stepping its value on a press on a button, a turn of the wheel or an up or down key.
         ///
         /// \param Owner   The interface it stands in.
         /// \param Message The event reaching it.
-        /// \param Self    The scalar hearing the event.
+        /// \param Self    The spinner hearing the event.
         /// \return `true` if the event asked it for a step, even one an end held back, `false` otherwise.
         static Bool OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self);
 
-        /// \brief Moves a scalar by a number of steps, reporting the move when its value changed.
+        /// \brief Moves a spinner by a number of steps, reporting the move when its value changed.
         ///
         /// \param Owner  The interface it stands in.
-        /// \param Self   The scalar to move.
+        /// \param Self   The spinner to move.
         /// \param Amount The number of steps, below nought to take them away.
         static void Move(Ref<Interface> Owner, Handle Self, Real32 Amount);
 
-        /// \brief Moves a scalar by steps as an edit of its own, between \ref Signal::kBegin and \ref Signal::kEnd.
+        /// \brief Moves a spinner by steps as an edit of its own, between \ref Signal::kBegin and \ref Signal::kEnd.
         ///
         /// \param Owner  The interface it stands in.
-        /// \param Self   The scalar to move.
+        /// \param Self   The spinner to move.
         /// \param Amount The number of steps, below nought to take them away.
         static void Nudge(Ref<Interface> Owner, Handle Self, Real32 Amount);
 
-        /// \brief Writes a scalar's value on its label, with the digits it shows after the point.
+        /// \brief Writes a spinner's value on its label, with the digits it shows after the point.
         ///
-        /// \param Target The scalar to show.
+        /// \param Target The spinner to show.
         static void Show(Element Target);
     };
 }

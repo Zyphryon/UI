@@ -11,7 +11,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Ruler.hpp"
-#include "Block.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -27,6 +26,7 @@ namespace ZyPlugin::UI
         const ConstPtr<ZyRender::Font::Glyph> Glyph = Source.GetGlyph(Codepoint);
         return Glyph ? Glyph->Advance : kNone;
     }
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -51,7 +51,6 @@ namespace ZyPlugin::UI
         Real32 Pen      = 0.0f;
         UInt32 Previous = 0;
 
-        // The pen moves as the painter places glyphs, kerned against the glyph before.
         for (UInt Cursor = 0; Cursor < Line.GetSize();)
         {
             const UInt32 Codepoint = Unicode::Decode(Line, Cursor);
@@ -122,7 +121,7 @@ namespace ZyPlugin::UI
                         Ref<Real32>              Natural)
     {
         // The walk is done in font units, as the font's own layout is, and only its results are scaled.
-        const Real32 Limit = (Width > 0.0f && Size > 0.0f) ? Width / Size : kMaximum<Real32>;
+        const Real32 Limit = (Width > 0.0f && Size > 0.0f) ? Width / Size + kSlack : kMaximum<Real32>;
 
         // The lines are nearly always the text with some spaces broken, so they start as a copy of it.
         Lines = Content;
@@ -161,7 +160,7 @@ namespace ZyPlugin::UI
         // The ellipsis is one glyph where the typeface draws it, never the fallback glyph standing in for it.
         const Text   Mark  = Source.GetGlyph(0x2026, 0) ? Text("\xE2\x80\xA6") : Text("...");
         const Real32 Tail  = Measure(Source, Mark, 1.0f);
-        const Real32 Limit = Width / Size;
+        const Real32 Limit = Width / Size + kSlack;
 
         Str  Result;
         Bool Cut   = false;
@@ -252,7 +251,7 @@ namespace ZyPlugin::UI
             Wrap(* Output.Source, Content, Output.Size, Width, Lines, Output.Widths, Natural);
         }
 
-        // Wrapping only turns spaces into breaks, keeping every byte; otherwise the text breaks only where it does.
+        // Wrapping turns spaces into breaks and keeps every byte, so unwrapped text breaks only where it does.
         const Bool Kept = Output.Source && Lines.GetSize() == Content.GetSize();
         const Text Read = Kept ? Text(Lines) : Content;
 
@@ -285,7 +284,7 @@ namespace ZyPlugin::UI
 
     UInt32 Ruler::GetLine(ConstRef<Block> Shape, UInt Offset)
     {
-        // The starts climb from nought, so the line is the last one starting at or before the place.
+        // The starts climb from zero, so the line is the last one starting at or before the place.
         const SInt Line = Shape.Starts.FindLast([Offset](UInt32 Start)
         {
             return Start <= Offset;
@@ -310,10 +309,9 @@ namespace ZyPlugin::UI
         const UInt   Start = Shape.Starts[Line];
         const UInt   End   = Clamp(Offset, Start, GetEnd(Shape, Content, Line));
         const Real32 Width = Line < Shape.Widths.GetSize() ? Shape.Widths[Line] : 0.0f;
+        const Text   Part  = Content.Slice(Start, End - Start);
 
-        const Real32 Across = Shape.Source
-            ? Measure(* Shape.Source, Content.Slice(Start, End - Start), Shape.Size)
-            : 0.0f;
+        const Real32 Across = Shape.Source ? Measure(* Shape.Source, Part, Shape.Size) : 0.0f;
         return Vector2(Lead(Shape.Alignment, Shape.Inner, Width) + Across,
                        Shape.Top + Shape.Leading * static_cast<Real32>(Line));
     }

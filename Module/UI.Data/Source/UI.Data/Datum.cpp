@@ -23,7 +23,6 @@ namespace ZyPlugin::UI
 
     Datum::Datum()
         : mForm   { Form::None },
-          mFlag   { false },
           mNumber { 0.0 },
           mWords  { Str() },
           mTint   { Color::Transparent() }
@@ -35,8 +34,7 @@ namespace ZyPlugin::UI
 
     Datum::Datum(Bool Value)
         : mForm   { Form::Bool },
-          mFlag   { Value },
-          mNumber { 0.0 },
+          mNumber { Value ? 1.0 : 0.0 },
           mWords  { Str() },
           mTint   { Color::Transparent() }
     {
@@ -47,7 +45,6 @@ namespace ZyPlugin::UI
 
     Datum::Datum(Real64 Value)
         : mForm   { Form::Number },
-          mFlag   { false },
           mNumber { Value },
           mWords  { Str() },
           mTint   { Color::Transparent() }
@@ -83,7 +80,6 @@ namespace ZyPlugin::UI
 
     Datum::Datum(Text Value)
         : mForm   { Form::Text },
-          mFlag   { false },
           mNumber { 0.0 },
           mWords  { Value },
           mTint   { Color::Transparent() }
@@ -95,7 +91,6 @@ namespace ZyPlugin::UI
 
     Datum::Datum(AnyRef<Str> Value)
         : mForm   { Form::Text },
-          mFlag   { false },
           mNumber { 0.0 },
           mWords  { Move(Value) },
           mTint   { Color::Transparent() }
@@ -107,7 +102,6 @@ namespace ZyPlugin::UI
 
     Datum::Datum(Color Value)
         : mForm   { Form::Color },
-          mFlag   { false },
           mNumber { 0.0 },
           mWords  { Str() },
           mTint   { Value }
@@ -122,7 +116,6 @@ namespace ZyPlugin::UI
         switch (mForm)
         {
         case Form::Bool:
-            return mFlag;
         case Form::Number:
         case Form::List:
             return mNumber != 0.0;
@@ -143,13 +136,12 @@ namespace ZyPlugin::UI
         switch (mForm)
         {
         case Form::Bool:
-            return mFlag ? 1.0 : 0.0;
         case Form::Number:
         case Form::List:
             return mNumber;
         case Form::Text:
         {
-            // Only text that is a number whole reads as one, so a name never turns into a stray value.
+            // Only text that is wholly a number reads as one, so a name never becomes a stray value.
             UInt         Cursor = 0;
             const Real64 Parsed = StrExtractNumber<Real64>(mWords, Cursor);
             return (Cursor > 0 && Cursor == mWords.GetSize()) ? Parsed : 0.0;
@@ -185,7 +177,7 @@ namespace ZyPlugin::UI
         switch (mForm)
         {
         case Form::Bool:
-            Output.Append(mFlag ? Text("true") : Text("false"));
+            Output.Append(mNumber != 0.0 ? Text("true") : Text("false"));
             break;
         case Form::Number:
         case Form::List:
@@ -215,7 +207,6 @@ namespace ZyPlugin::UI
         switch (mForm)
         {
         case Form::Bool:
-            return mFlag == Other.mFlag;
         case Form::Number:
         case Form::List:
             return mNumber == Other.mNumber;
@@ -246,7 +237,7 @@ namespace ZyPlugin::UI
         const UInt Digits = Decimals < 0 ? kLooseDecimals : static_cast<UInt>(Min(Decimals, kMaxDecimals));
         const UInt Start  = Output.GetSize();
 
-        // The engine writes the sign, and leaves it off a value that rounds to nought.
+        // The engine writes the sign, and leaves it off a value that rounds to zero.
         Output.AppendReal(Value, Digits);
 
         if (Decimals < 0 && Digits > 0)

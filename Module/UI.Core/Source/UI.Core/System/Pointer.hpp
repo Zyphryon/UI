@@ -14,7 +14,6 @@
 
 #include "Dispatcher.hpp"
 #include "Layout.hpp"
-#include "UI.Core/Handle.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -174,7 +173,7 @@ namespace ZyPlugin::UI
         ///
         /// \param DeltaX The horizontal turn, in notches.
         /// \param DeltaY The vertical turn, in notches.
-        /// \param Shift  The flag, `true` to turn a vertical turn sideways, as while shift is held.
+        /// \param Shift  `true` to turn a vertical turn sideways, as while shift is held, `false` otherwise.
         /// \return `true` if the pointer rests on the interface, `false` otherwise.
         Bool OnMouseScroll(Real32 DeltaX, Real32 DeltaY, Bool Shift);
 
@@ -230,7 +229,7 @@ namespace ZyPlugin::UI
         /// \brief Finds the nearest control holding an element, or the element itself.
         ///
         /// \param Element   The element the search starts from.
-        /// \param Focusable The flag, `true` to find only one that takes the keyboard, `false` to find any.
+        /// \param Focusable `true` to find only one that takes the keyboard, `false` to find any.
         /// \return The control, or one naming nothing.
         Handle Nearest(Handle Element, Bool Focusable) const;
 
@@ -264,13 +263,13 @@ namespace ZyPlugin::UI
             /// The control the last press of the button landed on.
             Handle  On;
 
-            /// Where the last press landed, in units of the interface.
+            /// The point the last press landed on, in units of the interface.
             Vector2 At;
 
-            /// When the last press landed, on the pointer's own clock.
+            /// The time the last press landed, on the pointer's own clock.
             Real32  Time  = 0.0f;
 
-            /// How many presses came in a row.
+            /// The number of presses that came in a row.
             UInt32  Count = 0;
         };
 
@@ -327,7 +326,7 @@ namespace ZyPlugin::UI
         /// \brief Takes hold of the thumb of the innermost scrolling element whose track stands under the pointer.
         ///
         /// \param Element The element the pointer rests on.
-        /// \return `true` if a thumb was taken, which a press on its track first moves to the pointer.
+        /// \return `true` if a thumb was taken, after a press on its track moved it to the pointer, `false` otherwise.
         Bool Grip(Handle Element);
 
         /// \brief Scrolls the element whose thumb is held so the thumb follows the pointer.
@@ -345,7 +344,7 @@ namespace ZyPlugin::UI
         /// \param Radius The radius its corners are rounded to, in pixels, held to half its shorter side.
         /// \param Point  The point, in pixels of the target.
         /// \return `true` if the point lies within, `false` if it misses the box or falls past a rounded corner.
-        static Bool Within(ConstRef<Rect> Frame, Real32 Radius, Vector2 Point);
+        static Bool Within(Rect Frame, Real32 Radius, Vector2 Point);
 
     private:
 

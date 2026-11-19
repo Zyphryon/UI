@@ -43,16 +43,16 @@ namespace ZyPlugin::UI
         /// The modifier keys held with it, which must be exactly the ones of shift, control and alt held.
         ZyInput::Modifier Modifiers = ZyInput::Modifier::None;
 
-        /// Where the pointer or the keyboard must be, for a shortcut an element keeps.
+        /// The place the pointer or the keyboard must be, for a shortcut an element keeps.
         Scope             Where     = Scope::Anywhere;
 
-        /// `true` to run even while a text field holds the keyboard, which otherwise hears the key.
+        /// `true` to run even while a text field holds the keyboard, `false` to leave the key to the field.
         Bool              Typing    = false;
 
-        /// `true` to take the keyboard from a text field holding it before running, as an undo drops a half typed edit.
+        /// `true` to take the keyboard from a text field before running, as an undo does, `false` to leave it.
         Bool              Blur      = false;
 
-        /// `true` to run again each time the key repeats while held.
+        /// `true` to run again each time the key repeats while held, `false` to run once per press.
         Bool              Repeat    = true;
 
         /// \brief Constructs a shortcut no key runs.
@@ -67,8 +67,8 @@ namespace ZyPlugin::UI
         /// \brief Reads a chord written as text, its modifiers and key joined by plus signs, as `Ctrl+Shift+Z`.
         ///
         /// \param Chord     The chord written as text.
-        /// \param Key       The receiver of the key.
-        /// \param Modifiers The receiver of the modifier keys.
+        /// \param Key       Receives the key, left untouched when the chord is not read.
+        /// \param Modifiers Receives the modifier keys, left untouched when the chord is not read.
         /// \return `true` if the chord was read, `false` otherwise.
         static Bool Parse(Text Chord, Ref<ZyInput::Key> Key, Ref<ZyInput::Modifier> Modifiers);
     };

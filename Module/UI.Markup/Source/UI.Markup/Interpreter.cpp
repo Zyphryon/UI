@@ -12,7 +12,6 @@
 
 #include "Interpreter.hpp"
 #include "Markup.hpp"
-#include "Parser.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -30,7 +29,7 @@ namespace ZyPlugin::UI
                             ConstRef<Table<Digest, Retainer<ZyRender::Font>>> Fonts,
                             Ref<Str>                                          Error)
     {
-        // Everything is read into a theme of its own, so a mistake in any layer leaves the one in use alone.
+        // Read into a theme of its own, so a mistake in any layer leaves the one in use alone.
         Theme Fresh;
         Sheet Context;
         Context.Owner  = AddressOf(Owner);
@@ -45,7 +44,7 @@ namespace ZyPlugin::UI
             ParseLayer(Context, Layers[Index], Documents.Append());
         }
 
-        // The names of every layer are read before any style, so a colour a later layer gives dresses every style.
+        // Every layer's names are read before any style, so a later layer's colour dresses every style.
         for (UInt Index = 0; Index < Documents.GetSize() && Context.Error.IsEmpty(); ++Index)
         {
             Context.Origin = (Index < Builtin ? kBuiltin : Text());
@@ -54,7 +53,7 @@ namespace ZyPlugin::UI
             ReadTable(Context, Documents[Index], "Images", ReadImage);
         }
 
-        // A layer's animations replace those of their name, and its styles merge over those of theirs, field by field.
+        // A layer's animations replace those of their name, and its styles merge field by field.
         for (UInt Index = 0; Index < Documents.GetSize() && Context.Error.IsEmpty(); ++Index)
         {
             Context.Origin = (Index < Builtin ? kBuiltin : Text());
@@ -62,7 +61,7 @@ namespace ZyPlugin::UI
             ReadTable(Context, Documents[Index], "Styles",     ReadStyle);
         }
 
-        // A skin may name an animation any layer defines, so the names are checked only once every layer is read.
+        // A skin may name an animation of any layer, so the names are checked once all are read.
         CheckAnimations(Context);
 
         if (!Context.Error.IsEmpty())
@@ -95,7 +94,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // Every template is checked before any is kept, so a layout with a mistake in it leaves the ones in use alone.
+        // Every template is checked before any is kept, so a bad layout leaves the ones in use alone.
         for (ConstRef<JsonValue::Object::Pair> Entry : Templates->GetObject())
         {
             if (!Entry.Second.IsObject())
@@ -338,7 +337,6 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // A sound belongs to the moment it plays at, never to a state.
         if (Parser::Find(Value, "Sounds"))
         {
             Fail(Context, Where, "Sounds", "a variant cannot give sounds, which the style gives");
@@ -381,7 +379,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Read on its own, so it gives only what the layer writes when it is merged over the style a layer before gave.
+        // Read on its own, so it gives only what this layer writes over the one before.
         Style Found;
         Found.Base = Identify(Markup::GetText(Value, "Base"));
         ReadSkin(Context, Key, Value, Found.Normal);
@@ -440,7 +438,7 @@ namespace ZyPlugin::UI
         }
         else if (Value.IsNull())
         {
-            // A slot holds none until code or a later layer fills it, and never empties one filled already.
+            // A slot holds none until code or a later layer fills it, and never empties a filled one.
             Context.Fonts.FindOrInsert(Name);
         }
         else

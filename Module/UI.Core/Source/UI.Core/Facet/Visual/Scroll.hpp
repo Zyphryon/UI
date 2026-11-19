@@ -23,19 +23,19 @@ namespace ZyPlugin::UI
     /// \brief Represents an element that scrolls what it holds, cut to its box, up and down and optionally sideways.
     struct Scroll final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Measure | Dirty::Paint;
 
-        /// How far down what it holds is scrolled, in pixels, held within what it holds.
+        /// The distance what it holds is scrolled down, in pixels, held within what it holds.
         Real32  Offset     = 0.0f;
 
-        /// How tall what it holds stands, in pixels, as the last layout found it.
+        /// The height of what it holds, in pixels, as the last layout found it.
         Real32  Overflow   = 0.0f;
 
-        /// How far right what it holds is scrolled, in pixels, held within what it holds.
+        /// The distance what it holds is scrolled right, in pixels, held within what it holds.
         Real32  OffsetX    = 0.0f;
 
-        /// How wide what it holds stands, in pixels, as the last layout found it.
+        /// The width of what it holds, in pixels, as the last layout found it.
         Real32  OverflowX  = 0.0f;
 
         /// The room what it holds is seen through, in pixels, as the last layout found it.
@@ -44,14 +44,30 @@ namespace ZyPlugin::UI
         /// The colour of the thumbs showing how far it is scrolled, where a transparent one draws none.
         Color   Thumb      = Color::White(0.3f);
 
-        /// How wide the gutter kept free down its right side for the painted thumb is, in pixels.
+        /// The width of the gutter kept free down its right side for the painted thumb, in pixels.
         Real32  Gutter     = 8.0f;
 
-        /// `true` to keep it scrolled to the end however much it holds, as a log following its newest line.
+        /// `true` to keep it scrolled to the end as a log follows its newest line, `false` to leave it where it is.
         Bool    Follow     = false;
 
-        /// `true` when what it holds keeps the width it asks for and scrolls sideways, rather than being fit to it.
+        /// `true` when what it holds keeps the width it asks for and scrolls sideways, `false` when fit to it.
         Bool    Horizontal = false;
+
+        /// \brief Gets the farthest what it holds scrolls down.
+        ///
+        /// \return The distance, in pixels, nought when all it holds is seen.
+        ZY_INLINE Real32 GetLimit() const
+        {
+            return Max(Overflow - View.GetY(), 0.0f);
+        }
+
+        /// \brief Gets the farthest what it holds scrolls right.
+        ///
+        /// \return The distance, in pixels, nought when all it holds is seen across.
+        ZY_INLINE Real32 GetLimitX() const
+        {
+            return Max(OverflowX - View.GetX(), 0.0f);
+        }
 
         /// \brief Gets the strip down the element's right edge the up and down thumb runs in and the pointer grabs.
         ///

@@ -15,16 +15,6 @@
 #include "Common.hpp"
 #include "Label.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
-#include "UI.Markup/Parser.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -70,9 +60,10 @@ namespace ZyPlugin::UI
             Real32 Width  = 0.0f;
             Real32 Height = 0.0f;
 
-            if (Least->IsArray() && Least->GetArray().GetSize() == 2
-                && Parser::ParseNumber(Least->GetArray()[0], Width)
-                && Parser::ParseNumber(Least->GetArray()[1], Height))
+            const Bool Pair   = Least->IsArray() && Least->GetArray().GetSize() == 2;
+            const Bool Parsed = Pair && Parser::ParseNumber(Least->GetArray()[0], Width);
+
+            if (Parsed && Parser::ParseNumber(Least->GetArray()[1], Height))
             {
                 SetMinimum(Result, Vector2(Width, Height));
             }
@@ -175,7 +166,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Copied, since making the edges may move the store the grip stands in.
+        // Copied, since making the edges may move the grip.
         const Str Style = Hold->Style;
 
         // A panel laid over the whole window, which the pointer passes through but for the edges it holds.
@@ -217,7 +208,6 @@ namespace ZyPlugin::UI
         Both.Width  = Length::Pixels(kCorner);
         Both.Height = Length::Pixels(kCorner);
 
-        // The content grows into the room a sizing gives the window.
         GetContent(Target).EditBox().Grow = 1.0f;
         Target.Get<Grip>()->Sizer = Sizer.GetHandle();
     }
@@ -248,9 +238,22 @@ namespace ZyPlugin::UI
 
     Element Window::GetGrip(Element Target)
     {
+        if (!IsResizable(Target))
+        {
+            return Element();
+        }
+
         // The corner stands last among the edges, so it is drawn and hit over them.
-        return IsResizable(Target)
-            ? Widget::GetChild(Element(Target.GetTree(), Target.Get<Grip>()->Sizer), 2) : Element();
+        return Widget::GetChild(Element(Target.GetTree(), Target.Get<Grip>()->Sizer), 2);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Element Window::GetClose(Element Target)
+    {
+        // The bar holds the title first and the close button after it.
+        return GetBar(Target).GetFirst().GetNext();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -300,15 +303,6 @@ namespace ZyPlugin::UI
             return true;
         }
         return false;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Element Window::GetClose(Element Target)
-    {
-        // The bar holds the title first and the close button after it.
-        return GetBar(Target).GetFirst().GetNext();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -23,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents how an element's box is drawn, with its fill, border and how opaque it and its children are.
     struct Look final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Paint;
 
         /// The colour the box is filled with, where a transparent one fills nothing.
@@ -38,10 +38,10 @@ namespace ZyPlugin::UI
         /// The radius the corners of the box, its border and its picture are rounded to, in pixels.
         Real32 Radius      = 0.0f;
 
-        /// How opaque the element and all it holds are, over nought through one.
+        /// The opacity of the element and all it holds, over nought through one.
         Real32 Opacity     = 1.0f;
 
-        /// `true` when what the element's children draw is cut to its box.
+        /// `true` when what the element's children draw is cut to its box, `false` to let it spill.
         Bool   Clip        = false;
     };
 }

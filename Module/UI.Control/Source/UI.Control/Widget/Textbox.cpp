@@ -15,21 +15,9 @@
 #include "Label.hpp"
 #include "Panel.hpp"
 #include "Scrollbar.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Layout/Virtual.hpp"
-#include "UI.Core/Facet/Visual/Caption.hpp"
-#include "UI.Core/Facet/Visual/Look.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Text/Block.hpp"
 #include "UI.Core/Text/Ruler.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -58,7 +46,7 @@ namespace ZyPlugin::UI
         Data.Caret  = static_cast<UInt32>(Content.GetSize());
         Data.Anchor = Data.Caret;
 
-        // A long line scrolls sideways, thumb unseen, so the caret stays in view; the clip cuts it to the field's box.
+        // A long line scrolls sideways, thumb unseen, so the caret stays in view.
         Ref<Scroll> Roll = Result.Add<Scroll>();
         Roll.Horizontal = true;
         Roll.Gutter     = 0.0f;
@@ -66,7 +54,7 @@ namespace ZyPlugin::UI
 
         Result.Add<Look>().Clip = true;
 
-        // The parts stand in a fixed order: text, caret, hint, then one selection band per line, made as needed.
+        // The parts stand in a fixed order of text, caret, hint, then one selection band per line, made as needed.
         const Element Shown = Label::Create(Result, Content, Widget::Part(Style, "Text"));
         const Element Caret = Panel::Create(Result, Widget::Part(Style, "Caret"));
         const Element Muted = Label::Create(Result, Hint, Widget::Part(Style, "Hint"));
@@ -179,7 +167,6 @@ namespace ZyPlugin::UI
         }
         Data->Multiline = Enabled;
 
-        // Several lines stand in a column across the field and scroll up and down, a thumb in a gutter showing where.
         Ref<Box> Shape = Target.EditBox();
         Shape.Flow  = Enabled ? Direction::Column : Direction::Row;
         Shape.Items = Enabled ? Align::Stretch : Align::Center;
@@ -223,7 +210,7 @@ namespace ZyPlugin::UI
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     void Textbox::SetPassword(Element Target, Bool Enabled)
     {
@@ -244,7 +231,7 @@ namespace ZyPlugin::UI
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     Str Textbox::Mask(Text Content)
     {
@@ -449,7 +436,6 @@ namespace ZyPlugin::UI
         const Real32  Travel = Before - Scrollbar::GetOffset(Target, Vertical);
         const Vector2 Shift  = Vertical ? Vector2(0.0f, Travel) : Vector2(Travel, 0.0f);
 
-        // The caret stands on its line, centred down it.
         const Real32 Tall = Caret.GetFrame().GetHeight();
         const Real32 Down = At.GetY() + Shift.GetY() + (Shape.Leading - Tall) * 0.5f;
         const Real32 Edge = At.GetX() + Shift.GetX();
@@ -474,10 +460,10 @@ namespace ZyPlugin::UI
                     continue;
                 }
 
-                const Real32 Left  = Ruler::Place(Shape, Content, Max<UInt>(Low, Shape.Starts[Line])).GetX()
-                    + Shift.GetX();
-                const Real32 Right = Ruler::Place(Shape, Content, Min(High, End)).GetX() + Shift.GetX()
-                    + (High > End ? Shape.Size * 0.3f : 0.0f);
+                const UInt   Head  = Max<UInt>(Low, Shape.Starts[Line]);
+                const Real32 Tail  = High > End ? Shape.Size * 0.3f : 0.0f;
+                const Real32 Left  = Ruler::Place(Shape, Content, Head).GetX() + Shift.GetX();
+                const Real32 Right = Ruler::Place(Shape, Content, Min(High, End)).GetX() + Shift.GetX() + Tail;
 
                 if (!Band.IsAlive())
                 {
@@ -568,12 +554,10 @@ namespace ZyPlugin::UI
                 return false;
             }
 
-            // A page is as many lines as the field shows at once.
             Block        Shape;
-            const Real32 View = Target.Get<Scroll>()->View.GetY();
-            const SInt32 Lines = Survey(Owner, Target, Shape) && Shape.Leading > 0.0f
-                ? Max(static_cast<SInt32>(View / Shape.Leading), 1)
-                : 1;
+            const Real32 View  = Target.Get<Scroll>()->View.GetY();
+            const Bool   Ruled = Survey(Owner, Target, Shape) && Shape.Leading > 0.0f;
+            const SInt32 Lines = Ruled ? Max(static_cast<SInt32>(View / Shape.Leading), 1) : 1;
             Step(Owner, Target, Key == ZyInput::Key::PageUp ? -Lines : Lines, Shift);
             return true;
         }
@@ -596,8 +580,7 @@ namespace ZyPlugin::UI
         case ZyInput::Key::A:
             if (Words)
             {
-                Data->Anchor = 0;
-                Data->Caret  = static_cast<UInt32>(Content.GetSize());
+                Select(Target, 0, static_cast<UInt32>(Content.GetSize()));
             }
             return Words;
         case ZyInput::Key::C:
@@ -684,32 +667,27 @@ namespace ZyPlugin::UI
 
     void Textbox::OnPress(Ref<Interface> Owner, Element Target, ConstRef<Event> Message)
     {
-        const Ptr<Entry> Data    = Target.Get<Entry>();
-        const UInt       Offset  = Locate(Owner, Target, Message.Position);
-        const Text       Content = GetText(Target);
+        const UInt Offset  = Locate(Owner, Target, Message.Position);
+        const Text Content = GetText(Target);
 
         if (Message.Count == 2)
         {
             UInt Start = 0;
             UInt End   = 0;
             Unicode::Word(Content, Offset, Start, End);
-
-            Data->Anchor = static_cast<UInt32>(Start);
-            Data->Caret  = static_cast<UInt32>(End);
+            Select(Target, static_cast<UInt32>(Start), static_cast<UInt32>(End));
         }
         else if (Message.Count >= 3)
         {
-            Data->Anchor = 0;
-            Data->Caret  = static_cast<UInt32>(Content.GetSize());
+            Select(Target, 0, static_cast<UInt32>(Content.GetSize()));
         }
         else
         {
             Move(Target, Offset, HasBit(Owner.GetModifiers(), ZyInput::Modifier::Shift));
         }
 
-        // Only a single press drags the selection out; a word or the whole text stays as picked.
-        Data->Selecting = (Message.Count == 1);
-        Data->Goal      = -1.0f;
+        // Only a single press drags the selection out, a word or the whole text staying as picked.
+        Target.Get<Entry>()->Selecting = (Message.Count == 1);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -743,7 +721,7 @@ namespace ZyPlugin::UI
             {
                 const Char Letter = Typed[Index];
 
-                if ((Letter >= '0' && Letter <= '9') || Letter == '-' || Letter == '.')
+                if (StrIsDigit(Letter) || Letter == '-' || Letter == '.')
                 {
                     Number.Append(Letter);
                 }
@@ -772,9 +750,17 @@ namespace ZyPlugin::UI
         }
 
         const UInt Caret = GetCaret(Target);
-        const UInt From  = Ahead ? Caret
-            : (Words ? Unicode::Backward(Content, Caret) : Unicode::Previous(Content, Caret));
-        const UInt To    = Ahead ? (Words ? Unicode::Forward(Content, Caret) : Unicode::Next(Content, Caret)) : Caret;
+        UInt       From  = Caret;
+        UInt       To    = Caret;
+
+        if (Ahead)
+        {
+            To = Words ? Unicode::Forward(Content, Caret) : Unicode::Next(Content, Caret);
+        }
+        else
+        {
+            From = Words ? Unicode::Backward(Content, Caret) : Unicode::Previous(Content, Caret);
+        }
 
         if (From == To)
         {
@@ -935,13 +921,14 @@ namespace ZyPlugin::UI
     Bool Textbox::Put(Element Part, Vector2 Corner, Rect Box, Bool Sized)
     {
         ConstRef<UI::Box> Now    = Part.GetTree().GetBox(Part.GetHandle());
-        const Real32      Left   = Box.GetMinimumX() - Corner.GetX();
-        const Real32      Top    = Box.GetMinimumY() - Corner.GetY();
-        const Real32      Width  = Max(Box.GetWidth(), 0.0f);
-        const Real32      Height = Max(Box.GetHeight(), 0.0f);
+        const Length      Left   = Length::Pixels(Box.GetMinimumX() - Corner.GetX());
+        const Length      Top    = Length::Pixels(Box.GetMinimumY() - Corner.GetY());
+        const Length      Width  = Length::Pixels(Max(Box.GetWidth(), 0.0f));
+        const Length      Height = Length::Pixels(Max(Box.GetHeight(), 0.0f));
 
-        const Bool Placed = Near(Now.Left, Left) && Near(Now.Top, Top);
-        const Bool Fitted = !Sized || (Near(Now.Width, Width) && Near(Now.Height, Height));
+        // A part stands where it should within a hundredth of a pixel, so rounding never lays the pane out again.
+        const Bool Placed = Now.Left.IsNear(Left, 0.01f) && Now.Top.IsNear(Top, 0.01f);
+        const Bool Fitted = !Sized || (Now.Width.IsNear(Width, 0.01f) && Now.Height.IsNear(Height, 0.01f));
 
         if (Placed && Fitted)
         {
@@ -949,13 +936,13 @@ namespace ZyPlugin::UI
         }
 
         Ref<UI::Box> Shape = Part.EditBox();
-        Shape.Left = Length::Pixels(Left);
-        Shape.Top  = Length::Pixels(Top);
+        Shape.Left = Left;
+        Shape.Top  = Top;
 
         if (Sized)
         {
-            Shape.Width  = Length::Pixels(Width);
-            Shape.Height = Length::Pixels(Height);
+            Shape.Width  = Width;
+            Shape.Height = Height;
         }
         return true;
     }
@@ -1002,14 +989,5 @@ namespace ZyPlugin::UI
     AnyRange<UInt> Textbox::GetSelection(ConstRef<Entry> Data, UInt Size)
     {
         return AnyRange(Min<UInt>(Data.Caret, Size), Min<UInt>(Data.Anchor, Size));
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Textbox::Near(ConstRef<Length> Value, Real32 Pixels)
-    {
-        // A part stands where it should within a hundredth of a pixel, so rounding never lays the pane out again.
-        return Value.Measure == Length::Unit::Pixel && Abs(Value.Value - Pixels) < 0.01f;
     }
 }

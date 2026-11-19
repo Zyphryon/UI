@@ -11,7 +11,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Style.hpp"
-#include "Skin.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -31,7 +30,7 @@ namespace ZyPlugin::UI
         }
         Normal.Merge(Over.Normal);
 
-        // Only a variant held before is merged into, so the other style's own stay apart, as they are when defined.
+        // Only a variant held before is merged into, so the other style's own stay apart as when defined.
         const UInt Held = Variants.GetSize();
 
         for (ConstRef<Variant> Entry : Over.Variants)

@@ -12,7 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
 #include "UI.Core/Shortcut.hpp"
 #include "UI.Markup/Markup.hpp"
 
@@ -40,7 +39,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Chord  The chord, as \ref Shortcut::Parse reads it.
         /// \param Value  The name of the action it runs, or an object giving it and how it runs.
-        /// \param Output The variable receiving the shortcut.
+        /// \param Output Receives the shortcut.
         /// \return `true` if it was read, `false` when the chord or the value is written badly.
         static Bool ReadShortcut(Text Chord, ConstRef<JsonValue> Value, Ref<Shortcut> Output);
     };

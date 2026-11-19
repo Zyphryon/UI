@@ -11,10 +11,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Memory.hpp"
-#include "UI.Core/Element.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -117,8 +114,8 @@ namespace ZyPlugin::UI
         // A move the user makes while it waits wins, and is what it remembers from then on.
         if (Kept->Restoring && Now == Kept->Seen)
         {
-            const Real32 LimitY = Max(Roll->Overflow  - Roll->View.GetY(), 0.0f);
-            const Real32 LimitX = Max(Roll->OverflowX - Roll->View.GetX(), 0.0f);
+            const Real32 LimitY = Roll->GetLimit();
+            const Real32 LimitX = Roll->GetLimitX();
 
             // Brought back only once what it holds reaches that far, so the layout never cuts the scroll short.
             if (Kept->Wanted.GetY() > LimitY + 0.5f || Kept->Wanted.GetX() > LimitX + 0.5f)
@@ -136,12 +133,7 @@ namespace ZyPlugin::UI
         }
 
         Kept->Restoring = false;
-
-        // The memory is written only when the scroll moved, so a still list costs one lookup.
-        if (Ref<Vector2> Slot = Supply(Target.GetTree()).Scrolled.FindOrInsert(Digest(Kept->Key)); Slot != Now)
-        {
-            Slot = Now;
-        }
+        Supply(Target.GetTree()).Scrolled.FindOrInsert(Digest(Kept->Key)) = Now;
         return false;
     }
 

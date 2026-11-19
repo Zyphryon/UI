@@ -10,8 +10,8 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Markup.hpp"
 #include "Parser.hpp"
+#include "Markup.hpp"
 #include "UI.Core/Layers.hpp"
 #include "UI.Core/States.hpp"
 
@@ -87,7 +87,7 @@ namespace ZyPlugin::UI
 
     Bool Parser::ParseStates(Text Source, Ref<State> Output)
     {
-        // A split makes no word of an empty text and drops a trailing empty one, and neither is a state.
+        // An empty text or a trailing plus names no state.
         if (Source.IsEmpty() || StrEndsWith(Source, "+"))
         {
             return false;
@@ -120,7 +120,7 @@ namespace ZyPlugin::UI
         {
             ConstRef<JsonValue::Array> List = Value.GetArray();
 
-            // A colour and an alpha of its own, as ["Gold", 0.18], the alpha replacing any the colour has.
+            // A colour with its own alpha, as ["Gold", 0.18], which replaces the colour's.
             if (List.GetSize() == 2 && List[0].IsString())
             {
                 Color  Shade;
@@ -195,7 +195,7 @@ namespace ZyPlugin::UI
             Output = Length::Auto();
             return true;
         }
-        
+
         const Text Content = StrTrim(Value.GetString());
 
         if (Content.GetSize() >= 3 && StrEqualCaseInsensitive(Content.Slice(0, 3), "Fit"))
@@ -382,9 +382,11 @@ namespace ZyPlugin::UI
             const ConstPtr<JsonValue> From = Find(Value, "From");
             const ConstPtr<JsonValue> To   = Find(Value, "To");
 
-            if (!Value.IsObject() || !HasOnly(Value, kGradientFields) || !From || !To
-                || !ParseColor(Context, * From, Result.From) || !ParseColor(Context, * To, Result.To)
-                || !Take(Value, "Angle", Result.Angle, ParseNumber))
+            Bool Failed = !Value.IsObject() || !HasOnly(Value, kGradientFields) || !From || !To;
+            Failed      = Failed || !ParseColor(Context, * From, Result.From) || !ParseColor(Context, * To, Result.To);
+            Failed      = Failed || !Take(Value, "Angle", Result.Angle, ParseNumber);
+
+            if (Failed)
             {
                 return false;
             }
@@ -433,12 +435,17 @@ namespace ZyPlugin::UI
                 return false;
             }
         }
-        else if (!Value.IsObject() || !HasOnly(Value, kTransitionFields)
-            || !Take(Value, "Duration", Result.Duration, ParseMeasure)
-            || !Take(Value, "Delay", Result.Delay, ParseMeasure)
-            || !Take(Value, "Easing", Result.Curve, ParseEnum<Easing>))
+        else
         {
-            return false;
+            Bool Failed = !Value.IsObject() || !HasOnly(Value, kTransitionFields);
+            Failed      = Failed || !Take(Value, "Duration", Result.Duration, ParseMeasure);
+            Failed      = Failed || !Take(Value, "Delay", Result.Delay, ParseMeasure);
+            Failed      = Failed || !Take(Value, "Easing", Result.Curve, ParseEnum<Easing>);
+
+            if (Failed)
+            {
+                return false;
+            }
         }
         Output = Result;
         return true;

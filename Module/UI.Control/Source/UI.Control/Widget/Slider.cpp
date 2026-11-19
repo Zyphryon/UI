@@ -13,15 +13,9 @@
 #include "Slider.hpp"
 #include "Common.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Bar.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -145,8 +139,8 @@ namespace ZyPlugin::UI
             return OnKey(Owner, Self, Message.Key);
         }
 
-        const Bool Pointed = Message.Kind == Signal::kPress || Message.Kind == Signal::kDrag
-            || Message.Kind == Signal::kRelease;
+        const Bool Held    = Message.Kind == Signal::kPress || Message.Kind == Signal::kDrag;
+        const Bool Pointed = Held || Message.Kind == Signal::kRelease;
 
         if (!Pointed || Message.Button != ZyInput::Button::Left)
         {
@@ -165,7 +159,6 @@ namespace ZyPlugin::UI
             Owner.Dispatch(Event(Signal::kBegin, Self));
         }
 
-        // The value follows the pointer along the track, held within it.
         const Rect            Frame = Owner.GetFrame(Self);
         const ConstPtr<Level> Span  = Owner.Get<Level>(Self);
         const Real32          Left  = Frame.GetMinimumX();

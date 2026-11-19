@@ -39,7 +39,7 @@ namespace ZyPlugin::UI
         /// \brief Reads a path from its text.
         ///
         /// \param Source The text, as `Player.Gold` or `Party[2].Bag[0].Name`.
-        /// \param Output The receiver of the path.
+        /// \param Output Receives the path.
         /// \return `true` if the text is a path, `false` otherwise.
         static Bool Parse(Text Source, Ref<Path> Output);
 
@@ -48,7 +48,7 @@ namespace ZyPlugin::UI
         /// \brief Reads a whole number of nought or more written as text.
         ///
         /// \param Source The text between the brackets of a step.
-        /// \param Output The receiver of the number.
+        /// \param Output Receives the number.
         /// \return `true` if the whole of the text is digits, ten at most, `false` otherwise.
         static Bool ParseIndex(Text Source, Ref<UInt32> Output);
     };

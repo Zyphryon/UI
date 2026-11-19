@@ -12,13 +12,8 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Event.hpp"
-#include "Facet.hpp"
 #include "Facet/Input/Control.hpp"
-#include "Facet/Layout/Box.hpp"
-#include "Handle.hpp"
 #include "Tree.hpp"
-#include "Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -155,7 +150,7 @@ namespace ZyPlugin::UI
         /// \brief Turns states of the element on or off.
         ///
         /// \param Bits    The states to turn on or off.
-        /// \param Enabled The flag, `true` to turn them on, `false` to turn them off.
+        /// \param Enabled `true` to turn them on, `false` to turn them off.
         ZY_INLINE void SetState(State Bits, Bool Enabled) const
         {
             mTree->SetState(mHandle, Bits, Enabled);

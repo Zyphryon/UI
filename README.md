@@ -522,8 +522,8 @@ update without rebuilding anything. A missing key shows itself and is logged onc
 
 **Images.** An `Image` shows a picture of the content or any GPU texture, such as a render target. A layout gives it
 `Source`, `Region` (`[u0, v0, u1, v1]`), `Layer` (the slice of an array), `Tint`, `Filter` (`Linear`, or `Point` for pixel
-art), `Fit` (`Stretch`, or `Contain` to keep its shape), `Opaque` and `Flip`. Most of these bind, so each row of a list
-can show its own thumbnail or frame of a sheet:
+art), `Fit` (`Stretch`, `Contain` to keep its shape whole, or `Cover` to fill the box and cut what overruns), `Opaque`
+and `Flip`. Most of these bind, so each row of a list can show its own thumbnail or frame of a sheet:
 
 ```json
 { "Widget": "Repeater", "Items": "{Assets}", "ItemHeight": 40, "ItemTemplate": { "Flow": "Row", "Children": [

@@ -62,7 +62,7 @@ namespace ZyPlugin::UI
         /// The animations the skins name, checked once every animation is read, wherever it was written.
         Sequence<Reference>                       Animations;
 
-        /// What is put before the first thing wrong with the layer being read, empty for a game's own layer.
+        /// The prefix of the first mistake in the layer being read, empty for a game's own layer.
         Text                                      Origin;
 
         /// The first thing wrong with the theme, or empty while nothing is.

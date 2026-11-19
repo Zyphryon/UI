@@ -16,7 +16,6 @@
 #include "Layers.hpp"
 #include "Paint/Canvas.hpp"
 #include "States.hpp"
-#include "Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -39,19 +38,19 @@ namespace ZyPlugin::UI
         /// `true` while the pane holds a root, `false` once it is closed and waits to be opened again.
         Bool              Open    = false;
 
-        /// `true` when something that sizes the pane's elements changed since it was last laid out.
+        /// `true` when something that sizes the pane's elements changed since it was last laid out, `false` otherwise.
         Bool              Stale   = false;
 
-        /// `true` when the next layout works out every row, not only the rows marked and those they reach.
+        /// `true` when the next layout works out every row, `false` for only the rows marked and those they reach.
         Bool              Whole   = false;
 
-        /// `true` when a row was marked to be dressed again since the pane was last dressed.
+        /// `true` when a row was marked to be dressed again since the pane was last dressed, `false` otherwise.
         Bool              Styled  = false;
 
-        /// `true` when rows moved, came or went since the reach of every row was last worked out.
+        /// `true` when rows moved, came or went since every reach was last worked out, `false` otherwise.
         Bool              Moved   = false;
 
-        /// `true` when a row was marked to draw differently since the reach of every row was last worked out.
+        /// `true` when a row was marked to draw differently since every reach was last worked out, `false` otherwise.
         Bool              Touched = false;
 
         /// The slot of the element at each row.
@@ -72,13 +71,13 @@ namespace ZyPlugin::UI
         /// The states the element at each row is in.
         Sequence<State>   States;
 
-        /// What of the element at each row must be worked out again.
+        /// The parts of the element at each row that must be worked out again.
         Sequence<Dirty>   Marks;
 
         /// The identifier of the style the element at each row wears, or zero for none.
         Sequence<UInt64>  Styles;
 
-        /// How the element at each row takes its place and lays out what it holds.
+        /// The box placing the element at each row and laying out what it holds.
         Sequence<Box>     Boxes;
 
         /// The box the element at each row was laid out in, in pixels of the target.
@@ -99,7 +98,7 @@ namespace ZyPlugin::UI
         /// The largest box what the element at each row holds paints opaque, in pixels, or an empty one.
         Sequence<Rect>    Covers;
 
-        /// What the subtree at each row drew when last walked, kept for the rows that bound a replayed part.
+        /// The quads the subtree at each row drew when last walked, kept for the rows that bound a replayed part.
         Sequence<Canvas::Tape> Tapes;
 
         /// \brief Gets how many rows the pane holds.

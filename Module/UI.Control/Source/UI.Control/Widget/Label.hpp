@@ -49,7 +49,7 @@ namespace ZyPlugin::UI
         /// \param Content The text to show.
         static void SetText(Element Target, Text Content);
 
-        /// \brief Sets what a line of a label too long for its box does; an ellipsis never wraps.
+        /// \brief Sets whether a line of a label too long for its box runs on or is cut short by an ellipsis.
         ///
         /// \param Target The label whose lines are cut or wrapped.
         /// \param Mode   The way a line too long for the box behaves.

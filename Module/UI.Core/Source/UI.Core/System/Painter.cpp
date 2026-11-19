@@ -11,23 +11,13 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Painter.hpp"
-#include "Animator.hpp"
-#include "Layout.hpp"
 #include "UI.Core/Element.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Backdrop.hpp"
 #include "UI.Core/Facet/Visual/Bar.hpp"
-#include "UI.Core/Facet/Visual/Caption.hpp"
-#include "UI.Core/Facet/Visual/Effect.hpp"
-#include "UI.Core/Facet/Visual/Look.hpp"
-#include "UI.Core/Facet/Visual/Picture.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
 #include "UI.Core/Facet/Visual/Sketch.hpp"
-#include "UI.Core/Paint/Canvas.hpp"
-#include "UI.Core/Pane.hpp"
 #include "UI.Core/Text/Block.hpp"
 #include "UI.Core/Text/Ruler.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -94,7 +84,6 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // Text held back while it was out of view is laid out before it draws.
             if (HasBit(Target.Marks[Row], Dirty::Unseen))
             {
                 Target.Marks[Row] = ClearBit(Target.Marks[Row], Dirty::Unseen);
@@ -105,7 +94,6 @@ namespace ZyPlugin::UI
                 }
             }
 
-            // An element faded out draws nothing, and neither does anything it holds.
             const UInt32         Slot    = Target.Slots[Row];
             const ConstPtr<Look> Shade   = mTree.Peek<Look>(Slot);
             const Real32         Above   = mScopes.IsEmpty() ? 1.0f : mScopes.GetBack().Opacity;
@@ -223,7 +211,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // After a layout every row is redone, else only marked rows and those holding one; backward, children first.
+        // After a layout every row is redone, else only marked rows and those holding one, children first.
         const Bool Whole = Target.Moved;
 
         mRipples.Clear();
@@ -237,7 +225,7 @@ namespace ZyPlugin::UI
                 mRipples.Advance(Depth + 2 - mRipples.GetSize());
             }
 
-            // The children left their ripple one level down; one leaving their union as it was asks nothing.
+            // The children left their ripple one level down, and one leaving their union as it was asks nothing.
             Ref<Ripple> Below  = mRipples[Depth + 1];
             const Bool  Marked = HasBit(Target.Marks[Row], Dirty::Paint);
             Bool        Asked  = false;
@@ -269,8 +257,12 @@ namespace ZyPlugin::UI
             Target.Marks[Row]   = SetOrClearBit(ClearBit(Target.Marks[Row], Dirty::Paint), Dirty::Turned, Turned);
             Target.Reaches[Row] = After;
 
-            if (After.GetMinimumX() != Before.GetMinimumX() || After.GetMinimumY() != Before.GetMinimumY()
-                || After.GetMaximumX() != Before.GetMaximumX() || After.GetMaximumY() != Before.GetMaximumY())
+            const Bool Left   = After.GetMinimumX() != Before.GetMinimumX();
+            const Bool Top    = After.GetMinimumY() != Before.GetMinimumY();
+            const Bool Right  = After.GetMaximumX() != Before.GetMaximumX();
+            const Bool Bottom = After.GetMaximumY() != Before.GetMaximumY();
+
+            if (Left || Top || Right || Bottom)
             {
                 // The first child to change starts the unions, which hold nothing from the last row they were left for.
                 Ref<Ripple> Above = mRipples[Depth];
@@ -344,7 +336,6 @@ namespace ZyPlugin::UI
         // What it holds is drawn as faded as it is, so a cover only hides what lies under it at full opacity.
         Element.Cover = Opacity >= 1.0f ? Target.Covers[Row] : Rect();
 
-        // Every stage of drawing whose kind of facet the element holds runs, in order, the interface's own among them.
         ConstRef<Mask> Held = mTree.GetMask(mTree.GetHandle(Element.Slot));
 
         for (ConstRef<Drawer> Each : mDrawers)
@@ -419,8 +410,8 @@ namespace ZyPlugin::UI
 
                 // A child cutting what it holds to its box hides nothing past it.
                 const Bool Cuts  = (Shade && Shade->Clip) || mTree.Peek<Scroll>(Slot);
-                const Rect Below = Cuts ? Rect::Intersection(Target.Covers[Child], Target.Frames[Child])
-                                       : Target.Covers[Child];
+                const Rect Cover = Target.Covers[Child];
+                const Rect Below = Cuts ? Rect::Intersection(Cover, Target.Frames[Child]) : Cover;
 
                 Best = LargerOf(Best, LargerOf(CoverOf(Target, Child, Scale), Below));
             }
@@ -447,14 +438,12 @@ namespace ZyPlugin::UI
         const ConstPtr<Effect>  Extra = mTree.Peek<Effect>(Slot);
         const ConstPtr<Picture> Image = mTree.Peek<Picture>(Slot);
 
-        // A fill covers its box when its background is opaque, or the gradient drawn over it is.
-        const Bool Filled = (Shade && Shade->Background.IsOpaque())
-            || (Extra && Extra->Fill.From.IsOpaque() && Extra->Fill.To.IsOpaque());
+        const Bool Plain  = Shade && Shade->Background.IsOpaque();
+        const Bool Graded = Extra && Extra->Fill.From.IsOpaque() && Extra->Fill.To.IsOpaque();
+        const Bool Filled = Plain || Graded;
+        const Bool Ready  =Image && (Image->Source ? Image->Source->HasCompleted() : Image->Texture != 0);
 
-        // A picture covers its box when it shows its colour alone, untinted and stretched over all of it.
-        const Bool Ready = Image && (Image->Source ? Image->Source->HasCompleted() : Image->Texture != 0);
-
-        if (!Filled && (!Ready || !Image->Opaque || !Image->Tint.IsOpaque() || Image->Fit != Fit::Stretch))
+        if (!Filled && (!Ready || !Image->Opaque || !Image->Tint.IsOpaque() || Image->Fit == Fit::Contain))
         {
             return Rect();
         }
@@ -481,7 +470,7 @@ namespace ZyPlugin::UI
         {
             const Rect   Frame = Target.Frames[Ending.Row];
             const Rect   Inner = Target.Boxes[Ending.Row].Padding.Inset(Frame);
-            const Color  Tint  = Fade(Roll->Thumb, Ending.Opacity);
+            const Color  Tint  = Color::Fade(Roll->Thumb, Ending.Opacity);
             const Real32 Wide  = Roll->View.GetX();
 
             // The thumb stands where the pointer grabs it, as tall to the track as the room is to the content.
@@ -490,7 +479,6 @@ namespace ZyPlugin::UI
                 Canvas.DrawRect(Knob, Tint, 2.0f);
             }
 
-            // One scrolling sideways shows a thumb along its bottom edge the same way, over the content.
             if (Roll->Horizontal && Roll->OverflowX > Wide + 0.5f)
             {
                 const Real32 Size   = Max(Wide * Wide / Roll->OverflowX, 16.0f);
@@ -534,7 +522,8 @@ namespace ZyPlugin::UI
 
         if (!Covered && Shade.Background.GetAlpha() > 0.0f)
         {
-            Canvas.DrawRect(Element.Frame, Fade(Shade.Background, Element.Opacity), Element.Radius, Element.Cover);
+            Canvas.DrawRect(Element.Frame, Color::Fade(Shade.Background, Element.Opacity), Element.Radius,
+                            Element.Cover);
         }
     }
 
@@ -558,9 +547,8 @@ namespace ZyPlugin::UI
             return;
         }
 
-        const Color Tint = Fade(Layer->Tint, Element.Opacity);
+        const Color Tint = Color::Fade(Layer->Tint, Element.Opacity);
 
-        // Only a stretched image can follow the corners.
         if (Layer->Slice.IsEmpty())
         {
             Canvas.DrawImage(* Layer->Source, Element.Frame, Layer->Region, Tint, Element.Radius);
@@ -605,13 +593,14 @@ namespace ZyPlugin::UI
             return;
         }
 
-        const Color Tint = Fade(Image->Tint, Element.Opacity);
-        const Rect  Box  = FitOf(Element.Frame, Size * Image->Region.GetSize(), Image->Fit);
+        const Color Tint = Color::Fade(Image->Tint, Element.Opacity);
+        Rect        Part = Image->Region;
+        const Rect  Box  = FitOf(Element.Frame, Size * Part.GetSize(), Image->Fit, Part);
 
         // A texture of no known size has no border to keep, so only an image is ever sliced.
         if (Image->Slice.IsEmpty() || !Image->Source)
         {
-            Canvas.DrawTexture(Texture, Box, Image->Region, Tint, Element.Radius);
+            Canvas.DrawTexture(Texture, Box, Part, Tint, Element.Radius);
         }
         else
         {
@@ -633,7 +622,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // What a sketch draws is never recorded; the pane's tape notes where it stands and a replay draws it anew.
+        // A sketch is never recorded, as the pane's tape notes where it stands and a replay draws it anew.
         const Ptr<Canvas::Tape> Paused = Canvas.Pause(Element.Row, Element.Opacity);
 
         if (Drawing->Clip)
@@ -665,7 +654,7 @@ namespace ZyPlugin::UI
 
         const Rect Filled = Rect::Within(Element.Inner, Rect(0.0f, 0.0f, Clamp(Fill->Value, 0.0f, 1.0f), 1.0f));
 
-        Canvas.DrawRect(Filled, Fade(Fill->Fill, Element.Opacity), Element.Radius);
+        Canvas.DrawRect(Filled, Color::Fade(Fill->Fill, Element.Opacity), Element.Radius);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -684,19 +673,11 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Color Painter::Fade(Color Tint, Real32 Opacity)
-    {
-        return Color::WithAlpha(Tint, Tint.GetAlpha() * Opacity);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     Gradient Painter::Fade(ConstRef<Gradient> Fill, Real32 Opacity)
     {
         Gradient Result = Fill;
-        Result.From = Fade(Fill.From, Opacity);
-        Result.To   = Fade(Fill.To, Opacity);
+        Result.From = Color::Fade(Fill.From, Opacity);
+        Result.To   = Color::Fade(Fill.To, Opacity);
         return Result;
     }
 
@@ -707,7 +688,6 @@ namespace ZyPlugin::UI
     {
         const Vector2 Middle = Frame.GetCenter();
 
-        // Scaled and turned about the middle, then moved.
         return Matrix3x2::FromTransform(Middle, Middle + Extra.Translate, Extra.Scale,
                                         Angle::FromDegrees(Extra.Rotate));
     }
@@ -723,25 +703,36 @@ namespace ZyPlugin::UI
         const Rect   Grown(MinimumX, MinimumY,
             Max(Box.GetMaximumX() + Source.Spread, MinimumX), Max(Box.GetMaximumY() + Source.Spread, MinimumY));
 
-        Canvas.DrawShadow(Grown, Fade(Source.Tint, Opacity), Max(Radius + Source.Spread, 0.0f), Source.Blur, Hole);
+        Canvas.DrawShadow(Grown, Color::Fade(Source.Tint, Opacity), Max(Radius + Source.Spread, 0.0f), Source.Blur,
+                          Hole);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Rect Painter::FitOf(Rect Frame, Vector2 Size, Fit Mode)
+    Rect Painter::FitOf(Rect Frame, Vector2 Size, Fit Mode, Ref<Rect> Region)
     {
-        // A picture of no known size, or one asked to stretch, covers the whole frame.
-        if (Mode == Fit::Stretch || Size.GetX() <= 0.0f || Size.GetY() <= 0.0f)
+        if (Mode == Fit::Stretch || Size.GetX() <= 0.0f || Size.GetY() <= 0.0f || Frame.IsEmpty())
         {
             return Frame;
         }
 
-        const Real32  Scale  = Min(Frame.GetWidth() / Size.GetX(), Frame.GetHeight() / Size.GetY());
-        const Vector2 Extent = Size * Max(Scale, 0.0f);
-        const Vector2 Corner = Frame.GetCenter() - Extent * 0.5f;
+        const Real32 Wide = Frame.GetWidth() / Size.GetX();
+        const Real32 Tall = Frame.GetHeight() / Size.GetY();
 
-        return Rect(Corner, Corner + Extent);
+        if (Mode == Fit::Contain)
+        {
+            const Vector2 Extent = Size * Min(Wide, Tall);
+            const Vector2 Corner = Frame.GetCenter() - Extent * 0.5f;
+            return Rect(Corner, Corner + Extent);
+        }
+
+        // One covering overruns the frame along one side, so only the frame's share of its region shows.
+        const Vector2 Extent = Region.GetSize() * Frame.GetSize() / (Size * Max(Wide, Tall));
+        const Vector2 Corner = Region.GetCenter() - Extent * 0.5f;
+
+        Region = Rect(Corner, Corner + Extent);
+        return Frame;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -762,8 +753,8 @@ namespace ZyPlugin::UI
 
     Rect Painter::LargerOf(Rect First, Rect Second)
     {
-        const Real32 Area   = First.IsEmpty() ? 0.0f : First.GetWidth() * First.GetHeight();
-        const Real32 Other  = Second.IsEmpty() ? 0.0f : Second.GetWidth() * Second.GetHeight();
+        const Real32 Area   = First.IsEmpty() ? 0.0f : First.GetArea();
+        const Real32 Other  = Second.IsEmpty() ? 0.0f : Second.GetArea();
 
         return Other > Area ? Second : (Area > 0.0f ? First : Rect());
     }
@@ -773,8 +764,7 @@ namespace ZyPlugin::UI
 
     Real32 Painter::OverhangOf(ConstRef<Caption> Words)
     {
-        return Words.Size * 0.5f + Max(Words.StrokeWidth, 0.0f)
-            + Vector2::Abs(Words.ShadowOffset).GetMaxComponent();
+        return Words.Size * 0.5f + Max(Words.StrokeWidth, 0.0f) + Vector2::Abs(Words.ShadowOffset).GetMaxComponent();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -885,17 +875,20 @@ namespace ZyPlugin::UI
         const Real32 Leading = Font.GetLineHeight(Text.Size);
         const Real32 Top     = Inner.GetMinimumY() + (Inner.GetHeight() - Text.Extent.GetY()) * 0.5f;
         const Bool   Shadow  = Text.Shadow.GetAlpha() > 0.0f;
+        const Bool   Stroked = Text.StrokeWidth > 0.0f && Text.Stroke.GetAlpha() > 0.0f;
 
-        const ZyRender::FontEffect Effect = (Text.StrokeWidth > 0.0f && Text.Stroke.GetAlpha() > 0.0f)
-            ? ZyRender::FontEffect(Fade(Text.Stroke, Opacity).ToColor8(), 0.0f, 0.0f, Text.StrokeWidth, 0.0f, 1.0f,
-                                   0.5f)
-            : ZyRender::FontEffect();
+        ZyRender::FontEffect Effect;
+
+        if (Stroked)
+        {
+            Effect = ZyRender::FontEffect(Color::Fade(Text.Stroke, Opacity).ToColor8(), 0.0f, 0.0f, Text.StrokeWidth,
+                                          0.0f, 1.0f, 0.5f);
+        }
 
         // The element as a whole was found in view, so only a caption of several lines has lines worth testing.
         const Bool   Several  = Text.Runs.GetSize() > 1;
         const Real32 Overhang = Several ? OverhangOf(Text) : 0.0f;
 
-        // Each line is set on its own, so a centred or right aligned block aligns every line and not only its box.
         const ConstSpan Glyphs(Text.Glyphs.GetData(), Text.Glyphs.GetSize());
 
         for (UInt32 Line = 0, First = 0; Line < Text.Runs.GetSize(); First += Text.Runs[Line], ++Line)
@@ -904,18 +897,18 @@ namespace ZyPlugin::UI
 
             const Real32  Width  = Line < Text.Widths.GetSize() ? Text.Widths[Line] : 0.0f;
             const Vector2 Origin = Vector2(Ruler::Lead(Text.Alignment, Inner, Width), Top + Leading * Line);
-
-            const Bool Seen = !Several
-                || Canvas.IsVisible(Rect(Origin, Origin + Vector2(Width, Leading)).Expand(Overhang));
+            const Rect    Bounds = Rect(Origin, Origin + Vector2(Width, Leading)).Expand(Overhang);
+            const Bool    Seen   = !Several || Canvas.IsVisible(Bounds);
 
             if (!Row.IsEmpty() && Seen)
             {
                 if (Shadow)
                 {
-                    Canvas.DrawGlyphs(Font, Row, Origin + Text.ShadowOffset, Text.Size, Fade(Text.Shadow, Opacity));
+                    Canvas.DrawGlyphs(Font, Row, Origin + Text.ShadowOffset, Text.Size,
+                                      Color::Fade(Text.Shadow, Opacity));
                 }
 
-                Canvas.DrawGlyphs(Font, Row, Origin, Text.Size, Fade(Text.Tint, Opacity), Effect);
+                Canvas.DrawGlyphs(Font, Row, Origin, Text.Size, Color::Fade(Text.Tint, Opacity), Effect);
             }
         }
     }
@@ -928,8 +921,9 @@ namespace ZyPlugin::UI
         // Boxes that touched none of the edges of the union and still stand within it leave the union as it was.
         const Rect Outer = Target.Reaches[Row];
 
-        const Bool Inside = Before.GetMinimumX() > Outer.GetMinimumX() && Before.GetMinimumY() > Outer.GetMinimumY()
-            && Before.GetMaximumX() < Outer.GetMaximumX() && Before.GetMaximumY() < Outer.GetMaximumY();
+        const Bool Low    = Before.GetMinimumX() > Outer.GetMinimumX() && Before.GetMinimumY() > Outer.GetMinimumY();
+        const Bool High   = Before.GetMaximumX() < Outer.GetMaximumX() && Before.GetMaximumY() < Outer.GetMaximumY();
+        const Bool Inside = Low && High;
         const Bool Stays  = Outer.Contains(After);
 
         // A row whose reach its own transform moved cannot have its children's boxes held against it.
@@ -943,7 +937,7 @@ namespace ZyPlugin::UI
     {
         ConstRef<Effect> Extra = * Element.Extra;
 
-        // A shadow is moved and grown with the box, a glow only grown; what the fill hides of either is never drawn.
+        // A shadow is moved and grown with the box and a glow only grown, and what the fill hides is never drawn.
         if (!Extra.Shadow.IsVisible() && !Extra.Glow.IsVisible())
         {
             return;
@@ -986,7 +980,7 @@ namespace ZyPlugin::UI
 
         if (Glow.IsVisible())
         {
-            Canvas.DrawInnerGlow(Element.Frame, Fade(Glow.Tint, Element.Opacity), Element.Radius, Glow.Blur);
+            Canvas.DrawInnerGlow(Element.Frame, Color::Fade(Glow.Tint, Element.Opacity), Element.Radius, Glow.Blur);
         }
     }
 
@@ -999,7 +993,8 @@ namespace ZyPlugin::UI
 
         if (Shade.BorderWidth > 0.0f && Shade.Border.GetAlpha() > 0.0f)
         {
-            Canvas.DrawFrame(Element.Frame, Fade(Shade.Border, Element.Opacity), Shade.BorderWidth, Element.Radius);
+            Canvas.DrawFrame(Element.Frame, Color::Fade(Shade.Border, Element.Opacity), Shade.BorderWidth,
+                             Element.Radius);
         }
     }
 }

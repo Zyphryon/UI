@@ -39,7 +39,7 @@ namespace ZyPlugin::UI
         /// \param Owner  The interface it stands in.
         /// \param Target The root of the popup to open.
         /// \param Anchor The element it opens beside.
-        /// \param Below  The flag, `true` to open under the anchor and as wide as it, `false` to open to its right.
+        /// \param Below  `true` to open under the anchor and as wide as it, `false` to open to its right.
         static void Show(Ref<Interface> Owner, Handle Target, Handle Anchor, Bool Below = true);
 
         /// \brief Opens a popup under an element, left aligned, as wide as its content, over all, even a modal pane.

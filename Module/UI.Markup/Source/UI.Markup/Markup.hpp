@@ -14,9 +14,6 @@
 
 #include "Parser.hpp"
 #include "Template.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
 #include <Zyphryon.Content/Service.hpp>
 
@@ -31,10 +28,10 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// \brief Represents the code creating a widget out of one node, its own parts included.
+        /// \brief Defines the code creating a widget out of one node, its own parts included.
         using Builder = Delegate<Element(Ref<Markup>, Element, ConstRef<JsonValue>)>;
 
-        /// \brief Represents the code reading a field any node may give into the element created from it.
+        /// \brief Defines the code reading a field any node may give into the element created from it.
         using Field   = Delegate<void(Ref<Markup>, Element, ConstRef<JsonValue>)>;
 
         /// \brief Represents a template made later, as a tooltip or a drag's ghost, reading the record it was named in.
@@ -107,7 +104,7 @@ namespace ZyPlugin::UI
 
         /// \brief Adds a layer every theme the markup dresses is read from, over the layers added before it.
         ///
-        /// \param Source The text of the layer, which must outlive the markup, as the bytes a module is built with do.
+        /// \param Source The text of the layer, which must outlive the markup.
         void AddTheme(Text Source);
 
         /// \brief Gives a typeface by name under every layer, filling the slot a layer declares as `null`.
@@ -119,7 +116,7 @@ namespace ZyPlugin::UI
         /// \brief Dresses a theme in the layers added alone, which replace every style of it only once all were read.
         ///
         /// \param Target The theme, left as it was when a layer cannot be read.
-        /// \param Error  The variable receiving why a layer cannot be read, saying so when a module built it in.
+        /// \param Error  Receives why a layer cannot be read, saying so when a module built it in.
         /// \return `true` if every layer was read, `false` otherwise.
         Bool Dress(Ref<Theme> Target, Ref<Str> Error);
 
@@ -127,14 +124,14 @@ namespace ZyPlugin::UI
         ///
         /// \param Target The theme, left as it was when a layer cannot be read.
         /// \param Source The text of the game's theme, whose names dress every layer, its styles merging over theirs.
-        /// \param Error  The variable receiving why a layer cannot be read, saying so when a module built it in.
+        /// \param Error  Receives why a layer cannot be read, saying so when a module built it in.
         /// \return `true` if every layer was read, `false` otherwise.
         Bool Dress(Ref<Theme> Target, Text Source, Ref<Str> Error);
 
         /// \brief Reads the templates of a layout, replacing those of the same name only once all were read.
         ///
         /// \param Source The text of the layout.
-        /// \param Error  The variable receiving why the layout cannot be read.
+        /// \param Error  Receives why the layout cannot be read.
         /// \return `true` if it was read, `false` otherwise.
         Bool Read(Text Source, Ref<Str> Error);
 
@@ -231,6 +228,29 @@ namespace ZyPlugin::UI
         /// \param Node  The node of the layout giving the children.
         void Nest(Element Owner, ConstRef<JsonValue> Node);
 
+        /// \brief Reads one field of a node's layout when the node gives it, warning when the value is not taken.
+        ///
+        /// \param Node   The node of the layout giving the field.
+        /// \param Key    The name of the field.
+        /// \param Output Receives the value, left as it was when the value is not one it takes.
+        /// \param Read   The function reading the value.
+        template<typename Type, typename Function>
+        static void ReadShape(ConstRef<JsonValue> Node, Text Key, Ref<Type> Output, Function Read)
+        {
+            if (const ConstPtr<JsonValue> Value = Parser::Find(Node, Key); Value && !Read(* Value, Output))
+            {
+                LOG_W("The layout gives '{0}' a value it cannot take, so it is left as it was", Key);
+            }
+        }
+
+        /// \brief Builds a node naming no widget as an element of the node's fields alone.
+        ///
+        /// \param Reader The markup building the node.
+        /// \param Parent The element to hold the new one.
+        /// \param Node   The node of the layout, whose fields the markup applies afterwards.
+        /// \return The plain element made for the node.
+        static Element Plain(Ref<Markup> Reader, Element Parent, ConstRef<JsonValue> Node);
+
     public:
 
         /// \brief Gets the value a node gives a field, of whatever kind, as `Find` takes only a `Symbol`.
@@ -261,7 +281,7 @@ namespace ZyPlugin::UI
         /// \param Node    The node of the layout giving the field.
         /// \param Key     The name of the field.
         /// \param Default The flag when the node gives none.
-        /// \return The flag, or the default when the node gives none or gives a value of another kind.
+        /// \return `true` or `false` as the node gives it, or the default when it gives none or another kind.
         static Bool GetBool(ConstRef<JsonValue> Node, Text Key, Bool Default = false);
 
         /// \brief Names the part of an element the children a layout gives it go in, as a window's content panel.
@@ -275,31 +295,6 @@ namespace ZyPlugin::UI
         /// \param Owner The element the layout gives the children to.
         /// \return The part it names, or the element itself when it names none.
         static Element GetHost(Element Owner);
-
-    private:
-
-        /// \brief Reads one field of a node's layout when the node gives it, warning when the value is not taken.
-        ///
-        /// \param Node   The node of the layout giving the field.
-        /// \param Key    The name of the field.
-        /// \param Output The variable receiving the value, left as it was when the value is not one it takes.
-        /// \param Read   The function reading the value.
-        template<typename Type, typename Function>
-        static void ReadShape(ConstRef<JsonValue> Node, Text Key, Ref<Type> Output, Function Read)
-        {
-            if (const ConstPtr<JsonValue> Value = Parser::Find(Node, Key); Value && !Read(* Value, Output))
-            {
-                LOG_W("The layout gives '{0}' a value it cannot take, so it is left as it was", Key);
-            }
-        }
-
-        /// \brief Builds a node naming no widget as an element of the node's fields alone.
-        ///
-        /// \param Reader The markup building the node.
-        /// \param Parent The element to hold the new one.
-        /// \param Node   The node of the layout, whose fields the markup applies afterwards.
-        /// \return The plain element made for the node.
-        static Element Plain(Ref<Markup> Reader, Element Parent, ConstRef<JsonValue> Node);
 
     private:
 

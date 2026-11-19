@@ -26,7 +26,7 @@ namespace ZyPlugin::UI
         /// The share of the run it stands at, over nought through one.
         Real32 At;
 
-        /// The values worn there; a value no key gives is the element's own, as its style and transition leave it.
+        /// The values worn there, where a value no key gives is the element's own.
         Skin   Values;
     };
 }

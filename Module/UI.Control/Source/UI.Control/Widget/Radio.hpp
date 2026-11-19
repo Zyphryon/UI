@@ -28,7 +28,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the group a radio button is exclusive within.
     struct Cohort final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The identifier of the group, spanning the whole pane, or zero for the radio buttons sharing its parent.
@@ -44,7 +44,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Parent  The element to hold it.
         /// \param Content The text beside it.
-        /// \param Checked The flag, `true` to start checked, clearing the rest of its group, `false` to start clear.
+        /// \param Checked `true` to start checked, clearing the rest of its group, `false` to start clear.
         /// \param Group   The name of the group it is exclusive within, or empty for the one its parent holds.
         /// \param Style   The name of the style it wears, its parts adding `.Box`, `.Mark` and `.Label`.
         /// \return The radio button, which reports \ref Signal::kChange when it is checked.
@@ -63,7 +63,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner   The interface it stands in.
         /// \param Target  The radio button to turn.
-        /// \param Checked The flag, `true` to check it, `false` to clear it.
+        /// \param Checked `true` to check it, `false` to clear it.
         static void SetChecked(Ref<Interface> Owner, Handle Target, Bool Checked);
 
         /// \brief Gets the radio button checked in a group.
@@ -75,7 +75,7 @@ namespace ZyPlugin::UI
         /// \brief Checks or clears a radio button silently, as a bound flag does, its group's rest writing back.
         ///
         /// \param Target  The radio button to turn.
-        /// \param Checked The flag, `true` to check it, `false` to clear it.
+        /// \param Checked `true` to check it, `false` to clear it.
         static void Toggle(Element Target, Bool Checked);
 
         /// \brief Changes the text beside a radio button.
@@ -109,15 +109,15 @@ namespace ZyPlugin::UI
         /// \brief Gathers the radio buttons of a group, in the order they stand.
         ///
         /// \param Any     The radio button of the group, or the element holding groups of radio buttons naming none.
-        /// \param Members The variable receiving the radio buttons.
+        /// \param Members Receives the radio buttons.
         static void Gather(Element Any, Ref<Sequence<Element>> Members);
 
         /// \brief Gathers the radio buttons of a group beneath an element, in the order they stand.
         ///
         /// \param Scope   The element to search beneath.
         /// \param Group   The identifier of the group, or zero for the radio buttons naming none.
-        /// \param Deep    The flag, `true` to search the whole subtree, `false` to search the element's children alone.
-        /// \param Members The variable receiving the radio buttons.
+        /// \param Deep    `true` to search the whole subtree, `false` to search the element's children alone.
+        /// \param Members Receives the radio buttons.
         static void Collect(Element Scope, UInt64 Group, Bool Deep, Ref<Sequence<Element>> Members);
     };
 }

@@ -44,10 +44,10 @@ namespace ZyPlugin::UI
         };
         ZY_DEFINE_BITWISE_FRIEND_ENUM(Trait)
 
-        /// Where the band stands, the higher drawn over the lower.
+        /// The place the band stands at, the higher drawn over the lower.
         UInt8 Order  = 0;
 
-        /// What the band does.
+        /// The traits of what the band does.
         Trait Traits = Trait::None;
 
         /// \brief Checks whether the band does something.
@@ -66,7 +66,7 @@ namespace ZyPlugin::UI
         constexpr Bool operator==(ConstRef<Layer> Other) const = default;
     };
 
-    /// \brief Specifies the states the interface keeps for itself; a module declares more through \ref States.
+    /// \brief Specifies the states the interface keeps for itself, a module declaring more through \ref States.
     enum class State : UInt32
     {
         None     = 0,        ///< In none of the states.
@@ -157,7 +157,7 @@ namespace ZyPlugin::UI
         /// The measure of the length, read the way its unit says.
         Real32 Value   = 0.0f;
 
-        /// What the value is measured in.
+        /// The unit the value is measured in.
         Unit   Measure = Unit::Auto;
 
         /// \brief Constructs a length taken from the content.
@@ -179,6 +179,16 @@ namespace ZyPlugin::UI
         ZY_INLINE constexpr Bool IsAuto() const
         {
             return Measure == Unit::Auto;
+        }
+
+        /// \brief Checks whether the length stands near another of the same unit.
+        ///
+        /// \param Other     The length to compare against.
+        /// \param Tolerance The largest gap between the two values still taken as near, in their unit.
+        /// \return `true` if both share a unit and their values lie within the tolerance, `false` otherwise.
+        ZY_INLINE constexpr Bool IsNear(Length Other, Real32 Tolerance) const
+        {
+            return Measure == Other.Measure && IsAlmostZero(Value - Other.Value, Tolerance);
         }
 
         /// \brief Resolves the length against the room it is laid out in.
@@ -337,13 +347,13 @@ namespace ZyPlugin::UI
         /// The colour at its most solid, where a transparent one draws nothing.
         Color   Tint   = Color::Transparent();
 
-        /// How far it is moved from the element, in pixels, as a light above casts a shadow downward.
+        /// The distance it is moved from the element, in pixels, as a light above casts a shadow downward.
         Vector2 Offset;
 
-        /// How far its edge fades out on either side, in pixels.
+        /// The distance its edge fades out over on either side, in pixels.
         Real32  Blur   = 0.0f;
 
-        /// How far it grows past the element's box before it fades, in pixels.
+        /// The distance it grows past the element's box before it fades, in pixels.
         Real32  Spread = 0.0f;
 
         /// \brief Checks whether it draws anything.

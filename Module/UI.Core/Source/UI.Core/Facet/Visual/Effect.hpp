@@ -23,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the effects an element is drawn with besides its look, as a gradient, shadows and a transform.
     struct Effect final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Paint;
 
         /// The gradient the box is filled with over its background, which shows wherever the gradient is not opaque.
@@ -38,13 +38,13 @@ namespace ZyPlugin::UI
         /// The glow just inside the box's edge.
         Halo     InnerGlow;
 
-        /// How much larger the element and all it holds are drawn on each axis, about its middle.
+        /// The scale the element and all it holds are drawn at on each axis, about its middle.
         Vector2  Scale  = Vector2(1.0f, 1.0f);
 
-        /// How far the element and all it holds are drawn turned, clockwise, in degrees.
+        /// The turn the element and all it holds are drawn at, clockwise, in degrees.
         Real32   Rotate = 0.0f;
 
-        /// How far the element and all it holds are drawn moved, in pixels.
+        /// The distance the element and all it holds are drawn moved, in pixels.
         Vector2  Translate;
 
         /// \brief Checks whether the transform moves anything.

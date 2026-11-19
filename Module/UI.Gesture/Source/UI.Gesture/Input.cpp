@@ -11,11 +11,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Input.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Input/Keymap.hpp"
-#include "UI.Core/Shortcut.hpp"
-#include "UI.Markup/Markup.hpp"
-#include "UI.Markup/Parser.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -28,7 +24,7 @@ namespace ZyPlugin::UI
 
     void Input::Read(Ref<Markup>, Element Target, ConstRef<JsonValue> Node)
     {
-        // A flag given makes the node a control, since asking for more of the pointer is what a control does.
+        // A flag makes the node a control, since asking more of the pointer is what a control does.
         const ConstPtr<JsonValue> Hover     = Markup::GetField(Node, "Hover");
         const ConstPtr<JsonValue> AnyButton = Markup::GetField(Node, "AnyButton");
         const ConstPtr<JsonValue> Typing    = Markup::GetField(Node, "Typing");
@@ -100,19 +96,18 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        const Text Action = Markup::GetText(Value, "Action");
+        const Text                Action = Markup::GetText(Value, "Action");
+        const ConstPtr<JsonValue> Scope  = Markup::GetField(Value, "Scope");
 
-        const ConstPtr<JsonValue> Scope = Markup::GetField(Value, "Scope");
-
-        if (Scope && !Parser::ParseEnum(* Scope, Output.Where))
+        if (Action.IsEmpty() || (Scope && !Parser::ParseEnum(* Scope, Output.Where)))
         {
             return false;
         }
 
-        Output.Action = Action.IsEmpty() ? 0 : Identify(Action);
+        Output.Action = Identify(Action);
         Output.Typing = Markup::GetBool(Value, "Typing", Output.Typing);
         Output.Blur   = Markup::GetBool(Value, "Blur", Output.Blur);
         Output.Repeat = Markup::GetBool(Value, "Repeat", Output.Repeat);
-        return !Action.IsEmpty();
+        return true;
     }
 }

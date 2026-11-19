@@ -66,20 +66,20 @@ namespace ZyPlugin::UI
         /// The size of its window, in units of the interface.
         Vector2 Size;
 
-        /// `true` when it moves to \ref Goal at the next update.
+        /// `true` when it moves to \ref Goal at the next update, `false` while it stays.
         Bool    Due   = false;
 
-        /// `true` to dock it again even in the region it stands in, so a layout read back keeps its order of tabs.
+        /// `true` to dock it again even in the region it stands in, `false` to leave it where it stands.
         Bool    Again = false;
 
-        /// `true` to show its tab over the others of its region once it is docked.
+        /// `true` to show its tab over the others of its region once docked, `false` to leave the tab shown.
         Bool    Front = false;
     };
 
     /// \brief Represents a dock, with its panels, the regions they are docked in, and the drag carrying one.
     struct Harbor final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The panels, in the order they were added or a layout read back lists them.
@@ -112,11 +112,11 @@ namespace ZyPlugin::UI
         /// The panel the dragged tab's drag carries, or one naming nothing.
         Handle           Carried;
 
-        /// `true` when the lifted tab is taken away at the next update.
-        Bool             Loose = false;
-
         /// The style the dock wears, its parts wearing it followed by theirs.
         Str              Style;
+
+        /// `true` when the lifted tab is taken away at the next update, `false` while it stays.
+        Bool             Loose = false;
     };
 
     /// \brief Represents a dock of five regions, each a \ref Tabs split by \ref Splitter bars, with floating panels.
@@ -227,7 +227,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The dock whose panels are moved.
         /// \param Source The JSON text \ref Save wrote.
-        /// \param Error  The variable receiving why the text cannot be read.
+        /// \param Error  Receives why the text cannot be read.
         /// \return `true` if it was read, `false` otherwise.
         static Bool Load(Element Owner, Text Source, Ref<Str> Error);
 
@@ -279,7 +279,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Holder The tab, or the window, whose title is bound.
         /// \param Title  The panel's title, which may bind values or be the key of a text of the lexicon.
-        /// \param Floats The flag, `true` to bind a window's title, `false` a tab's.
+        /// \param Floats `true` to bind a window's title, `false` a tab's.
         static void Entitle(Element Holder, Text Title, Bool Floats);
 
         /// \brief Adds the tab of a panel as the last of a region, its title bound to the panel's.
@@ -355,7 +355,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The interface the window stands in.
         /// \param Window The floating window whose dock is looked for.
-        /// \param Index  The variable receiving the index of the panel floating in it.
+        /// \param Index  Receives the index of the panel floating in it.
         /// \return The dock, or one naming nothing.
         static Element Seek(Ref<Interface> Owner, Handle Window, Ref<UInt> Index);
 

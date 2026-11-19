@@ -33,7 +33,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Parent  The element to hold it.
         /// \param Content The text beside it.
-        /// \param Checked The flag, `true` to start checked, `false` to start clear.
+        /// \param Checked `true` to start checked, `false` to start clear.
         /// \param Style   The name of the style it wears, its parts adding `.Box`, `.Mark` and `.Label`.
         /// \return The check box, which reports \ref Signal::kChange when it turns.
         static Element Create(Element Parent, Text Content, Bool Checked = false, Text Style = "Checkbox");
@@ -50,7 +50,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner   The interface it stands in.
         /// \param Target  The check box to turn.
-        /// \param Checked The flag, `true` to check it, `false` to clear it.
+        /// \param Checked `true` to check it, `false` to clear it.
         static void SetChecked(Ref<Interface> Owner, Handle Target, Bool Checked);
 
         /// \brief Changes the text beside a check box.

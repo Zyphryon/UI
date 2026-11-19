@@ -25,10 +25,10 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Represents the value a slider, a progress bar or a scalar holds, and the range it moves in.
+    /// \brief Represents the value a slider, a progress bar or a spinner holds, and the range it moves in.
     struct Level final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The value the widget stands at, kept within the range by whoever sets it.

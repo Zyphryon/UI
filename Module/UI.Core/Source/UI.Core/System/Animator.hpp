@@ -69,13 +69,32 @@ namespace ZyPlugin::UI
         /// \param Row     The row of the element in that pane.
         /// \param Values  The skin worked out for the element, which its values move toward.
         /// \param State   The motion of the element, which keeps its clocks and the values it shows.
-        /// \param Dressed The flag, `true` to move from the skin the element wore, `false` to snap to the new one.
+        /// \param Dressed `true` to move from the skin the element wore, `false` to snap to the new one.
         void Stir(Ref<Pane> Target, UInt32 Row, ConstRef<Skin> Values, Ref<Motion> State, Bool Dressed);
 
         /// \brief Moves every running transition and animation on, dropping the ones that ended.
         ///
         /// \param Delta The time since the last update, in seconds.
         void Tick(Real32 Delta);
+
+        /// \brief Plays an animation of the theme once over an element, from its start.
+        ///
+        /// \param Element The element to play it over, which must be alive.
+        /// \param Name    The name of the animation in the theme.
+        /// \return `true` if the theme holds the animation, `false` otherwise.
+        Bool Play(Handle Element, Text Name);
+
+        /// \brief Hides an element and destroys it once it has played its exit, or on the next tick when it has none.
+        ///
+        /// \param Element The element to let go of, which must be alive.
+        void Dismiss(Handle Element);
+
+        /// \brief Gets the motion of an element, giving it one standing at its own values when it holds none.
+        ///
+        /// \param Element The element, which must be alive.
+        /// \param Hidden  `true` when a motion given now starts hidden, so showing plays the way in, `false` otherwise.
+        /// \return The motion of the element.
+        Ref<Motion> Hold(Handle Element, Bool Hidden);
 
         /// \brief Reads the values that move from the facets of an element.
         ///
@@ -128,8 +147,8 @@ namespace ZyPlugin::UI
         /// \param Clip    The animation played.
         /// \param Share   The share of the run, over nought through one.
         /// \param Beneath The values beneath it, which stand at either end and wherever no key gives a value.
-        /// \param Output  The receiver of the values, written only where a key gives one.
-        /// \param Touched The receiver of the values any of its keys give, added to the ones it held.
+        /// \param Output  Receives the values, written only where a key gives one.
+        /// \param Touched Receives the values any of its keys give, added to the ones it held.
         void Overlay(ConstRef<Animation>  Clip,
                      Real32               Share,
                      ConstRef<Appearance> Beneath,
@@ -142,7 +161,7 @@ namespace ZyPlugin::UI
         /// \param Share   The share of the run, over nought through one.
         /// \param Bit     The single value played.
         /// \param Beneath The values beneath the animation, which stand in past its first or last key.
-        /// \param Output  The receiver of the value.
+        /// \param Output  Receives the value.
         void Tween(ConstRef<Animation>  Clip,
                    Real32               Share,
                    Skin::Field          Bit,
@@ -164,7 +183,7 @@ namespace ZyPlugin::UI
 
         /// \brief Gives some values that move every one of them a skin gives.
         ///
-        /// \param Output The receiver of the values the skin gives, the rest kept.
+        /// \param Output Receives the values the skin gives, the rest kept.
         /// \param Values The skin giving the values.
         /// \return The values the skin changed, those it gave as they already stood left out.
         static Skin::Field Lay(Ref<Appearance> Output, ConstRef<Skin> Values);
@@ -212,7 +231,7 @@ namespace ZyPlugin::UI
 
         /// \brief Mixes some of the values that move from one set toward another.
         ///
-        /// \param Output The receiver of the mixed values, written only where the mask names one.
+        /// \param Output Receives the mixed values, written only where the mask names one.
         /// \param From   The values at nought.
         /// \param To     The values at one.
         /// \param Share  The share of the way from one to the other.
@@ -242,7 +261,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner   The tree the element stands in.
         /// \param Element The element whose facet is wanted.
-        /// \param Needed  The flag, `true` to add the facet when the element holds none.
+        /// \param Needed  `true` to add the facet when the element holds none, `false` to leave it without.
         /// \return The facet, or `nullptr` when the element holds none and none is needed.
         template<typename Type>
         static Ptr<Type> Obtain(Ref<Tree> Owner, Handle Element, Bool Needed);
@@ -253,7 +272,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree the element stands in.
         /// \param Slot   The slot of the element whose look is read.
-        /// \param Output The receiver of the values it holds.
+        /// \param Output Receives the values it holds.
         static void ReadLook(Ref<Tree> Owner, UInt32 Slot, Ref<Appearance> Output);
 
         /// \brief Writes the values that move onto a look, as the interface's own applier.
@@ -268,7 +287,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree the element stands in.
         /// \param Slot   The slot of the element whose caption is read.
-        /// \param Output The receiver of the values it holds.
+        /// \param Output Receives the values it holds.
         static void ReadCaption(Ref<Tree> Owner, UInt32 Slot, Ref<Appearance> Output);
 
         /// \brief Writes the values that move onto text, as the interface's own applier.
@@ -283,7 +302,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree the element stands in.
         /// \param Slot   The slot of the element whose bar is read.
-        /// \param Output The receiver of the values it holds.
+        /// \param Output Receives the values it holds.
         static void ReadBar(Ref<Tree> Owner, UInt32 Slot, Ref<Appearance> Output);
 
         /// \brief Writes the values that move onto a bar, as the interface's own applier.
@@ -298,7 +317,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree the element stands in.
         /// \param Slot   The slot of the element whose scroll is read.
-        /// \param Output The receiver of the values it holds.
+        /// \param Output Receives the values it holds.
         static void ReadScroll(Ref<Tree> Owner, UInt32 Slot, Ref<Appearance> Output);
 
         /// \brief Writes the values that move onto a scrolling element, as the interface's own applier.
@@ -313,7 +332,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree the element stands in.
         /// \param Slot   The slot of the element whose effects are read.
-        /// \param Output The receiver of the values it holds.
+        /// \param Output Receives the values it holds.
         static void ReadEffect(Ref<Tree> Owner, UInt32 Slot, Ref<Appearance> Output);
 
         /// \brief Writes the values that move onto effects, as the interface's own applier.
@@ -328,7 +347,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The tree the element stands in.
         /// \param Slot   The slot of the element whose skin image is read.
-        /// \param Output The receiver of the values it holds.
+        /// \param Output Receives the values it holds.
         static void ReadBackdrop(Ref<Tree> Owner, UInt32 Slot, Ref<Appearance> Output);
 
         /// \brief Writes the values that move onto a skin image, as the interface's own applier.
@@ -363,6 +382,7 @@ namespace ZyPlugin::UI
         Ref<Interface>       mOwner;
         Real64               mClock;
         Sequence<Handle>     mMoving;
+        Sequence<Handle>     mDismissed;
         Sequence<Appearance> mLifted;
         Sequence<Applier>    mAppliers;
     };

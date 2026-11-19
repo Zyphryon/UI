@@ -12,11 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -49,16 +44,16 @@ namespace ZyPlugin::UI
     /// \brief Represents the state of a splitter, with the room each pane keeps and the hold the pointer has on a bar.
     struct Split final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The room each pane keeps, in the order the panes stand.
         Sequence<Quota>  Quotas;
 
-        /// How far into the bar held the press landed, along the axis, in pixels.
+        /// The distance into the bar held the press landed at, along the axis, in pixels.
         Real32           Grab = 0.0f;
 
-        /// `true` while the pointer holds a bar, between the \ref Signal::kBegin and the \ref Signal::kEnd it reports.
+        /// `true` while the pointer holds a bar, from \ref Signal::kBegin to \ref Signal::kEnd, `false` otherwise.
         Bool             Held = false;
 
         /// The name its sizes are saved under by \ref Splitter::Save, from its layout node, or empty to leave it out.
@@ -70,11 +65,8 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// The thickness of a bar, in pixels.
-        static constexpr Real32 kThickness = 6.0f;
-
         /// The least size a pane is given when none is named, in pixels.
-        static constexpr Real32 kMinimum   = 40.0f;
+        static constexpr Real32 kMinimum = 40.0f;
 
     public:
 
@@ -86,7 +78,7 @@ namespace ZyPlugin::UI
         /// \return The splitter, reporting \ref Signal::kBegin, \ref Signal::kChange and \ref Signal::kEnd on a drag.
         static Element Create(Element Parent, Direction Flow = Direction::Row, Text Style = "Splitter");
 
-        /// \brief Creates a splitter from a node, reading `Orientation` and `Panes`; its `Name` is the \ref Save name.
+        /// \brief Creates a splitter from a node, reading `Orientation`, `Panes` and the `Name` \ref Save uses.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Parent The element to hold it.
@@ -177,7 +169,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Scope  The element whose subtree is walked, itself included.
         /// \param Source The JSON text \ref Save wrote.
-        /// \param Error  The variable receiving why the text cannot be read.
+        /// \param Error  Receives why the text cannot be read.
         /// \return `true` if it was read, `false` otherwise.
         static Bool Load(Element Scope, Text Source, Ref<Str> Error);
 
@@ -185,7 +177,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner  The splitter holding the pane.
         /// \param Index  The index of the pane.
-        /// \param Folded The flag, `true` to fold it, `false` to open it.
+        /// \param Folded `true` to fold it, `false` to open it.
         static void SetFolded(Element Owner, UInt32 Index, Bool Folded);
 
         /// \brief Checks whether a pane is folded.
@@ -196,6 +188,9 @@ namespace ZyPlugin::UI
         static Bool IsFolded(Element Owner, UInt32 Index);
 
     private:
+
+        /// The thickness of a bar, in pixels.
+        static constexpr Real32 kThickness = 6.0f;
 
         /// \brief Runs a splitter, where a press on a bar holds it, a drag moves it, and a double click folds a pane.
         ///
@@ -263,8 +258,8 @@ namespace ZyPlugin::UI
         ///
         /// \param Root   The splitter holding the bar.
         /// \param Bar    The bar the panes stand beside.
-        /// \param Before The variable receiving the index of the nearest shown pane before, or below nought for none.
-        /// \param After  The variable receiving the index of the nearest shown pane after it, or below nought for none.
+        /// \param Before Receives the index of the nearest shown pane before it, or below nought for none.
+        /// \param After  Receives the index of the nearest shown pane after it, or below nought for none.
         static void Flank(Element Root, Element Bar, Ref<SInt32> Before, Ref<SInt32> After);
 
         /// \brief Lays a pane out from the room it keeps, at nothing while folded.
@@ -297,7 +292,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Root  The splitter whose axis is read.
         /// \param Point The point to measure.
-        /// \return Its distance across for panes side by side, down for panes one over another.
+        /// \return The distance across for panes side by side, down for panes one over another.
         static Real32 Toward(Element Root, Vector2 Point);
     };
 }

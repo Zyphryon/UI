@@ -15,14 +15,8 @@
 #include "Memory.hpp"
 #include "Panel.hpp"
 #include "Scrollbar.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Layout/Virtual.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -74,11 +68,7 @@ namespace ZyPlugin::UI
 
         SetHorizontal(Result, Markup::GetBool(Node, "Horizontal", true));
         SetFollow(Result, Markup::GetBool(Node, "Follow"));
-
-        if (const Str Key = Memory::GetKey(Reader, Node); !Key.IsEmpty())
-        {
-            Remember(Result, Key);
-        }
+        Remember(Result, Memory::GetKey(Reader, Node));
         return Result;
     }
 
@@ -95,7 +85,7 @@ namespace ZyPlugin::UI
 
     Element Scroller::GetBar(Element Viewer, Bool Vertical)
     {
-        // The body comes first, holding the content and then the sideways bar; the other bar stands after the body.
+        // The body holds the content and then the sideways bar, and the bar down the side stands after the body.
         const Element Body = Viewer.GetFirst();
         return Vertical ? Body.GetNext() : Body.GetFirst().GetNext();
     }
@@ -164,26 +154,19 @@ namespace ZyPlugin::UI
 
     Bool Scroller::OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
     {
-        // Only keys it hears itself; one bubbling from a control inside it belongs to that control and the keyboard.
+        // Only keys sent to it, since one bubbling from a control inside it belongs to that control and the keyboard.
         if (Message.Kind != Signal::kKey || Message.Target != Self)
         {
             return false;
         }
-        return OnKey(Element(Owner, Self), Message.Key);
-    }
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    Bool Scroller::OnKey(Element Viewer, ZyInput::Key Key)
-    {
-        const Element Content = GetContent(Viewer);
+        const Element Content = GetContent(Element(Owner, Self));
         const Real32  Down    = Scrollbar::GetOffset(Content, true);
         const Real32  Across  = Scrollbar::GetOffset(Content, false);
         const Real32  Page    = Scrollbar::GetView(Content, true);
 
         // A move that finds the end already reached is left to the keyboard, so the arrows walk out of the viewer.
-        switch (Key)
+        switch (Message.Key)
         {
         case ZyInput::Key::Up:
             return Scrollbar::ScrollTo(Content, true, Down - kStep);

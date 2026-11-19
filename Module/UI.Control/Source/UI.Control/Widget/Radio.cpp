@@ -11,16 +11,9 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Radio.hpp"
+#include "Checkbox.hpp"
 #include "Common.hpp"
-#include "Label.hpp"
-#include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -33,17 +26,10 @@ namespace ZyPlugin::UI
 
     Element Radio::Create(Element Parent, Text Content, Bool Checked, Text Group, Text Style)
     {
-        const Element Result = Panel::Create(Parent, Style, Direction::Row);
-        Result.EditBox().Items = Align::Center;
+        // Built as a check box, whose box, mark and label it shares, and run by its own behaviour.
+        const Element Result = Checkbox::Create(Parent, Content, false, Style);
         Widget::Govern(Result, Handler::Create<&Radio::OnEvent>(), true);
         Result.Add<Cohort>().Group = Identify(Group);
-
-        // The mark fills the box, and the theme shows it only while the radio button is checked.
-        const Element Holder = Panel::Create(Result, Widget::Part(Style, "Box"));
-        const Element Mark   = Panel::Create(Holder, Widget::Part(Style, "Mark"));
-        Mark.EditBox().Grow = 1.0f;
-
-        Label::Create(Result, Content, Widget::Part(Style, "Label"));
 
         if (Checked)
         {
@@ -118,8 +104,7 @@ namespace ZyPlugin::UI
 
     void Radio::SetText(Element Target, Text Content)
     {
-        // The label stands after the box.
-        Label::SetText(Target.GetFirst().GetNext(), Content);
+        Checkbox::SetText(Target, Content);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -132,7 +117,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // A click only ever checks it; it is cleared by checking another of its group.
+        // A click only ever checks it, as it is cleared by checking another of its group.
         if (Message.Kind == Signal::kClick)
         {
             SetChecked(Owner, Self, true);

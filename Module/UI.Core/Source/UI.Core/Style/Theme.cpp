@@ -12,9 +12,6 @@
 
 #include "Theme.hpp"
 #include "UI.Core/Handle.hpp"
-#include "Animation.hpp"
-#include "Skin.hpp"
-#include "Style.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -30,6 +27,9 @@ namespace ZyPlugin::UI
     {
     }
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     Ref<Style> Theme::Define(Text Name, Text Base)
     {
         ++mVersion;
@@ -37,7 +37,6 @@ namespace ZyPlugin::UI
         const Digest Key   = Digest(Identify(Name));
         Ref<Style>   Entry = mStyles.FindOrInsert(Key);
 
-        // A style defined before starts over, keeping nothing it gave.
         Entry      = Style();
         Entry.Base = Identify(Base);
 
@@ -66,7 +65,6 @@ namespace ZyPlugin::UI
     {
         ++mVersion;
 
-        // A table moved from is left empty, so the other theme holds nothing after.
         mStyles     = Move(Other.mStyles);
         mAnimations = Move(Other.mAnimations);
         mNames      = Move(Other.mNames);
@@ -106,7 +104,6 @@ namespace ZyPlugin::UI
         const Digest   Key   = Digest(Identify(Name));
         Ref<Animation> Entry = mAnimations.FindOrInsert(Key);
 
-        // An animation defined before starts over, keeping nothing it held.
         Entry = Animation();
 
         mNames.Assign(Key, Str(Name));

@@ -16,14 +16,8 @@
 #include "Label.hpp"
 #include "Memory.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -39,7 +33,6 @@ namespace ZyPlugin::UI
         const Element Result = Panel::Create(Parent, Style);
         Widget::Govern(Result, Handler::Create<&Expander::OnEvent>(), true);
 
-        // A header reads from its leading edge, where a button centres what it holds.
         const Element Header = Button::Create(Result, Title, Widget::Part(Style, "Header"));
         Header.EditBox().Content = Justify::Start;
 
@@ -107,7 +100,7 @@ namespace ZyPlugin::UI
         Target.SetState(Widget::Checked(), Expanded);
         GetContent(Target).SetState(State::Hidden, !Expanded);
 
-        // The arrow is the first thing in the header, the first thing in the expander.
+        // The arrow is the first part of the header.
         Label::SetText(Target.GetFirst().GetFirst(), Expanded ? "v" : ">");
         Memory::SetOpened(Target, Expanded);
     }
@@ -152,8 +145,8 @@ namespace ZyPlugin::UI
         const Handle Header  = Owner.GetFirst(Self);
         const Bool   Clicked = Message.Kind == Signal::kClick && Message.Target == Header;
         const Bool   Pressed = Message.Key == ZyInput::Key::Enter || Message.Key == ZyInput::Key::Space;
-        const Bool   Keyed   = Message.Kind == Signal::kKey && Pressed
-            && (Message.Target == Header || Message.Target == Self);
+        const Bool   Aimed   = Message.Target == Header || Message.Target == Self;
+        const Bool   Keyed   = Message.Kind == Signal::kKey && Pressed && Aimed;
 
         if (!Clicked && !Keyed)
         {

@@ -23,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an element a drag can be let go over, accepting some kinds of things or any.
     struct Droppable final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks       = Dirty::None;
 
         /// `true`, so the pointer stops at an element holding it.

@@ -15,18 +15,11 @@
 #include "Common.hpp"
 #include "Label.hpp"
 #include "Panel.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
+#include "Window.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Layout/Virtual.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
 #include "UI.Core/Layers.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
-#include "Window.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -44,7 +37,6 @@ namespace ZyPlugin::UI
         Widget::Govern(Result, Handler::Create<&Dialog::OnEvent>(), true);
         Result.Add<Virtual>().Realize = Realizer::Create<&Dialog::Center>();
 
-        // The message opens the body, where the children given to it follow; the buttons stand under it all.
         const Element Content = Window::GetContent(Result);
         const Element Body    = Panel::Create(Content, Widget::Part(Style, "Body"));
         const Element Words   = Label::Create(Body, Message, Widget::Part(Style, "Message"));
@@ -114,7 +106,7 @@ namespace ZyPlugin::UI
 
     Element Dialog::AddButton(Element Target, Text Content, Text Action, Bool Default, Bool Cancel)
     {
-        // Copied, since making the button may move the store the dialog's own facet stands in.
+        // Copied, since making the button may move the dialog's facet.
         const ConstPtr<Verdict> Found = Target.Get<Verdict>();
         const Str               Style(Text(Found->Style));
         const Element           Row(Target.GetTree(), Found->Buttons);
@@ -197,7 +189,6 @@ namespace ZyPlugin::UI
         const Handle            Default = Own->Default;
         const Handle            Cancel  = Own->Cancel;
 
-        // Enter clicks the button holding the keyboard, or else the default one; escape clicks the cancel one.
         if (Message.Kind == Signal::kKey && Message.Key == ZyInput::Key::Enter)
         {
             if (Owner.GetParent(Message.Target) == Buttons)
@@ -212,18 +203,19 @@ namespace ZyPlugin::UI
             return Answer(Owner, Self, Cancel);
         }
 
-        // A button's action ran already, as its click bubbled through it on its way here.
-        if (Message.Kind == Signal::kClick && Owner.GetParent(Message.Target) == Buttons)
+        if (Message.Kind == Signal::kClick)
         {
-            Close(Owner, Self);
-            return true;
-        }
+            // A button's action ran already, as its click bubbled through it on its way here.
+            if (Owner.GetParent(Message.Target) == Buttons)
+            {
+                Close(Owner, Self);
+                return true;
+            }
 
-        const Bool Clicked = Message.Kind == Signal::kClick;
-
-        if (Clicked && Message.Target == Window::GetClose(Element(Owner, Self)).GetHandle())
-        {
-            return Answer(Owner, Self, Cancel);
+            if (Message.Target == Window::GetClose(Element(Owner, Self)).GetHandle())
+            {
+                return Answer(Owner, Self, Cancel);
+            }
         }
         return Window::OnEvent(Owner, Message, Self);
     }

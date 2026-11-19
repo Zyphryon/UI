@@ -12,12 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -29,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the state of a menu, with its style, what it was opened over, the item lit.
     struct Roster final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The name of the style the menu wears, its parts wearing it followed by theirs.
@@ -44,21 +38,21 @@ namespace ZyPlugin::UI
         /// The control that held the keyboard before the menu took it.
         Handle Return;
 
-        /// `true` when left and right, once the menu has no use for them, go on to what opened it.
+        /// `true` when left and right, once the menu has no use for them, go on to what opened it, `false` otherwise.
         Bool   Passes = false;
     };
 
-    /// \brief Represents a check item, which turns on a click and leaves its menu open, as a setting being tried does.
+    /// \brief Represents a check item, which turns on a click and leaves its menu open.
     struct Toggle final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
     };
 
-    /// \brief Represents the parts of a menu item given an icon, so its text is found past the icon standing before it.
+    /// \brief Represents the parts of a menu item given an icon.
     struct Option final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The label showing the item's text.
@@ -71,7 +65,7 @@ namespace ZyPlugin::UI
     /// \brief Represents a control that opens a menu under itself when clicked, as a title of a menu bar or a dropdown.
     struct Pulldown final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The root of the menu it opens.
@@ -81,7 +75,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an item of a menu that opens another menu beside it.
     struct Branch final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The root of the menu it opens.
@@ -108,7 +102,7 @@ namespace ZyPlugin::UI
         /// \return The root of the menu's pane, closed.
         static Element Build(Ref<Markup> Reader, Element Parent, ConstRef<JsonValue> Node);
 
-        /// \brief Reads a node's `ContextMenu`, which is a list of items.
+        /// \brief Reads a node's `ContextMenu`, a list of items, a template name or a menu node, into its context menu.
         ///
         /// \param Reader The markup reading the layout.
         /// \param Target The element made from the node, which a right press opens the menu over.
@@ -135,7 +129,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Target   The menu the item is added to.
         /// \param Content  The text of the item.
-        /// \param Checked  The flag, `true` to start it on, `false` to start it off.
+        /// \param Checked  `true` to start it on, `false` to start it off.
         /// \param Action   The name of the action picking it runs, after it turned, or empty for none.
         /// \param Shortcut The text shown beside it, as the key doing the same, or empty for none.
         /// \return The item, which is `Checked` while on and reports \ref Signal::kChange each time picking turns it.
@@ -177,7 +171,7 @@ namespace ZyPlugin::UI
         /// \brief Turns an item made by \ref AddCheck on or off, without reporting it.
         ///
         /// \param Item    The item to turn.
-        /// \param Checked The flag, `true` to turn it on, `false` to turn it off.
+        /// \param Checked `true` to turn it on, `false` to turn it off.
         static void SetChecked(Element Item, Bool Checked);
 
         /// \brief Checks whether an item is turned on.
@@ -200,13 +194,13 @@ namespace ZyPlugin::UI
         /// \param Subject The element it is opened over, or one naming nothing.
         static void Open(Ref<Interface> Owner, Handle Target, Vector2 At, Handle Subject = Handle());
 
-        /// \brief Opens a menu under an element, on screen and taking the keyboard; the element is the \ref GetSubject.
+        /// \brief Opens a menu under an element, on screen and taking the keyboard, the element becoming its subject.
         ///
         /// \param Owner    The interface it stands in.
         /// \param Target   The menu to open.
-        /// \param Anchor   The element it opens under, lined up with its left edge.
-        /// \param Wide     The flag, `true` to make it as wide as the element, `false` to make it as wide as its items.
-        /// \param Keyboard The flag, `true` to light its first item, as the keyboard opens it, `false` to light none.
+        /// \param Anchor   The element it opens under, lined up with its left edge, which \ref GetSubject gives back.
+        /// \param Wide     `true` to make it as wide as the element, `false` to make it as wide as its items.
+        /// \param Keyboard `true` to light its first item, as the keyboard opens it, `false` to light none.
         static void Drop(Ref<Interface> Owner, Handle Target, Handle Anchor, Bool Wide = false, Bool Keyboard = false);
 
         /// \brief Closes a menu and every submenu open from it, without picking anything.
@@ -264,7 +258,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner    The interface it stands in.
         /// \param Item     The item whose submenu opens.
-        /// \param Keyboard The flag, `true` to give the submenu the keyboard and light its first item, `false` to show.
+        /// \param Keyboard `true` to give the submenu the keyboard and light its first item, `false` to only show it.
         static void Expand(Ref<Interface> Owner, Handle Item, Bool Keyboard);
 
         /// \brief Closes every submenu open from the items of a menu, but the one an item keeps open.
@@ -272,8 +266,7 @@ namespace ZyPlugin::UI
         /// \param Owner The interface it stands in.
         /// \param Self  The menu whose submenus close.
         /// \param Kept  The item whose submenu stays open, or one naming nothing to close them all.
-        /// \return `true` if a submenu closed, `false` otherwise.
-        static Bool Collapse(Ref<Interface> Owner, Handle Self, Handle Kept);
+        static void Collapse(Ref<Interface> Owner, Handle Self, Handle Kept);
 
         /// \brief Lights an item of a menu, letting the one lit before go.
         ///
@@ -286,7 +279,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner     The interface it stands in.
         /// \param Self      The menu whose items are stepped through.
-        /// \param Direction The direction, one to go down or minus one to go up.
+        /// \param Direction The step, one to go down or minus one to go up.
         static void Step(Ref<Interface> Owner, Handle Self, SInt32 Direction);
 
         /// \brief Closes a menu and gives the keyboard back to the menu it was opened from, or to what held it before.
@@ -326,7 +319,7 @@ namespace ZyPlugin::UI
         /// \brief Gets the name of the style a menu's parts are named after, from any part of it.
         ///
         /// \param Part The menu or a part of it, as an item.
-        /// \return The name of the menu's style, copied, since making a part may move the store its facet stands in.
+        /// \return The name of the menu's style, copied since making a part may move the store its facet stands in.
         static Str GetStyle(Element Part);
     };
 }

@@ -11,20 +11,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Binder.hpp"
-#include "Datum.hpp"
 #include "Facet/Binding.hpp"
 #include "Lexicon.hpp"
-#include "Link.hpp"
-#include "Model.hpp"
-#include "Path.hpp"
-#include "Piece.hpp"
-#include "Step.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -82,17 +70,17 @@ namespace ZyPlugin::UI
     {
         Ref<Feed> Fed = Supply(Target);
 
-        // Declared again, as by each module standing on this one, it installs nothing twice.
+        // Each module standing on this one declares it again.
         if (Fed.Declared)
         {
             return;
         }
         Fed.Declared = true;
 
-        // Values the game changed reach what is bound to them before anything is dressed or laid out.
+        // The game's changes reach their bindings before anything is dressed or laid out.
         Target.AddStage(Interface::Phase::Prepare, 20, Interface::Stage::Create<&Binder::OnRefresh>());
 
-        // A widget's new value is heard first, and reaches the model before any handler reads it there.
+        // Heard first, so the model holds a widget's new value before any handler reads it.
         Target.GetDispatcher().AddListener(Handler::Create<&Binder::OnChange>());
     }
 
@@ -109,7 +97,7 @@ namespace ZyPlugin::UI
         Sequence<Piece> Pieces;
         Str             Phrase;
 
-        // A key is read from the lexicon, its text naming values or not; a doubled at sign writes one out instead.
+        // A doubled at sign writes one out instead of naming a key.
         if (IsLocalized(Source))
         {
             if (Source[1] != '@')
@@ -129,7 +117,7 @@ namespace ZyPlugin::UI
         Entry.Write  = Move(Write);
         Entry.Read   = Move(Read);
 
-        // Only a text of the lexicon is read again, so only it keeps where it was read.
+        // Only a lexicon text is read again, so only it keeps its scope.
         if (!Phrase.IsEmpty())
         {
             Entry.Phrase = Move(Phrase);
@@ -137,7 +125,7 @@ namespace ZyPlugin::UI
             Locate(Scope, Entry.Within);
         }
 
-        // Shown at once, so a template reads right the moment it is made rather than at the next update.
+        // Shown at once, so a template reads right the moment it is made.
         Show(Target, Found.Links.GetSize() - 1, true);
         return true;
     }
@@ -226,7 +214,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Copied before the facet is added, since adding it may move the store the source's sits in.
+        // Copied first, since adding the facet may move the source's store.
         Sequence<Link> Links = Found->Links;
         Target.Add<Binding>().Links = Move(Links);
 
@@ -264,7 +252,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // The popups opened for it, as a row's context menu, were made reading its record, so they follow it too.
+        // Popups opened for it, as a row's context menu, read its record too.
         Sequence<Handle> Opened;
         Gather(Target.GetTree(), Target.GetHandle(), Opened);
 
@@ -313,7 +301,7 @@ namespace ZyPlugin::UI
     {
         Ref<Feed> Fed = Supply(Owner);
 
-        // A switched language or a read or replaced table reads every text again; otherwise it costs one comparison.
+        // A switched language or a replaced table reads every text again.
         const UInt32 Spoken = Fed.Tables ? Fed.Tables->GetVersion() : 0;
 
         if (Fed.Tables != Fed.Heard || Spoken != Fed.Spoken)
@@ -326,7 +314,6 @@ namespace ZyPlugin::UI
         const Ptr<Model> Data     = Fed.Source;
         const Bool       Replaced = (Data != Fed.Watched);
 
-        // A model left as it was costs one comparison a frame; only a change walks the bindings.
         if (!Replaced && (!Data || Data->GetRevision() == Fed.Revision))
         {
             return;
@@ -335,7 +322,7 @@ namespace ZyPlugin::UI
         Fed.Watched  = Data;
         Fed.Revision = Data ? Data->GetRevision() : 0;
 
-        // A model put in another's place may stamp its values as the last one did, so every one is shown anew.
+        // A new model may stamp its values as the last one did, so every one is shown anew.
         Refresh(Owner, Replaced);
     }
 
@@ -357,7 +344,7 @@ namespace ZyPlugin::UI
     template<typename Callable>
     void Binder::Sweep(Ref<Tree> Owner, AnyRef<Callable> Action)
     {
-        // The slots are kept between sweeps, and a sweep begun inside another takes a list of its own.
+        // A sweep begun inside another takes a list of its own.
         thread_local Sequence<UInt32> Kept;
         thread_local Bool             Busy = false;
 
@@ -408,7 +395,7 @@ namespace ZyPlugin::UI
             const Char Current = Source[Cursor];
             const Char Next    = Cursor + 1 < Source.GetSize() ? Source[Cursor + 1] : '\0';
 
-            // A doubled brace is written out as one, which a text naming no value is still bound for.
+            // A doubled brace is written out as one, and still makes the text bound.
             if ((Current == '{' || Current == '}') && Next == Current)
             {
                 Literal.Append(Current);
@@ -419,7 +406,6 @@ namespace ZyPlugin::UI
 
             const SInt Close = Current == '{' ? StrFind(Source.Slice(Cursor), '}') : -1;
 
-            // A brace closing nothing is written as it stands.
             if (Close < 0)
             {
                 Literal.Append(Current);
@@ -462,7 +448,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // A translator's mistake still shows the words, as written, rather than nothing.
+        // A translator's mistake still shows the words as written.
         Output.Clear();
         Output.Append().Literal = Source;
     }
@@ -495,18 +481,17 @@ namespace ZyPlugin::UI
     {
         Ref<Link> Entry = Target.Get<Binding>()->Links[Index];
 
-        // A value may hold a key of the lexicon itself, which only showing it again reads in the new language.
+        // A value may hold a lexicon key itself, which only showing it again translates.
         if (Entry.Phrase.IsEmpty())
         {
             Show(Target, Index, true);
             return;
         }
 
-        // Read where it was first made, then moved to the record its row shows now, as the old pieces were.
+        // Read where it was made, then moved to the record its row shows now.
         Sequence<Piece> Pieces;
         Speak(Lookup(Target, Entry.Phrase), Entry.Scope, Pieces);
 
-        // The record it was made in may lie deeper or shallower than the one it reads now, as a tree view's row.
         Path Made;
         Locate(Entry.Scope, Made);
 
@@ -551,7 +536,7 @@ namespace ZyPlugin::UI
             Inside          = StrTrim(Inside.Slice(0, static_cast<UInt>(Colon)), ' ');
         }
 
-        // A path opening with a slash is read from the root, whatever scope it stands in.
+        // A leading slash reads from the root, whatever the scope.
         const Bool Slashed = !Inside.IsEmpty() && Inside[0] == '/';
         const Bool Rooted  = Slashed || Scope.IsEmpty();
         const Text Named   = Slashed ? Inside.Slice(1) : Inside;
@@ -615,7 +600,6 @@ namespace ZyPlugin::UI
             return Hole.Negate ? Datum(!Value.GetBool()) : Value;
         }
 
-        // Room for every piece is reserved up front, so a text costs one allocation.
         const UInt Room = Accumulate(Entry.Pieces.GetData(), Entry.Pieces.GetSize(), UInt(0), [](ConstRef<Piece> Part)
         {
             return Part.Hole ? kRoom : Part.Literal.GetSize();
@@ -655,7 +639,6 @@ namespace ZyPlugin::UI
         Ref<Link>             Entry  = Target.Get<Binding>()->Links[Index];
         const UInt32          Newest = Stamp(Data, Entry);
 
-        // An unchanged value is never written out again, so a frame with nothing new formats nothing.
         if (!Force && Newest == Entry.Seen)
         {
             return;
@@ -663,11 +646,11 @@ namespace ZyPlugin::UI
 
         Entry.Seen = Newest;
 
-        // Copied, since the writer may add a facet and move the binding under it.
+        // Copied, since the writer may add a facet and move the binding.
         const Writer Write = Entry.Write;
         Datum        Value = Evaluate(Data, Entry);
 
-        // Only a value the model holds as `@Key` is read through the lexicon, and one held as `@@` loses an at sign.
+        // Only a whole value held as `@Key` is read through the lexicon, and `@@` drops an at sign.
         if (const Text Words = Value.GetText(); IsWhole(Entry) && IsLocalized(Words))
         {
             Value = Datum(Words[1] == '@' ? Words.Slice(1) : Lookup(Target, Words.Slice(1)));
@@ -691,14 +674,14 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // The binding is found again after the reader runs, since reading the element may add a facet and move it.
+        // Found again after the reader runs, since reading may add a facet and move the binding.
         const Reader Read  = Current.Read;
         const Datum  Value = Read(Target);
         Ref<Link>    Entry = Target.Get<Binding>()->Links[Index];
 
         Data.Assign(Entry.Pieces[0].Where, Entry.Pieces[0].Negate ? Datum(!Value.GetBool()) : Value);
 
-        // The element shows what it was written back as already, so the next refresh passes it over.
+        // Marked seen, so the next refresh passes it over.
         Entry.Seen = Stamp(AddressOf(Data), Entry);
     }
 
@@ -707,7 +690,7 @@ namespace ZyPlugin::UI
 
     void Binder::Retarget(Element Target, ConstRef<Path> From, ConstRef<Path> To)
     {
-        // What a facet keeps of the record it reads, as a tooltip made later from a template, follows the row.
+        // What a facet keeps of the record, as a tooltip's template scope, follows the row.
         for (ConstRef<Table<UInt32, Scoped>::Pair> Each : GetHolders())
         {
             if (const Ptr<Path> Kept = Each.Second(Target))
@@ -716,7 +699,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The facet is found again each time, since showing a value may add a facet and move the store under it.
+        // Found again each time, since showing a value may add a facet and move the binding.
         for (UInt Index = 0; Index < CountLinks(Target); ++Index)
         {
             Bool      Moved = false;
@@ -727,7 +710,7 @@ namespace ZyPlugin::UI
                 Moved = Repoint(Part, From, To) || Moved;
             }
 
-            // A text of the lexicon read again later reads from the record the row shows by then.
+            // A lexicon text read again later reads from the row's record by then.
             Reroute(Entry.Within, Entry.Within.Steps.GetSize(), From, To);
 
             if (Moved)
@@ -747,7 +730,6 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // The steps its scope gave grow or shrink with the record's own.
         Part.Scoped = static_cast<UInt32>(Part.Scoped + To.Steps.GetSize() - From.Steps.GetSize());
         return true;
     }
@@ -770,7 +752,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // A record deeper or shallower than the first takes as many steps as its own path does.
+        // A record at another depth takes as many steps as its own path.
         if (To.Steps.GetSize() != Count)
         {
             Sequence<Step> Steps = To.Steps;

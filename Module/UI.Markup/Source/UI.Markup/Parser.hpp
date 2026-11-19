@@ -36,29 +36,29 @@ namespace ZyPlugin::UI
         /// \brief Parses the text of a theme or a layout, which must be an object.
         ///
         /// \param Source The text of the theme or the layout.
-        /// \param Output The variable receiving the document.
-        /// \param Error  The variable receiving why it cannot be parsed.
+        /// \param Output Receives the document.
+        /// \param Error  Receives why it cannot be parsed.
         /// \return `true` if it was parsed, `false` otherwise.
         static Bool Parse(Text Source, Ref<JsonValue> Output, Ref<Str> Error);
 
         /// \brief Reads a number.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the number.
+        /// \param Output Receives the number.
         /// \return `true` if the value is a number, `false` otherwise.
         static Bool ParseNumber(ConstRef<JsonValue> Value, Ref<Real32> Output);
 
         /// \brief Reads a flag.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the flag.
+        /// \param Output Receives the flag.
         /// \return `true` if the value is a flag, `false` otherwise.
         static Bool ParseBool(ConstRef<JsonValue> Value, Ref<Bool> Output);
 
         /// \brief Reads one of the values of an enumeration, by its name.
         ///
         /// \param Value  The value written for the field, the name of one of the enumeration's values.
-        /// \param Output The variable receiving the value.
+        /// \param Output Receives the value.
         /// \return `true` if the enumeration has a value of that name, `false` otherwise.
         template<IsEnum Type>
         static Bool ParseEnum(ConstRef<JsonValue> Value, Ref<Type> Output)
@@ -78,14 +78,14 @@ namespace ZyPlugin::UI
         /// \brief Reads a band by the name it was declared with.
         ///
         /// \param Value  The value written for the field, the band's name.
-        /// \param Output The variable receiving the band.
+        /// \param Output Receives the band.
         /// \return `true` if a band has that name, `false` otherwise.
         static Bool ParseLayer(ConstRef<JsonValue> Value, Ref<Layer> Output);
 
         /// \brief Reads one or more states joined by `+`, as `Hover+Checked`.
         ///
         /// \param Source The text naming the states.
-        /// \param Output The variable receiving the states.
+        /// \param Output Receives the states.
         /// \return `true` if every one of them is a state, `false` otherwise.
         static Bool ParseStates(Text Source, Ref<State> Output);
 
@@ -93,21 +93,21 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, whose palette names colours.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the colour.
+        /// \param Output  Receives the colour.
         /// \return `true` if the value is a colour, `false` otherwise.
         static Bool ParseColor(ConstRef<Sheet> Context, ConstRef<JsonValue> Value, Ref<Color> Output);
 
         /// \brief Reads a length written as a number of pixels, as a share of the room written as `50%`, or as `Auto`.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the length.
+        /// \param Output Receives the length.
         /// \return `true` if the value is a length, `false` otherwise.
         static Bool ParseLength(ConstRef<JsonValue> Value, Ref<Length> Output);
 
         /// \brief Reads the room on each side of a box, written as one, two or four numbers.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the room.
+        /// \param Output Receives the room.
         /// \return `true` if the value is room on each side, `false` otherwise.
         static Bool ParseEdges(ConstRef<JsonValue> Value, Ref<Edges> Output);
 
@@ -115,35 +115,35 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, whose typefaces are found by name and whose markup loads the others.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the typeface.
+        /// \param Output  Receives the typeface.
         /// \return `true` if the value is a typeface, `false` otherwise.
         static Bool ParseFont(Ref<Sheet> Context, ConstRef<JsonValue> Value, Ref<Retainer<ZyRender::Font>> Output);
 
         /// \brief Reads a pair of numbers, written `[x, y]`.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the pair.
+        /// \param Output Receives the pair.
         /// \return `true` if the value is two numbers, `false` otherwise.
         static Bool ParsePair(ConstRef<JsonValue> Value, Ref<Vector2> Output);
 
         /// \brief Reads a scale written as one number for both axes, or as a pair of numbers.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the scale.
+        /// \param Output Receives the scale.
         /// \return `true` if the value is a scale, `false` otherwise.
         static Bool ParseScale(ConstRef<JsonValue> Value, Ref<Vector2> Output);
 
         /// \brief Reads a number that cannot be below nought, as a time or a blur.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the number.
+        /// \param Output Receives the number.
         /// \return `true` if the value is a number of nought or more, `false` otherwise.
         static Bool ParseMeasure(ConstRef<JsonValue> Value, Ref<Real32> Output);
 
         /// \brief Reads a share of an animation's run, written as a number up to one or as a percentage.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the share, over nought through one.
+        /// \param Output Receives the share, over nought through one.
         /// \return `true` if the value is a share within the run, `false` otherwise.
         static Bool ParseShare(ConstRef<JsonValue> Value, Ref<Real32> Output);
 
@@ -151,7 +151,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, whose palette names colours.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the gradient.
+        /// \param Output  Receives the gradient.
         /// \return `true` if the value is a gradient, `false` otherwise.
         static Bool ParseGradient(ConstRef<Sheet> Context, ConstRef<JsonValue> Value, Ref<Gradient> Output);
 
@@ -159,14 +159,14 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, whose palette names colours.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the halo.
+        /// \param Output  Receives the halo.
         /// \return `true` if the value is a halo, `false` otherwise.
         static Bool ParseHalo(ConstRef<Sheet> Context, ConstRef<JsonValue> Value, Ref<Halo> Output);
 
         /// \brief Reads a transition written as a number of seconds, or as an object of its fields.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the transition.
+        /// \param Output Receives the transition.
         /// \return `true` if the value is a transition, `false` otherwise.
         static Bool ParseTransition(ConstRef<JsonValue> Value, Ref<Transition> Output);
 
@@ -176,7 +176,7 @@ namespace ZyPlugin::UI
         /// \param Where   The name of the style naming the animation.
         /// \param Key     The name of the field naming the animation.
         /// \param Value   The value written for the field, the name of the animation or empty for none.
-        /// \param Output  The variable receiving the identifier of the animation, or zero for none.
+        /// \param Output  Receives the identifier of the animation, or zero for none.
         /// \return `true` if the value is a name, `false` otherwise.
         static Bool ParseAnimation(Ref<Sheet>          Context,
                                    Text                Where,
@@ -188,14 +188,14 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, whose images are found by name and whose markup loads the others.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the image.
+        /// \param Output  Receives the image.
         /// \return `true` if the value is an image, `false` otherwise.
         static Bool ParseSource(Ref<Sheet> Context, ConstRef<JsonValue> Value, Ref<Retainer<ZyGraphic::Image>> Output);
 
         /// \brief Reads the part of an image shown, written `[u0, v0, u1, v1]` in texture coordinates.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the part.
+        /// \param Output Receives the part.
         /// \return `true` if the value is four numbers, `false` otherwise.
         static Bool ParseRegion(ConstRef<JsonValue> Value, Ref<Rect> Output);
 
@@ -203,8 +203,8 @@ namespace ZyPlugin::UI
         ///
         /// \param Context The theme being read, whose images and palette the value may name.
         /// \param Value   The value written for the field.
-        /// \param Output  The variable receiving the values given.
-        /// \param Bits    The variable receiving the bits of the values given.
+        /// \param Output  Receives the values given.
+        /// \param Bits    Receives the bits of the values given.
         /// \return `true` if the value is an image, `false` otherwise.
         static Bool ParseImage(Ref<Sheet> Context, ConstRef<JsonValue> Value, Ref<Skin> Output, Ref<Skin::Field> Bits);
 
@@ -225,14 +225,14 @@ namespace ZyPlugin::UI
         /// \brief Reads a percentage written as text, as `50%`.
         ///
         /// \param Source The text, which must be a number followed by `%` and nothing else.
-        /// \param Output The variable receiving the share it gives, a hundredth of the number.
+        /// \param Output Receives the share it gives, a hundredth of the number.
         /// \return `true` if the whole of the text is a percentage, `false` otherwise.
         static Bool ParsePercent(Text Source, Ref<Real32> Output);
 
         /// \brief Reads an array holding exactly as many numbers as a buffer does.
         ///
         /// \param Value  The value written for the field.
-        /// \param Output The variable receiving the numbers, in the order they are written.
+        /// \param Output Receives the numbers, in the order they are written.
         /// \return `true` if the value is an array of that many numbers, `false` otherwise.
         static Bool ParseNumbers(ConstRef<JsonValue> Value, Span<Real32> Output);
 
@@ -247,7 +247,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Node   The object the field is looked up in.
         /// \param Key    The name of the field.
-        /// \param Output The variable receiving the value, left untouched when the object does not give it.
+        /// \param Output Receives the value, left untouched when the object does not give it.
         /// \param Read   The function reading the value.
         /// \return `true` if the object does not give it or gives a value it takes, `false` otherwise.
         template<typename Type, typename Function>

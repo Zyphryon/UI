@@ -16,13 +16,7 @@
 #include "Listbox.hpp"
 #include "Panel.hpp"
 #include "Popup.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -73,7 +67,6 @@ namespace ZyPlugin::UI
     {
         const ConstPtr<Choice> Parts = Owner.Get<Choice>(Self);
 
-        // The up and down arrows step the pick whether the popup is open or closed.
         const Bool Upward   = Message.Key == ZyInput::Key::Up;
         const Bool Downward = Message.Key == ZyInput::Key::Down;
 
@@ -92,13 +85,11 @@ namespace ZyPlugin::UI
             {
                 Popup::Show(Owner, Parts->Popup, Self);
 
-                // The pick opens in view however far down its list it stands.
                 Owner.Reveal(Listbox::GetSelected(Element(Owner, Self)).GetHandle());
             }
             return true;
         }
 
-        // An item picked in its list shows in its label, closes the popup, and reaches the game as its own change.
         if (Message.Kind == Signal::kChange && Message.Target == Parts->List)
         {
             const Element Combo(Owner, Self);

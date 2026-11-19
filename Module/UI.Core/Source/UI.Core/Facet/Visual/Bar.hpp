@@ -23,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents how far a bar is filled, along its width.
     struct Bar final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Paint;
 
         /// The share filled, over nought through one.

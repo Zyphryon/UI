@@ -15,19 +15,8 @@
 #include "Label.hpp"
 #include "Panel.hpp"
 #include "Repeater.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Visual/Caption.hpp"
 #include "UI.Core/Facet/Visual/Scroll.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Data/Datum.hpp"
 #include "UI.Data/Facet/Binding.hpp"
-#include "UI.Data/Link.hpp"
-#include "UI.Data/Path.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -222,7 +211,6 @@ namespace ZyPlugin::UI
 
     void Listbox::SetIndex(Element Owner, SInt32 Index)
     {
-        // A position below nought or past the items picks none.
         const Element List = GetList(Owner);
         const Element Item = Index >= 0 ? Widget::GetChild(List, static_cast<UInt32>(Index)) : Element();
 
@@ -322,8 +310,8 @@ namespace ZyPlugin::UI
             return Step(Owner, Self, Upward ? -1 : 1);
         }
 
-        // Only a click on one of its own items picks it; one deeper down belongs to whatever holds it.
-        if (Message.Kind != Signal::kClick || Message.Target == Self || Owner.GetParent(Message.Target) != Self)
+        // Only a click on one of its own items picks it, one deeper down belonging to whatever holds it.
+        if (Message.Kind != Signal::kClick || Owner.GetParent(Message.Target) != Self)
         {
             return false;
         }
@@ -341,7 +329,7 @@ namespace ZyPlugin::UI
         const Ptr<Listing> Feed  = Owner.Get<Listing>();
         const UInt32       Count = Value.GetForm() == Form::List ? static_cast<UInt32>(Value.GetNumber()) : 0;
 
-        // Only a change of count makes the items again; a change in a record shows through the item's bindings.
+        // Only a change of count makes the items again, a change in a record showing through the item's bindings.
         if (!Feed || Feed->Count == Count)
         {
             return;
@@ -373,7 +361,7 @@ namespace ZyPlugin::UI
             Element(List.GetTree(), Item).Destruct();
         }
 
-        // Copied, since making an item may move the store the facet stands in.
+        // Copied, since making an item may move the facet.
         const ConstPtr<Listing> Feed = Owner.Get<Listing>();
 
         if (!Feed)
@@ -386,8 +374,18 @@ namespace ZyPlugin::UI
         const Str    Hidden   = Feed->Hidden;
         const Str    Disabled = Feed->Disabled;
         const UInt32 Count    = Feed->Count;
-        Path         Base;
-        const Bool   Parsed   = Path::Parse(Source, Base) && !Base.Steps.IsEmpty();
+
+        // A list in a row handed another record reads that record's list, which the bound text no longer names.
+        Path       From;
+        Path       To;
+        const Bool Moved = Path::Parse(Source, From) && !From.Steps.IsEmpty() && Locate(Owner, To);
+
+        if (Moved)
+        {
+            From.Steps.GetBack().Index = 0;
+        }
+
+        const Bool Rescoped = Moved && From != To;
 
         for (UInt32 Record = 0; Record < Count; ++Record)
         {
@@ -406,18 +404,11 @@ namespace ZyPlugin::UI
                 Binder::Attach(Item, Disabled, Binder::PutState<State::Disabled>(), Reader(), Scope);
             }
 
-            // A list in a row handed another record reads that record's list, which the bound text no longer names.
-            Path From = Base;
-            Path To;
-
-            if (Parsed && Locate(Owner, Record, To))
+            if (Rescoped)
             {
                 From.Steps.GetBack().Index = Record;
-
-                if (From != To)
-                {
-                    Binder::Rescope(Item, From, To);
-                }
+                To.Steps.GetBack().Index   = Record;
+                Binder::Rescope(Item, From, To);
             }
         }
 
@@ -430,14 +421,20 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Listbox::Locate(Element Owner, UInt32 Record, Ref<Path> Output)
+    Bool Listbox::Locate(Element Owner, Ref<Path> Output)
     {
         // The binding of the records is the list's own, the one counting them through the list's writer.
         const ConstPtr<Binding> Found = Owner.Get<Binding>();
-        const SInt              Index = Found ? Found->Links.Find([](ConstRef<Link> Entry)
+
+        if (!Found)
+        {
+            return false;
+        }
+
+        const SInt Index = Found->Links.Find([](ConstRef<Link> Entry)
         {
             return Entry.Write.IsBoundTo<&Listbox::OnItems>() && Entry.Pieces.GetSize() == 1 && Entry.Pieces[0].Hole;
-        }) : -1;
+        });
 
         if (Index < 0)
         {
@@ -451,7 +448,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        Output.Steps.GetBack().Index = Record;
+        Output.Steps.GetBack().Index = 0;
         return true;
     }
 
@@ -468,7 +465,7 @@ namespace ZyPlugin::UI
 
     Str Listbox::Phrase(Text Field)
     {
-        // A field naming a value or a lexicon key binds as it is written; a bare key reads that value of the record.
+        // A field naming a value or a lexicon key binds as written, while a bare key reads that value of the record.
         if (Field.IsEmpty() || Binder::IsBound(Field) || Binder::IsLocalized(Field))
         {
             return Str(Field);

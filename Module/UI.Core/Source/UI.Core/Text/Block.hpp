@@ -45,7 +45,7 @@ namespace ZyPlugin::UI
         /// The size the text is set at, in pixels.
         Real32                   Size      = 0.0f;
 
-        /// Where each line sits along the width of the box.
+        /// The place each line sits at along the width of the box.
         Align                    Alignment = Align::Start;
     };
 }

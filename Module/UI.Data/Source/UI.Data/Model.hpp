@@ -34,14 +34,14 @@ namespace ZyPlugin::UI
 
         /// \brief Sets a value, stamping it only when it changed.
         ///
-        /// \param Key   The path of the value, as `Player.Gold` or `Party[2].Name`; a record it names must exist.
+        /// \param Key   The path of the value, as `Player.Gold` or `Party[2].Name`, whose records must exist.
         /// \param Value The value stored there, which what is bound to the path shows.
         void Set(Text Key, ConstRef<Datum> Value);
 
         /// \brief Sets a flag.
         ///
         /// \param Key   The path of the value, as \ref Set reads it.
-        /// \param Value The flag, `true` to set the flag, `false` to clear it.
+        /// \param Value `true` to set the flag, `false` to clear it.
         ZY_INLINE void SetBool(Text Key, Bool Value)
         {
             Set(Key, Datum(Value));
@@ -62,7 +62,7 @@ namespace ZyPlugin::UI
         /// \param Value The text stored there, copied in.
         ZY_INLINE void SetText(Text Key, Text Value)
         {
-            // Text held already is no change, which is told before a copy of it is made.
+            // Text held already is no change, told before any copy is made.
             const ConstPtr<Datum> Held = Find(Key);
 
             if (Held && Held->GetForm() == Form::Text && Held->GetText() == Value)
@@ -180,7 +180,7 @@ namespace ZyPlugin::UI
         template<typename Container, typename Keying, typename Filling>
         void Mirror(Text List, ConstRef<Container> Source, AnyRef<Keying> KeyOf, AnyRef<Filling> Fill)
         {
-            // The keys are gathered in the root, which a list nested in a record's fill finds free again by then.
+            // Gathered in the root, which a list nested in a record's fill finds free again by then.
             Ref<Sequence<UInt64>> Keys = mRoot->mKeys;
             Keys.Clear();
 
@@ -220,7 +220,7 @@ namespace ZyPlugin::UI
         /// \return The index of the first record holding it, or below nought when none does.
         SInt32 FindKey(Text List, UInt64 Key) const;
 
-        /// \brief Gets the count of changes made to the root this model belongs to, or to anything beneath it.
+        /// \brief Gets the count of changes made under the root this model belongs to.
         ///
         /// \return The count, which only grows.
         ZY_INLINE UInt32 GetRevision() const
@@ -231,7 +231,7 @@ namespace ZyPlugin::UI
         /// \brief Finds the value a path reaches, and the newest stamp on the way to it.
         ///
         /// \param Where The path read from this model.
-        /// \param Stamp The receiver of the newest stamp of the lists the path goes through and the value it ends on.
+        /// \param Stamp Receives the newest stamp of the lists the path goes through and the value it ends on.
         /// \return The value, or `nullptr` when the path reaches none.
         ConstPtr<Datum> Resolve(ConstRef<Path> Where, Ref<UInt32> Stamp) const;
 
@@ -286,15 +286,15 @@ namespace ZyPlugin::UI
         /// \brief Finds the entry of the list a path names, making it when there is none.
         ///
         /// \param List  The path of the list, as text.
-        /// \param Owner The receiver of the model holding the list, which its new records point back at.
-        /// \param Name  The receiver of the identifier of the name of the list.
+        /// \param Owner Receives the model holding the list, which its new records point back at.
+        /// \param Name  Receives the identifier of the name of the list.
         /// \return The entry, or `nullptr` when the path is not one or a record on the way does not exist.
         Ptr<Entry> Open(Text List, Ref<Ptr<Model>> Owner, Ref<UInt64> Name);
 
         /// \brief Finds the entry a path ends on, and the newest stamp on the way to it.
         ///
         /// \param Where The path read from this model.
-        /// \param Stamp The receiver of the newest stamp of the lists the path goes through and the entry it ends on.
+        /// \param Stamp Receives the newest stamp of the lists the path goes through and the entry it ends on.
         /// \return The entry, or `nullptr` when the path reaches none.
         ConstPtr<Entry> Reach(ConstRef<Path> Where, Ref<UInt32> Stamp) const;
 

@@ -16,16 +16,7 @@
 #include "Menu.hpp"
 #include "Panel.hpp"
 #include "Popup.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Layout/Virtual.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -67,9 +58,11 @@ namespace ZyPlugin::UI
 
         if (const ConstPtr<JsonValue> Menus = Markup::GetField(Node, "Menus"); Menus && Menus->IsArray())
         {
+            const Text Style = Markup::GetText(Node, "MenuStyle", "Menu");
+
             for (ConstRef<JsonValue> Entry : Menus->GetArray())
             {
-                Add(Reader, Result, Entry, Markup::GetText(Node, "MenuStyle", "Menu"));
+                Add(Reader, Result, Entry, Style);
             }
         }
         else if (Menus)
@@ -77,7 +70,7 @@ namespace ZyPlugin::UI
             LOG_W("A menu bar's 'Menus' must be a list, so the bar holds none");
         }
 
-        // What the layout gives the bar besides its menus stands at its far end, as a readout of the frame rate.
+        // What the layout gives the bar besides its menus stands at its far end.
         Markup::SetHost(Result, GetTrail(Result));
         return Result;
     }
@@ -87,7 +80,6 @@ namespace ZyPlugin::UI
 
     Element Menubar::AddMenu(Element Bar, Text Content, Text Style)
     {
-        // Copied, since making the title may move the store the bar's own facet stands in.
         const ConstPtr<Strip> Own = Bar.Get<Strip>();
 
         if (!Own)
@@ -95,7 +87,8 @@ namespace ZyPlugin::UI
             return Element();
         }
 
-        const Str     Face  = Widget::Part(Text(Own->Style), "Title");
+        // Read before the title is made, since making it may move the bar's facet.
+        const Str     Face  = Widget::Part(Own->Style, "Title");
         const Element Trail(Bar.GetTree(), Own->Trail);
 
         // Titles stand in the order they were added, before the part at the far end.
@@ -255,7 +248,6 @@ namespace ZyPlugin::UI
 
     Bool Menubar::OnEvent(Ref<Interface> Owner, ConstRef<Event> Message, Handle Self)
     {
-        // A click on a title opens its menu, or closes it when it stands open already.
         const Bool Inside = Message.Kind == Signal::kClick && Owner.GetParent(Message.Target) == Self;
 
         if (Inside && Owner.Has<Pulldown>(Message.Target))
@@ -291,7 +283,7 @@ namespace ZyPlugin::UI
 
     Bool Menubar::Track(Ref<Interface> Owner, Handle Self)
     {
-        const ConstPtr<Strip> Own = Owner.Get<Strip>(Self);
+        const Ptr<Strip> Own = Owner.Get<Strip>(Self);
 
         // Nothing is followed while every menu is closed, which is all a bar costs an update then.
         if (!Own || !Own->Open.IsValid())
@@ -310,9 +302,8 @@ namespace ZyPlugin::UI
                 Owner.SetState(Title, Widget::Selected(), false);
             }
 
-            const Ptr<Strip> Closed = Owner.Get<Strip>(Self);
-            Closed->Open    = Handle();
-            Closed->Hovered = Handle();
+            Own->Open    = Handle();
+            Own->Hovered = Handle();
             return false;
         }
 
@@ -327,14 +318,12 @@ namespace ZyPlugin::UI
         }
 
         // Only the pointer coming to rest on another title counts, so the keyboard keeps the menu it moved to.
-        const Ptr<Strip> Kept = Owner.Get<Strip>(Self);
-
-        if (Hovered == Kept->Hovered)
+        if (Hovered == Own->Hovered)
         {
             return false;
         }
 
-        Kept->Hovered = Hovered;
+        Own->Hovered = Hovered;
 
         if (!Hovered.IsValid() || Hovered == Title)
         {
@@ -384,8 +373,11 @@ namespace ZyPlugin::UI
 
     Bool Menubar::IsUsable(ConstRef<Interface> Owner, Handle Title)
     {
-        return Owner.Has<Pulldown>(Title) && !Owner.HasState(Title, State::Hidden)
-            && !Owner.HasState(Title, State::Disabled);
+        if (!Owner.Has<Pulldown>(Title))
+        {
+            return false;
+        }
+        return !Owner.HasState(Title, State::Hidden) && !Owner.HasState(Title, State::Disabled);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

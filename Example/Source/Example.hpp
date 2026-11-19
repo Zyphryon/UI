@@ -16,12 +16,12 @@
 #include <UI.Control/Module.hpp>
 #include <UI.Control/Widget/Common.hpp>
 #include <UI.Control/Widget/Dialog.hpp>
-#include <UI.Control/Widget/Repeater.hpp>
 #include <UI.Control/Widget/Label.hpp>
 #include <UI.Control/Widget/Listbox.hpp>
 #include <UI.Control/Widget/Menu.hpp>
-#include <UI.Control/Widget/Spinner.hpp>
+#include <UI.Control/Widget/Repeater.hpp>
 #include <UI.Control/Widget/Scroller.hpp>
+#include <UI.Control/Widget/Spinner.hpp>
 #include <UI.Control/Widget/Window.hpp>
 #include <UI.Core/Element.hpp>
 #include <UI.Core/Facet/Visual/Bar.hpp>
@@ -67,7 +67,7 @@ namespace ZyPlugin::UI
             Window.Height = 720;
             Startup.SetWindow(Window);
 
-            // A plain target blends as the colours are written, with no conversion on the way.
+            // A plain target blends the colours as written.
             ZyRuntime::Startup::Graphic Graphic = Startup.GetGraphic();
             Graphic.ColorFormat = ZyGraphic::TextureFormat::RGBA8UIntNorm;
             Startup.SetGraphic(Graphic);
@@ -84,7 +84,7 @@ namespace ZyPlugin::UI
             mFont = Content->Load<ZyRender::Font>("Resources://Font/MedievalSharp-Regular.fnt");
             mDoor = Content->Load<ZyGraphic::Image>("Resources://Image/Door.tex");
 
-            // Every widget wears the look built into the library, in the example's typeface, until its theme is read.
+            // Widgets wear the built-in look until the theme is read.
             mMarkup = Unique<Markup>::Create(AddressOf(* Content));
             ControlModule::Declare(* mMarkup);
             mMarkup->SetFont("Body", mFont);
@@ -94,27 +94,26 @@ namespace ZyPlugin::UI
                 LOG_W("The built-in theme cannot be read: {0}", Error);
             }
             mInterface.SetTheme(AddressOf(mTheme));
-            // Text fields copy to and paste from the window's clipboard, and the display's scale follows the window.
+
+            // The clipboard and the display scale follow the window.
             Ref<ZyInput::Service>    Input    = * GetService<ZyInput::Service>();
             Ref<ZyPlatform::Service> Platform = * GetService<ZyPlatform::Service>();
             mInterface.Attach(Input, AddressOf(Platform.GetWindow()));
             Input.OnWindowScale.AddMethod<&Example::OnWindowScale>(this);
 
-            // The library names sounds and nothing more; the game decides how each one plays.
+            // The library names sounds, and the game decides how each plays.
             mInterface.SetSoundHook(SoundHook::Create([this](Text Address, Cue Moment, Handle)
             {
                 OnSound(Address, Moment);
             }));
 
-            // Bindings, drag and drop, tooltips and context menus run on the interface once the library is installed.
             ControlModule::Declare(mInterface);
 
-            // The game owns the values the interface shows; the interface only points at them.
             Seed();
             Binder::SetModel(mInterface, AddressOf(mModel));
             Scale(Platform);
 
-            // Text written as a key shows the key itself until its language file arrives, then its text.
+            // A key shows itself until its language file arrives.
             mLexicon.SetLanguage("English");
             Binder::SetLexicon(mInterface, AddressOf(mLexicon));
 
@@ -204,7 +203,7 @@ namespace ZyPlugin::UI
             Words.Size    = Size;
             Words.Tint    = Tint;
 
-            // A key is bound as a layout binds one, so the line follows the language as the layout's text does.
+            // A key binds as a layout's does, so the line follows the language.
             if (Binder::IsLocalized(Content))
             {
                 Binder::Attach(Result, Content, Binder::PutText<&Label::SetText>());
@@ -230,7 +229,6 @@ namespace ZyPlugin::UI
 
             Gauge.Add<Bar>().Fill = Fill;
 
-            // The caption stands over the bar, stretched across it, its text centred.
             Caption = AddText(Gauge, "", 13.0f, Color::White());
 
             Ref<Box> Shape = Caption.EditBox();
@@ -267,7 +265,7 @@ namespace ZyPlugin::UI
         {
             const Element Card = OpenCard(24.0f, 360.0f);
 
-            // The heading holds the title, then the pickers the layout makes once it arrives.
+            // The heading holds the title, then the pickers the layout adds.
             const Element Header = Card.Create();
             Ref<Box>      Line   = Header.EditBox();
             Line.Flow  = Direction::Row;
@@ -277,20 +275,21 @@ namespace ZyPlugin::UI
 
             const Element Title = AddText(Header, "", 34.0f, Color(0.94f, 0.85f, 0.56f, 1.0f));
             Title.EditBox().Grow = 1.0f;
-            Ref<Caption>  Words = * Title.Edit<Caption>();
-            Words.Stroke      = Color(0.23f, 0.16f, 0.06f, 1.0f);
-            Words.StrokeWidth = 2.0f;
-            Words.Shadow      = Color::Black();
+
+            Ref<Caption> Words = * Title.Edit<Caption>();
+            Words.Stroke       = Color(0.23f, 0.16f, 0.06f, 1.0f);
+            Words.StrokeWidth  = 2.0f;
+            Words.Shadow       = Color::Black();
             Words.ShadowOffset = Vector2(2.0f, 2.0f);
 
-            // Bound in code as a layout binds it, so typing a name in the character card renames this one.
+            // Bound in code, so renaming in the character card renames this one.
             Binder::Attach(Title, "{Player.Name}", Binder::PutText<&Label::SetText>());
 
             AddText(Card, "@Card.About", 15.0f, Color(0.63f, 0.66f, 0.72f, 1.0f));
 
             AddText(Card, "@Card.Vitals", 20.0f, Color(0.62f, 0.70f, 0.85f, 1.0f));
 
-            // A caption is formatted again only when a whole number it shows changes; its words come from the language.
+            // A caption is formatted again only when a whole number it shows changes.
             Element       HealthText;
             const Element Health = AddBar(Card, Color(0.84f, 0.27f, 0.27f, 1.0f), HealthText);
             Binder::Attach(Health, "{Player.HealthShare}", Binder::Put<Real32, &Example::SetShare>());
@@ -335,7 +334,7 @@ namespace ZyPlugin::UI
             Roll.Thumb  = Color(0.94f, 0.85f, 0.56f, 0.8f);
             Roll.Follow = true;
 
-            // More lines than the log shows, so it scrolls, staying on the latest one.
+            // More lines than fit, so the log scrolls and stays on the latest.
             for (UInt32 Line = 0; Line < 30; ++Line)
             {
                 Str Content;
@@ -388,7 +387,7 @@ namespace ZyPlugin::UI
             const Element Heading = AddText(Card, "", 20.0f, Color(0.62f, 0.70f, 0.85f, 1.0f));
             Binder::Attach(Heading, "@Inventory.Title", Binder::PutText<&Label::SetText>());
 
-            // Three lines of slots show; the rest of the records are reached by the wheel, their slots handed on.
+            // Three lines of slots show, and the wheel hands them on to the other records.
             const Element Grid = Repeater::Create(Card, "Slots");
             Grid.EditBox().Height = Length::Pixels(156.0f);
             mGrid = Grid;
@@ -416,7 +415,7 @@ namespace ZyPlugin::UI
 
             AddBadge(Slot, Scope);
 
-            // Bound like the rest of the slot, so a slot handed to another record carries and explains that one.
+            // Bound, so a slot handed to another record carries and explains that one.
             Drag::SetSource(Slot, "Item");
             Drag::SetTarget(Slot, "Item");
             Binder::Attach(Slot, "{Name}", Writer::Create<&Drag::SetPayload>(), Reader(), Scope);
@@ -581,7 +580,7 @@ namespace ZyPlugin::UI
 
             ConstRetainer<ZyContent::Service> Content = GetService<ZyContent::Service>();
 
-            // Every language is read up front, so switching is only a matter of which one is spoken.
+            // Every language is read up front, so switching only changes which is spoken.
             Content->Read("Resources://Language/English.lang", ZyJob::Lane::Main,
                 ZyContent::Mount::OnRead::Create([this](Filesystem::Result Result, Blob Data)
                 {
@@ -649,23 +648,20 @@ namespace ZyPlugin::UI
             mMarkup->Spawn(mInterface, "Gallery");
             mMarkup->Spawn(mInterface, "Audio");
 
-            // The pickers of language and scale stand in the character card built in code, beside its title.
             mMarkup->Spawn(mHeader, "Options");
 
-            // The bag waits closed until its button opens it; its rows swap with each other and with the grid's slots.
+            // The bag's rows swap with each other and with the grid's slots.
             mBag = mMarkup->Spawn(mInterface, "Bag");
             Window::Close(mInterface, mBag.GetHandle());
             ObserveBag();
 
-            // The codex waits closed as well; its button opens it, and tab walks into it once it holds the keyboard.
+            // Tab walks into the codex once it holds the keyboard.
             mCodex = mMarkup->Spawn(mInterface, "Codex");
             Window::Close(mInterface, mCodex.GetHandle());
 
-            // The dialog waits closed too, until the quit button asks.
             mQuit = mMarkup->Spawn(mInterface, "QuitDialog");
             Dialog::Close(mInterface, mQuit.GetHandle());
 
-            // The editor waits closed as well, until its button opens it.
             mEditor = mMarkup->Spawn(mInterface, "Editor");
             Window::Close(mInterface, mEditor.GetHandle());
         }
@@ -698,9 +694,7 @@ namespace ZyPlugin::UI
             {
                 mLexicon.SetLanguage(Listbox::GetIndex(Element(mInterface, Self)) == 1 ? "Spanish" : "English");
 
-                Str Line;
-                Line.Format("[Settings] Language: {0}", mLexicon.GetLanguage());
-                Say(Line);
+                Say(Str::Print("[Settings] Language: {0}", mLexicon.GetLanguage()));
             }
             return false;
         }
@@ -719,9 +713,7 @@ namespace ZyPlugin::UI
                 const SInt32 Picked = Clamp(Listbox::GetIndex(Element(mInterface, Self)), 0, 2);
                 mInterface.SetScale(kScales[Picked]);
 
-                Str Line;
-                Line.Format("[Settings] Interface scale: {0}%", static_cast<UInt32>(kScales[Picked] * 100.0f));
-                Say(Line);
+                Say(Str::Print("[Settings] Interface scale: {0}%", static_cast<UInt32>(kScales[Picked] * 100.0f)));
             }
             return false;
         }
@@ -796,9 +788,7 @@ namespace ZyPlugin::UI
         {
             if (Message.Kind == Signal::kClick && Message.Target == Self)
             {
-                Str Line;
-                Line.Format("[You] {0}!", Name);
-                Say(Line);
+                Say(Str::Print("[You] {0}!", Name));
             }
             return false;
         }
@@ -813,10 +803,8 @@ namespace ZyPlugin::UI
         {
             if (Message.Kind == Signal::kChange && Message.Target == Self)
             {
-                Str Line;
                 const Bool Checked = mInterface.HasState(Self, Widget::Checked());
-                Line.Format("[Settings] {0}: {1}", Name, Checked ? "on"_Text : "off"_Text);
-                Say(Line);
+                Say(Str::Print("[Settings] {0}: {1}", Name, Checked ? "on"_Text : "off"_Text));
             }
             return false;
         }
@@ -831,9 +819,7 @@ namespace ZyPlugin::UI
         {
             if (Message.Kind == Signal::kChange && Message.Target == Self)
             {
-                Str Line;
-                Line.Format("[Settings] Level: {0}", static_cast<UInt32>(Spinner::GetValue(Element(Owner, Self))));
-                Say(Line);
+                Say(Str::Print("[Settings] Level: {0}", static_cast<UInt32>(Spinner::GetValue(Element(Owner, Self)))));
             }
             return false;
         }
@@ -850,9 +836,7 @@ namespace ZyPlugin::UI
             {
                 const Element Picked = Listbox::GetSelected(Element(mInterface, Self));
 
-                Str Line;
-                Line.Format("[Settings] {0}: {1}", Name, Text(Picked.GetFirst().Get<Caption>()->Content));
-                Say(Line);
+                Say(Str::Print("[Settings] {0}: {1}", Name, Text(Picked.GetFirst().Get<Caption>()->Content)));
             }
             return false;
         }
@@ -948,9 +932,7 @@ namespace ZyPlugin::UI
             {
                 const ConstPtr<Caption> Kind = Element(mInterface, Self).GetParent().GetFirst().Get<Caption>();
 
-                Str Line;
-                Line.Format("[Codex] Tracking the {0}.", Kind ? Text(Kind->Content) : Text("beast"));
-                Say(Line);
+                Say(Str::Print("[Codex] Tracking the {0}.", Kind ? Text(Kind->Content) : Text("beast")));
             }
             return false;
         }
@@ -964,12 +946,9 @@ namespace ZyPlugin::UI
         {
             if (Message.Kind == Signal::kChange && Message.Target == Self)
             {
-                Str Where;
-                Where.Format("Inventory[{0}].Name", Repeater::GetIndex(Element(mInterface, Self)));
+                const Str Where = Str::Print("Inventory[{0}].Name", Repeater::GetIndex(Element(mInterface, Self)));
 
-                Str Line;
-                Line.Format("[Bag] Picked {0}.", Text(mModel.GetText(Where)));
-                Say(Line);
+                Say(Str::Print("[Bag] Picked {0}.", Text(mModel.GetText(Where))));
             }
             return false;
         }
@@ -985,17 +964,14 @@ namespace ZyPlugin::UI
             {
                 const UInt32 Count = mModel.GetCount("Inventory");
 
-                Str Name;
-                Name.Format("{0}. Found Trinket", Count + 1);
+                const Str Name = Str::Print("{0}. Found Trinket", Count + 1);
 
                 const Ptr<Model> Record = mModel.Append("Inventory");
                 Record->SetText("Name", Name);
                 Record->SetNumber("Count", 1.0);
                 Record->SetBool("Rare", true);
 
-                Str Line;
-                Line.Format("[Bag] Looted {0}.", Text(Name));
-                Say(Line);
+                Say(Str::Print("[Bag] Looted {0}.", Text(Name)));
             }
             return false;
         }
@@ -1011,12 +987,7 @@ namespace ZyPlugin::UI
 
             if (Message.Kind == Signal::kClick && Message.Target == Self && Picked >= 0)
             {
-                Str Where;
-                Where.Format("Inventory[{0}].Name", Picked);
-
-                Str Line;
-                Line.Format("[Bag] Dropped {0}.", Text(mModel.GetText(Where)));
-                Say(Line);
+                Say(Str::Print("[Bag] Dropped {0}.", Text(mModel.GetText(Str::Print("Inventory[{0}].Name", Picked)))));
 
                 mModel.Erase("Inventory", static_cast<UInt32>(Picked));
             }
@@ -1058,14 +1029,12 @@ namespace ZyPlugin::UI
                 return false;
             }
 
-            // What the dragged slot carries is its item's name, bound like everything else it shows.
+            // The dragged slot carries its item's name.
             const Str Carried = Drag::GetPayload(Element(mInterface, Message.Other)).Print();
 
             Swap(static_cast<UInt32>(From), static_cast<UInt32>(To));
 
-            Str Line;
-            Line.Format("[Bag] Moved {0} to slot {1}.", Text(Carried), To + 1);
-            Say(Line);
+            Say(Str::Print("[Bag] Moved {0} to slot {1}.", Text(Carried), To + 1));
             return true;
         }
 
@@ -1088,9 +1057,9 @@ namespace ZyPlugin::UI
             const Ptr<Model> One = mModel.GetRecord("Inventory", First);
             const Ptr<Model> Two = mModel.GetRecord("Inventory", Second);
 
-            const Str    Name   = One->GetText("Name");
-            const Real64 Count  = One->GetNumber("Count", 0.0);
-            const Bool   Rare   = One->GetBool("Rare", false);
+            const Str    Name  = One->GetText("Name");
+            const Real64 Count = One->GetNumber("Count", 0.0);
+            const Bool   Rare  = One->GetBool("Rare", false);
 
             One->SetText("Name", Text(Two->GetText("Name")));
             One->SetNumber("Count", Two->GetNumber("Count", 0.0));
@@ -1156,8 +1125,7 @@ namespace ZyPlugin::UI
 
             for (UInt32 Index = 0; Index < 500; ++Index)
             {
-                Str Name;
-                Name.Format("{0}. {1} {2}", Index + 1, kMaterials[Index % 8], kKinds[(Index / 8) % 10]);
+                const Str Name = Str::Print("{0}. {1} {2}", Index + 1, kMaterials[Index % 8], kKinds[(Index / 8) % 10]);
 
                 const Ptr<Model> Record = mModel.Append("Inventory");
                 Record->SetText("Name", Name);
@@ -1193,11 +1161,8 @@ namespace ZyPlugin::UI
 
             for (UInt32 Index = 0; Index < 40; ++Index)
             {
-                Str Name;
-                Name.Format("{0} {1}", kKinds[Index % 6], Index + 1);
-
                 const Ptr<Model> Entity = mModel.Append("Entities");
-                Entity->SetText("Name", Name);
+                Entity->SetText("Name", Str::Print("{0} {1}", kKinds[Index % 6], Index + 1));
                 Entity->SetText("Kind", kKinds[Index % 6]);
                 Entity->SetNumber("Level", static_cast<Real64>((Index * 7) % 30 + 1));
                 Entity->SetNumber("Health", static_cast<Real64>((Index * 37) % 200 + 20));
@@ -1238,7 +1203,7 @@ namespace ZyPlugin::UI
             const Real32 Health = Wave(mTime * 0.2f);
             const Real32 Mana   = Wave(mTime * 0.13f + 0.5f);
 
-            // The shares move every frame; the whole numbers only change, and so are shown again, now and then.
+            // The shares move every frame, while the whole numbers change only now and then.
             mModel.SetNumber("Player.HealthShare", Health);
             mModel.SetNumber("Player.Health", Floor(Health * 250.0f));
             mModel.SetNumber("Player.ManaShare", Mana);
@@ -1254,13 +1219,11 @@ namespace ZyPlugin::UI
                 Experience -= 1.0;
                 mModel.SetNumber("Player.Level", Level);
 
-                Str Line;
-                Line.Format("[Game] Level up! Now level {0}.", static_cast<UInt32>(Level));
-                Say(Line);
+                Say(Str::Print("[Game] Level up! Now level {0}.", static_cast<UInt32>(Level)));
             }
             mModel.SetNumber("Player.Experience", Experience);
 
-            // What the bag costs, shown in it: the rows that exist, against the records it holds.
+            // The rows the bag made, against the records it holds.
             if (mBag.IsAlive())
             {
                 mModel.SetNumber("Ui.Rows", static_cast<Real64>(Repeater::GetRealized(mBag.Find("Items"))));
@@ -1291,22 +1254,22 @@ namespace ZyPlugin::UI
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Canvas                     mCanvas;
-        Interface                  mInterface;
-        Retainer<ZyRender::Font>   mFont;
-        Retainer<ZyGraphic::Image> mDoor;
-        Element                    mLog;
-        Element                    mBag;
-        Element                    mGrid;
-        Element                    mQuit;
-        Element                    mCodex;
-        Element                    mEditor;
-        Element                    mHeader;
-        Model                      mModel;
-        Lexicon                    mLexicon;
-        Theme                      mTheme;
-        Unique<Markup>             mMarkup;
+        Canvas                                  mCanvas;
+        Interface                               mInterface;
+        Retainer<ZyRender::Font>                mFont;
+        Retainer<ZyGraphic::Image>              mDoor;
+        Element                                 mLog;
+        Element                                 mBag;
+        Element                                 mGrid;
+        Element                                 mQuit;
+        Element                                 mCodex;
+        Element                                 mEditor;
+        Element                                 mHeader;
+        Model                                   mModel;
+        Lexicon                                 mLexicon;
+        Theme                                   mTheme;
+        Unique<Markup>                          mMarkup;
         Table<UInt64, Retainer<ZyAudio::Sound>> mSounds;
-        Real32                     mTime;
+        Real32                                  mTime;
     };
 }

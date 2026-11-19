@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Block.hpp"
-#include "UI.Core/Types.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -57,9 +56,9 @@ namespace ZyPlugin::UI
         /// \param Content The text to lay out.
         /// \param Size    The size the text is set at, in pixels.
         /// \param Width   The width no line may overrun, in pixels, or nought to break only where the text does.
-        /// \param Lines   The receiver of the text with a line break wherever a line was broken.
-        /// \param Widths  The receiver of the width of each line, in pixels.
-        /// \param Natural The receiver of the widest line's reach in font units, or the largest real if a line broke.
+        /// \param Lines   Receives the text with a line break wherever a line was broken.
+        /// \param Widths  Receives the width of each line, in pixels.
+        /// \param Natural Receives the widest line's reach in font units, or the largest real if a line broke.
         /// \return The width of the widest line and the height of every line together, in pixels.
         static Vector2 Wrap(ConstRef<ZyRender::Font> Source,
                             Text                     Content,
@@ -124,7 +123,10 @@ namespace ZyPlugin::UI
     private:
 
         /// The advance a codepoint the typeface draws nothing for holds, which no glyph has.
-        static constexpr Real32 kNone = -kMaximum<Real32>;
+        static constexpr Real32 kNone  = -kMaximum<Real32>;
+
+        /// The room a line is given past its box, in font units, so a box as wide as its text never breaks it.
+        static constexpr Real32 kSlack = 0.001f;
 
         /// \brief Gets how far a codepoint moves the pen, before any kerning.
         ///
@@ -135,14 +137,14 @@ namespace ZyPlugin::UI
 
         /// \brief Breaks text onto new lines, as \ref Wrap does.
         ///
-        /// \tparam Copied  The flag, `true` to turn only spaces of a copy into breaks, `false` to write all codepoints.
+        /// \tparam Copied `true` to turn only spaces of a copy into breaks, `false` to write all codepoints.
         /// \param Source  The typeface, which must have finished loading.
         /// \param Content The text to lay out.
         /// \param Size    The size the text is set at, in pixels.
         /// \param Limit   The width no line may overrun, in font units.
-        /// \param Lines   The receiver of the text with line breaks, holding a copy of the text when \p Copied.
-        /// \param Widths  The receiver of the width of each line, in pixels.
-        /// \param Natural The receiver of the widest line's reach in font units, or the largest real if a line broke.
+        /// \param Lines   Receives the text with line breaks, holding a copy of the text when \p Copied.
+        /// \param Widths  Receives the width of each line, in pixels.
+        /// \param Natural Receives the widest line's reach in font units, or the largest real if a line broke.
         /// \return `true` if the walk ran to the end, `false` otherwise.
         template<Bool Copied>
         static Bool Walk(ConstRef<ZyRender::Font> Source,

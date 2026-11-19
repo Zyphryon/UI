@@ -15,18 +15,8 @@
 #include "Label.hpp"
 #include "Panel.hpp"
 #include "Popup.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Input/Control.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Tree.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
 #include "UI.Gesture/Facet/Context.hpp"
 #include "UI.Gesture/Tooltip.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -137,11 +127,12 @@ namespace ZyPlugin::UI
         Item.SetStyle(Face);
 
         // The item tells of the pointer coming over it, which the menu lights it by.
-        Item.Get<Control>()->Hover = true;
+        const Ptr<Control> Input = Item.Get<Control>();
+        Input->Hover = true;
 
         if (!Action.IsEmpty())
         {
-            Item.Get<Control>()->Action = Identify(Action);
+            Input->Action = Identify(Action);
         }
 
         Label::Create(Item, Content, Widget::Part(Face, "Label")).EditBox().Grow = 1.0f;
@@ -161,7 +152,6 @@ namespace ZyPlugin::UI
         const Str     Style = GetStyle(Target);
         const Element Item  = AddItem(Target, Content, Action, Shortcut);
 
-        // The mark fills its box at the far end of the item, and the theme shows it only while the item is checked.
         const Element Holder = Panel::Create(Item, Widget::Part(Style, "Check"));
         Panel::Create(Holder, Widget::Part(Style, "Check.Mark")).EditBox().Grow = 1.0f;
 
@@ -312,7 +302,6 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Every submenu open from it closes first, each closing its own.
         Collapse(Owner, Target, Handle());
 
         Light(Owner, Target, Handle());
@@ -344,7 +333,7 @@ namespace ZyPlugin::UI
             return Element();
         }
 
-        // A submenu was opened over nothing; the menu it was reached from knows.
+        // A submenu was opened over nothing, so the menu it was reached from is asked.
         Ref<Tree>              Owner = Part.GetTree();
         const ConstPtr<Roster> Own   = Owner.Get<Roster>(GetTopMenu(Owner, Owner.GetRoot(Part.GetHandle())));
         return Own && Owner.IsAlive(Own->Subject) ? Element(Owner, Own->Subject) : Element();
@@ -374,8 +363,8 @@ namespace ZyPlugin::UI
         }
 
         // An item's hover goes no further than its menu, where the pointer coming over one lights it.
-        const Bool Hover = Message.Kind == Signal::kEnter || Message.Kind == Signal::kMove
-            || Message.Kind == Signal::kLeave;
+        const Bool Moving = Message.Kind == Signal::kEnter || Message.Kind == Signal::kMove;
+        const Bool Hover  = Moving || Message.Kind == Signal::kLeave;
 
         if (Hover && Owner.GetParent(Message.Target) == Self)
         {
@@ -481,13 +470,12 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // A check item turns where it stands, so several can be tried in a row; another item or escape closes the menu.
+        // A check item turns where it stands, so several can be tried in a row before another item or escape closes.
         if (Owner.Has<Toggle>(Item))
         {
             return;
         }
 
-        // Every menu the item was reached through closes, and the keyboard goes back to whoever held it.
         Retreat(Owner, GetTopMenu(Owner, Self));
     }
 
@@ -511,7 +499,6 @@ namespace ZyPlugin::UI
 
         if (!Popup::IsOpen(Owner, Submenu))
         {
-            // An item in the window's right half opens its submenu to the left, so the submenu stays in view.
             const Rect Frame = Owner.GetFrame(Item);
             const Bool Left  = Frame.GetMinimumX() > Owner.GetSize().GetX() * 0.5f;
 
@@ -542,10 +529,8 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Menu::Collapse(Ref<Interface> Owner, Handle Self, Handle Kept)
+    void Menu::Collapse(Ref<Interface> Owner, Handle Self, Handle Kept)
     {
-        Bool Closed = false;
-
         for (Element Item = Element(Owner, Self).GetFirst(); Item.IsAlive(); Item = Item.GetNext())
         {
             const ConstPtr<Branch> Inner = Item.Get<Branch>();
@@ -553,10 +538,8 @@ namespace ZyPlugin::UI
             if (Inner && Item.GetHandle() != Kept && Popup::IsOpen(Owner, Inner->Submenu))
             {
                 Close(Owner, Inner->Submenu);
-                Closed = true;
             }
         }
-        return Closed;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -608,7 +591,6 @@ namespace ZyPlugin::UI
         const SInt32 Count  = static_cast<SInt32>(Choices.GetSize());
         const SInt32 Index  = static_cast<SInt32>(Choices.Find(Active));
 
-        // From nothing lit, down starts at the top and up at the bottom; past either end it wraps around.
         const SInt32 Next = Index < 0 ? (Direction > 0 ? 0 : Count - 1) : Wrap(Index + Direction, Count);
         Light(Owner, Self, Choices[Next]);
     }
@@ -669,8 +651,11 @@ namespace ZyPlugin::UI
 
     Bool Menu::IsPickable(ConstRef<Tree> Owner, Handle Item)
     {
-        return Owner.IsAlive(Item) && Owner.Has<Control>(Item)
-            && !Owner.HasState(Item, State::Hidden) && !Owner.HasState(Item, State::Disabled);
+        if (!Owner.IsAlive(Item) || !Owner.Has<Control>(Item))
+        {
+            return false;
+        }
+        return !Owner.HasState(Item, State::Hidden) && !Owner.HasState(Item, State::Disabled);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -712,7 +697,6 @@ namespace ZyPlugin::UI
         }
         else if (const ConstPtr<JsonValue> Inner = Markup::GetField(Entry, "Items"))
         {
-            // An item holding items of its own opens them as a submenu beside it.
             const Element Submenu = AddSubmenu(Target, Markup::GetText(Entry, "Text"));
             Fill(Reader, Submenu, * Inner);
 
@@ -750,7 +734,6 @@ namespace ZyPlugin::UI
         Reader.Bind(Item, Entry, "Hidden", Binder::PutState<State::Hidden>());
         Reader.Bind(Item, Entry, "Disabled", Binder::PutState<State::Disabled>());
 
-        // An item explains itself as any node does, its text read in the record the menu reads.
         Tooltip::Read(Reader, Item, Entry);
     }
 
@@ -760,6 +743,6 @@ namespace ZyPlugin::UI
     Str Menu::GetStyle(Element Part)
     {
         const ConstPtr<Roster> Own = Part.GetRoot().Get<Roster>();
-        return Own ? Str(Text(Own->Style)) : Str("Menu");
+        return Own ? Own->Style : Str("Menu");
     }
 }

@@ -24,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the image a theme lays over an element's box, under its picture, never sizing it.
     struct Backdrop final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::Paint;
 
         /// The image, or none to draw nothing.

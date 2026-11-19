@@ -12,8 +12,6 @@
 
 #include "Skin.hpp"
 #include "UI.Core/Handle.hpp"
-#include "Animation.hpp"
-#include "Transition.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]

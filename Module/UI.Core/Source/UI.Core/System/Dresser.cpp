@@ -11,16 +11,9 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Dresser.hpp"
-#include "Animator.hpp"
 #include "UI.Core/Element.hpp"
 #include "UI.Core/Facet/Input/Control.hpp"
 #include "UI.Core/Facet/Layout/Box.hpp"
-#include "UI.Core/Facet/Style/Motion.hpp"
-#include "UI.Core/Pane.hpp"
-#include "UI.Core/Style/Appearance.hpp"
-#include "UI.Core/Style/Skin.hpp"
-#include "UI.Core/Style/Theme.hpp"
-#include "UI.Core/Tree.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -65,7 +58,6 @@ namespace ZyPlugin::UI
 
     void Dresser::Dress(Ref<Pane> Target)
     {
-        // A pane with no row marked has nothing to dress, so it is not walked at all.
         if (!mTheme || !Target.Styled)
         {
             return;
@@ -110,7 +102,7 @@ namespace ZyPlugin::UI
             Skin       Values;
             const Bool Resolved = Target.Styles[Row] && mTheme->Resolve(Target.Styles[Row], Current, Values);
 
-            // What the last skin gave and this one does not is given at its default, so no old style or theme stays.
+            // What the last skin gave and this one does not goes back to its default.
             const Skin::Field Dropped = Renew(mTree.GetHandle(Slot), Resolved ? Values.Mask : Skin::Field::None);
 
             if (Resolved || Dropped != Skin::Field::None)
@@ -141,10 +133,9 @@ namespace ZyPlugin::UI
         Fit(Target, Row, Values);
 
         const Skin::Field Given = Values.Mask & Motion::kMoving;
-        Ptr<Motion>       State = mTree.Peek<Motion>(Slot);
 
-        // An element whose style names nothing that moves takes the values at once, and pays nothing more.
-        if (!State && !HasAnyBit(Values.Mask, Motion::kDriven))
+        // An element whose style names nothing that moves takes the values at once.
+        if (!mTree.Peek<Motion>(Slot) && !HasAnyBit(Values.Mask, Motion::kDriven))
         {
             Appearance Goal = mAnimator.Capture(Slot);
             Animator::Lay(Goal, Values);
@@ -152,19 +143,10 @@ namespace ZyPlugin::UI
             return;
         }
 
-        if (!State)
-        {
-            State = AddressOf(mTree.Add<Motion>(Element));
-            State->Shown  = mAnimator.Capture(Slot);
-            State->Own    = State->Shown;
-            State->Goal   = State->Shown;
-
-            // One never dressed counts as hidden until now, so showing up plays its way in.
-            State->Hidden = Dressed ? Target.IsHidden(Row) : true;
-        }
-
-        State->Touched |= Given;
-        mAnimator.Stir(Target, Row, Values, * State, Dressed);
+        // One never dressed counts as hidden until now, so showing up plays its way in.
+        Ref<Motion> State = mAnimator.Hold(Element, !Dressed || Target.IsHidden(Row));
+        State.Touched |= Given;
+        mAnimator.Stir(Target, Row, Values, State, Dressed);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -205,7 +187,6 @@ namespace ZyPlugin::UI
             Sized     = true;
         }
 
-        // What a facet sets at once, as a typeface or an image, is given by the facet's own applier.
         if (mAnimator.Tailor(mTree.GetHandle(Slot), Values))
         {
             Sized = true;
@@ -241,7 +222,7 @@ namespace ZyPlugin::UI
         const UInt32 Slot = Element.GetSlot();
         mWorn.Expand(Slot + 1);
 
-        // Only a new style or theme drops values; a slot another element left wore nothing, and drivers are no facet.
+        // Only a new style or theme drops values, since a slot another element left wore nothing.
         const Bool        Same = Slot < mDressed.GetSize() && mDressed[Slot] == Element;
         const Skin::Field Last = Same ? mWorn[Slot] : Skin::Field::None;
 

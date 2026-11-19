@@ -12,8 +12,6 @@
 
 #include "Summon.hpp"
 #include "Facet/Context.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/System/Pointer.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -60,7 +58,7 @@ namespace ZyPlugin::UI
                 continue;
             }
 
-            // The menu hears what it was opened over, the nearest control under the pointer as a list's item.
+            // The menu hears the nearest control under the pointer, as a list's item.
             const Handle Menu    = Found->Menu;
             const Handle Subject = Owner.GetCursor().Nearest(Over, false);
 

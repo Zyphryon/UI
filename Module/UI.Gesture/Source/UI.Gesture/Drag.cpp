@@ -13,24 +13,12 @@
 #include "Drag.hpp"
 #include "Facet/Draggable.hpp"
 #include "Tooltip.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Facet/Layout/Box.hpp"
 #include "UI.Core/Facet/Visual/Backdrop.hpp"
 #include "UI.Core/Facet/Visual/Bar.hpp"
 #include "UI.Core/Facet/Visual/Caption.hpp"
 #include "UI.Core/Facet/Visual/Look.hpp"
 #include "UI.Core/Facet/Visual/Picture.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
 #include "UI.Core/States.hpp"
-#include "UI.Core/System/Pointer.hpp"
-#include "UI.Core/Types.hpp"
-#include "UI.Data/Binder.hpp"
-#include "UI.Data/Datum.hpp"
-#include "UI.Data/Link.hpp"
-#include "UI.Data/Path.hpp"
-#include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -114,7 +102,7 @@ namespace ZyPlugin::UI
         const ConstPtr<JsonValue> Template = Markup::GetField(Node, "DragTemplate");
         const ConstPtr<JsonValue> Dropped  = Markup::GetField(Node, "Drop");
 
-        // Any of the source's fields makes it one; a value naming the model carries what the model holds.
+        // Any of the source's fields makes it one, and a bound value carries what the model holds.
         if (Carried || Kind || (Template && Template->IsString()))
         {
             const Bool Bound = Carried && Carried->IsString() && Binder::IsBound(Carried->GetString());
@@ -269,7 +257,7 @@ namespace ZyPlugin::UI
 
     void Drag::Spawn(Element Holder, Element Source)
     {
-        // Copied, since making the ghost may make sources too and move the store under this one.
+        // Copied, since making the ghost may make sources too and move this store.
         const ConstPtr<Draggable> Found  = Source.Get<Draggable>();
         const Markup::Recipe      Recipe = Found ? Found->Recipe : Markup::Recipe();
 
@@ -286,7 +274,7 @@ namespace ZyPlugin::UI
     {
         Ref<Session> Run = * Owner.Find<Session>();
 
-        // Another button going down while something is carried lets it go nowhere.
+        // Another button going down while something is carried drops it nowhere.
         if (!Run.Dragged.IsValid())
         {
             return false;
@@ -316,7 +304,7 @@ namespace ZyPlugin::UI
 
     Bool Drag::OnMove(Ref<Interface> Owner)
     {
-        // A button let go of while the window was away never came up here, so nothing is picked up or carried on.
+        // A button let go of while the window was away never came up here.
         if (!Owner.IsButtonHeld(ZyInput::Button::Left))
         {
             Cancel(Owner);
@@ -325,7 +313,7 @@ namespace ZyPlugin::UI
 
         Ref<Session> Run = * Owner.Find<Session>();
 
-        // What the pointer carries follows it, and only the targets it passes over hear it; one that died ends it.
+        // What is carried follows the pointer, and one that died ends the drag.
         if (Run.Dragged.IsValid())
         {
             if (!Owner.IsAlive(Run.Dragged))
@@ -337,7 +325,7 @@ namespace ZyPlugin::UI
         }
         else if (Owner.IsAlive(Run.Candidate) && Owner.GetPointer().GetDistance(Run.PressAt) >= kThreshold)
         {
-            // A press on something the pointer can carry becomes a drag once it moved far enough to be no click.
+            // A press becomes a drag once it moved too far to be a click.
             Lift(Owner, Run);
         }
         else
@@ -368,7 +356,7 @@ namespace ZyPlugin::UI
             return false;
         }
 
-        // Letting go of what is carried drops it on the target under the pointer, or nowhere when it died.
+        // What is carried drops on the target under the pointer, or nowhere when it died.
         if (Owner.IsAlive(Run.Dragged))
         {
             Aim(Owner, Run);
@@ -384,7 +372,7 @@ namespace ZyPlugin::UI
     {
         Ref<Session> Run = * Owner.Find<Session>();
 
-        // Escape lets go of what is carried before anything holding the keyboard hears it.
+        // Escape drops what is carried before anything holding the keyboard hears it.
         if (!Run.Dragged.IsValid() || Key != ZyInput::Key::Escape)
         {
             return false;
@@ -414,14 +402,9 @@ namespace ZyPlugin::UI
 
     Handle Drag::Receiver(Ref<Interface> Owner, ConstRef<Session> Run, Handle Element)
     {
-        const ConstPtr<Draggable> Carried = Owner.Get<Draggable>(Run.Dragged);
-        const UInt64              Kind    = Carried ? Carried->Kind : 0;
-
         for (Handle Current = Element; Current.IsValid(); Current = Owner.GetParent(Current))
         {
-            const ConstPtr<Droppable> Accepts = Owner.Get<Droppable>(Current);
-
-            if (!Accepts)
+            if (!Owner.Has<Droppable>(Current))
             {
                 continue;
             }
@@ -432,9 +415,9 @@ namespace ZyPlugin::UI
                 return Handle();
             }
 
-            const Bool Taken = Accepts->Kinds.IsEmpty() || Accepts->Kinds.Contains(Kind);
+            const Bool Accepted = Accepts(UI::Element(Owner, Current), UI::Element(Owner, Run.Dragged));
 
-            if (Taken && Owner.GetDispatcher().IsUsable(Current))
+            if (Accepted && Owner.GetDispatcher().IsUsable(Current))
             {
                 return Current;
             }
@@ -459,13 +442,13 @@ namespace ZyPlugin::UI
 
         Owner.SetState(Source, Dragging(), true);
 
-        // The ghost stands in a pane of its own over everything, where the pointer passes through it.
+        // The ghost has a pane of its own over everything, which the pointer passes through.
         Run.Ghost = Owner.Open(kLayer);
         Owner.SetStyle(Run.Ghost, Identify("Ghost"));
         Owner.EditBox(Run.Ghost).Placement = Position::Absolute;
         Carry(Owner, Run);
 
-        // Copied, since the code may add a facet of the kind and move the store under it.
+        // Copied, since the code may add a facet and move this store.
         const ConstPtr<Draggable> Carried = Owner.Get<Draggable>(Source);
         const Filler              Code    = Carried ? Carried->Ghost : Filler();
 
@@ -609,7 +592,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        // The copy of the element flows in the ghost at the size it was laid out at, wherever it stood.
+        // The copy flows in the ghost at the size it was laid out at.
         const Handle Top   = Owner.GetFirst(Ghost);
         Ref<Box>     Shape = Owner.EditBox(Top);
         Shape.Placement = Position::Flow;
@@ -641,7 +624,7 @@ namespace ZyPlugin::UI
 
     void Drag::Imitate(Ref<Interface> Owner, Handle From, Handle Into)
     {
-        // The ghost is what is carried, not the source left behind, so it is never drawn as carried or as a target.
+        // The ghost is never drawn as carried or as a target.
         const State Passing = States::kPassing | Dragging() | DropHover();
 
         Owner.SetStyle(Into, Owner.GetStyle(From));
@@ -649,7 +632,7 @@ namespace ZyPlugin::UI
         const Box Shape = Owner.GetBox(From);
         Owner.EditBox(Into) = Shape;
 
-        // Only the states that say what it is are copied; hover, press and focus belong to the original.
+        // Only the states that say what it is are copied, never hover, press or focus.
         Owner.SetState(Into, ClearBit(Owner.GetStates(From), Passing), true);
 
         Clone<Look>(Owner, From, Into);

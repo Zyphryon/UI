@@ -24,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the part of an element the children a layout gives it go in, as a window's content panel.
     struct Host final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The part of the element the children a layout gives it are built under.

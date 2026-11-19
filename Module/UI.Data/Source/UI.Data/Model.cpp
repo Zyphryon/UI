@@ -11,9 +11,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Model.hpp"
-#include "Datum.hpp"
-#include "Path.hpp"
-#include "Step.hpp"
 #include "UI.Core/Handle.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -27,7 +24,7 @@ namespace ZyPlugin::UI
 
     void Model::Set(Text Key, ConstRef<Datum> Value)
     {
-        // A name reaching into no record, the common case, is set without a path being built for it.
+        // A plain name, the common case, is set without building a path.
         if (StrFind(Key, '[') < 0)
         {
             if (!Key.IsEmpty())
@@ -110,7 +107,7 @@ namespace ZyPlugin::UI
         UInt32                Stamp = 0;
         const ConstPtr<Entry> Found = Reach(Where, Stamp);
 
-        // The lists on the way count by their own changes alone, so a change in a sibling record never reaches here.
+        // Lists on the way count their own changes alone, so a sibling record's change never reaches here.
         return Found ? Max(Stamp, Found->Deep) : Stamp;
     }
 
@@ -203,7 +200,7 @@ namespace ZyPlugin::UI
     {
         Ptr<Entry> Found = nullptr;
 
-        // A list of this model by its name alone is found without a path being built for it.
+        // A plain name is found without building a path.
         if (StrFind(List, '[') < 0)
         {
             Found = List.IsEmpty() ? nullptr : mEntries.Find(Digest(Identify(List)));
@@ -232,13 +229,10 @@ namespace ZyPlugin::UI
     {
         if (const ConstPtr<Entry> Found = Seek(List))
         {
-            for (UInt Index = 0; Index < Found->Records.GetSize(); ++Index)
+            return static_cast<SInt32>(Found->Records.Find([Key](ConstRef<Unique<Model>> Record)
             {
-                if (Found->Records[Index]->mKey == Key)
-                {
-                    return static_cast<SInt32>(Index);
-                }
-            }
+                return Record->mKey == Key;
+            }));
         }
         return -1;
     }
@@ -292,13 +286,10 @@ namespace ZyPlugin::UI
 
     void Model::Store(UInt64 Key, ConstRef<Datum> Value)
     {
-        // Setting what is there already is no change, so nothing bound to it is shown again, and nothing is copied.
+        // Setting what is there already shows nothing again and copies nothing.
         const ConstPtr<Entry> Held = mEntries.Find(Digest(Key));
 
-        const Bool Blank = Value.GetForm() == Form::None;
-        const Bool Same  = Held ? Held->Value == Value && (Held->Stamp != 0 || Blank) : Blank;
-
-        if (Same)
+        if (Held ? Held->Value == Value : Value.GetForm() == Form::None)
         {
             return;
         }
@@ -340,7 +331,7 @@ namespace ZyPlugin::UI
 
     void Model::Spread(UInt32 Stamp)
     {
-        // Each record names the list it stands in, so the walk up costs a lookup a level and never a search.
+        // Each record names its list, so the walk up costs a lookup a level.
         for (Ptr<Model> Current = this; Current->mParent; Current = Current->mParent)
         {
             const Ptr<Entry> Holder = Current->mParent->mEntries.Find(Digest(Current->mList));
@@ -373,7 +364,7 @@ namespace ZyPlugin::UI
             return nullptr;
         }
 
-        // A value that held anything else, or none, becomes an empty list, a change what is bound to it shows.
+        // A value that held anything else becomes an empty list, which its bindings show.
         Ref<Entry> Found = Owner->mEntries.FindOrInsert(Digest(Name));
 
         if (Found.Value.GetForm() != Form::List)
@@ -403,7 +394,7 @@ namespace ZyPlugin::UI
                 return nullptr;
             }
 
-            // A list newer than the value reached through it changed which record the path lands on.
+            // A list newer than the value changed which record the path lands on.
             Stamp = Max(Stamp, Found->Stamp);
 
             if (Hop.Index == Step::kLeaf)
@@ -433,13 +424,12 @@ namespace ZyPlugin::UI
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
     Ptr<Model::Entry> Model::Arrange(Text List)
     {
-        ConstRef<Sequence<UInt64>> Keys  = mRoot->mKeys;
-        Ptr<Model>                 Owner = nullptr;
-        UInt64                     Name  = 0;
-        const Ptr<Entry>           Found = Open(List, Owner, Name);
+        const ConstSpan<UInt64> Keys  = mRoot->mKeys;
+        Ptr<Model>              Owner = nullptr;
+        UInt64                  Name  = 0;
+        const Ptr<Entry>        Found = Open(List, Owner, Name);
 
         if (!Found)
         {
@@ -461,7 +451,7 @@ namespace ZyPlugin::UI
             return Found;
         }
 
-        // Each record is found by its key once, so a long list reordered costs no more than walking it.
+        // Each record is found by its key once, so reordering costs no more than a walk.
         Table<UInt64, UInt> Places;
 
         for (UInt Index = 0; Index < Records.GetSize(); ++Index)

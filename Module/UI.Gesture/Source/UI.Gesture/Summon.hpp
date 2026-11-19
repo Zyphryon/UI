@@ -20,7 +20,7 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Provides context menus to any element, a popup that a right press no handler took opens at the pointer.
+    /// \brief Provides context menus, a popup a right press no handler took opens at the pointer.
     class Summon final
     {
     public:
@@ -41,7 +41,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner   The interface the press went down on.
         /// \param Button  The button that went down, of which only the right one opens a menu.
-        /// \param Stopped The flag, `true` when a handler took the press, `false` otherwise.
+        /// \param Stopped `true` when a handler took the press, `false` otherwise.
         static void OnOffered(Ref<Interface> Owner, ZyInput::Button Button, Bool Stopped);
     };
 }

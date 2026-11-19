@@ -83,7 +83,7 @@ namespace ZyPlugin::UI
         /// \brief Hands out the index of a kind, the next one unless another library already named it.
         ///
         /// \param Key         The hash of the kind's name, the same in every library.
-        /// \param Interactive The flag, `true` when the kind stops the pointer, `false` otherwise.
+        /// \param Interactive `true` when the kind stops the pointer, `false` otherwise.
         /// \return The index the kind is known by from now on.
         static UInt32 Declare(UInt64 Key, Bool Interactive);
 

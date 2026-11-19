@@ -14,7 +14,7 @@
 
 namespace ZyPlugin::UI
 {
-    /// \brief Represents the string tables of an interface, one per language, that text written `@Key` is read through.
+    /// \brief Represents an interface's string tables, one per language, that text written `@Key` is read through.
     class Lexicon final
     {
     public:
@@ -26,7 +26,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Language The name of the language, as `English`.
         /// \param Source   The text of the table, a JSON object of texts and objects of more keys.
-        /// \param Error    The receiver of why the table cannot be read.
+        /// \param Error    Receives why the table cannot be read.
         /// \return `true` if it was read, `false` otherwise.
         Bool Read(Text Language, Text Source, Ref<Str> Error);
 
@@ -34,7 +34,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Language The name of the language, as `English`.
         /// \param Source   The text of the table, a JSON object of texts and objects of more keys.
-        /// \param Error    The receiver of why the table cannot be read.
+        /// \param Error    Receives why the table cannot be read.
         /// \return `true` if it was read, `false` otherwise, leaving the language as it was.
         Bool Merge(Text Language, Text Source, Ref<Str> Error);
 
@@ -103,11 +103,11 @@ namespace ZyPlugin::UI
         /// \return The table of the language, empty when it is new.
         Ref<Phrases> Open(Text Language);
 
-        /// \brief Reads the text of a table into its texts, every one checked before the table is handed back.
+        /// \brief Reads the text of a table into its texts, checking every one.
         ///
         /// \param Source The text of the table, a JSON object of texts and objects of more keys.
-        /// \param Output The receiver of the texts, added to those it held.
-        /// \param Error  The receiver of why the table cannot be read.
+        /// \param Output Receives the texts, added to those it held.
+        /// \param Error  Receives why the table cannot be read.
         /// \return `true` if the table is an object of texts and objects, `false` otherwise.
         static Bool Parse(Text Source, Ref<Phrases> Output, Ref<Str> Error);
 
@@ -115,8 +115,8 @@ namespace ZyPlugin::UI
         ///
         /// \param Prefix The name the keys are put after, with a dot, or empty for the top of the table.
         /// \param Node   The object whose keys are gathered.
-        /// \param Output The receiver of the texts, added to those it held.
-        /// \param Error  The receiver of why a value cannot be read.
+        /// \param Output Receives the texts, added to those it held.
+        /// \param Error  Receives why a value cannot be read.
         /// \return `true` if every value is text or an object, `false` otherwise.
         static Bool Gather(Text Prefix, ConstRef<JsonValue> Node, Ref<Phrases> Output, Ref<Str> Error);
 
@@ -124,8 +124,8 @@ namespace ZyPlugin::UI
         ///
         /// \param Key    The full key of the value, as `Menu.Play`.
         /// \param Value  The value gathered.
-        /// \param Output The receiver of the text, or the texts of the object.
-        /// \param Error  The receiver of why the value cannot be read.
+        /// \param Output Receives the text, or the texts of the object.
+        /// \param Error  Receives why the value cannot be read.
         /// \return `true` if the value is text or an object of such values, `false` otherwise.
         static Bool Take(ConstRef<Str> Key, ConstRef<JsonValue> Value, Ref<Phrases> Output, Ref<Str> Error);
 

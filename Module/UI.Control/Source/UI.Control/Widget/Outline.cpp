@@ -53,7 +53,6 @@ namespace ZyPlugin::UI
         Rows.Grow   = 1.0f;
         Rows.Basis  = Length::Pixels(0.0f);
 
-        // The rows are named one by one, as the open branches lay them out.
         Repeater::SetTemplate(List, Maker::Create<&Outline::OnMake>());
         Repeater::SetRecords(List, Sequence<Str>());
 
@@ -73,9 +72,7 @@ namespace ZyPlugin::UI
         const Element Result = Create(Parent, Markup::GetText(Node, "Style", "Outline"));
 
         SetNested(Result, Markup::GetText(Node, "Nested", "Children"));
-        Repeater::SetItemHeight(GetList(Result), Markup::GetNumber(Node, "ItemHeight", 0.0f));
         Repeater::BuildRows(Reader, GetList(Result), Node);
-        SetMultiple(Result, Markup::GetBool(Node, "Multiple"));
         SetUnfolded(Result, Markup::GetBool(Node, "Unfolded"));
         SetDraggable(Result, Markup::GetText(Node, "DragRows"), Markup::GetBool(Node, "DropBetween"));
 
@@ -84,7 +81,6 @@ namespace ZyPlugin::UI
             SetTemplate(Result, Reader, * Shape);
         }
 
-        // The records are one list in braces, read from the scope the tree view stands in.
         if (const Text Source = Markup::GetText(Node, "Items"); !Source.IsEmpty())
         {
             if (Text Inside; Repeater::Unwrap(Source, Inside))
@@ -209,21 +205,7 @@ namespace ZyPlugin::UI
 
     UInt64 Outline::GetKey(Element Owner, Text Path)
     {
-        const ConstPtr<Model> Data = Binder::GetModel(Owner.GetTree());
-        const SInt            Open = StrFindLast(Path, '[');
-
-        if (!Data || Open <= 0 || Path.GetBack() != ']')
-        {
-            return 0;
-        }
-
-        UInt32 Index = 0;
-
-        for (UInt Cursor = static_cast<UInt>(Open) + 1; Cursor + 1 < Path.GetSize() && StrIsDigit(Path[Cursor]); ++Cursor)
-        {
-            Index = Index * 10 + static_cast<UInt32>(Path[Cursor] - '0');
-        }
-        return Data->GetKey(Path.Slice(0, static_cast<UInt>(Open)), Index);
+        return Repeater::GetKey(Binder::GetModel(Owner.GetTree()), Path);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -295,7 +277,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Every branch above the record opens, so it has a row; each record on the way ends at a bracket or dot.
+        // Every branch above the record opens so it has a row.
         const ConstPtr<Model> Data   = Binder::GetModel(Owner.GetTree());
         Bool                  Opened = false;
 
@@ -446,7 +428,7 @@ namespace ZyPlugin::UI
         Own->Carry   = Kind;
         Own->Between = Between && !Kind.IsEmpty();
 
-        // Every row is made again, so each is a source and a target, and holds its marker, as asked now.
+        // Every row is made again, so each drags and holds its marker as asked now.
         Repeater::SetTemplate(GetList(Owner), Maker::Create<&Outline::OnMake>());
     }
 
@@ -468,21 +450,15 @@ namespace ZyPlugin::UI
         const ConstPtr<Hierarchy> Own = Owner.Get<Hierarchy>(Self);
         const Element             List(Owner, Own->List);
 
-        // A pick the rows report is the tree view's, so its binding and its observers hear it as its own.
-        if (Message.Kind == Signal::kChange && Message.Target == Own->List)
-        {
-            Owner.Dispatch(Event(Signal::kChange, Self));
-            return true;
-        }
-
-        // So are its rows' activations and renames, heard as stopped only when the tree view's are.
-        const Bool Reported = Message.Kind == Signal::kActivate || Message.Kind == Repeater::kRename;
+        // A pick, activation or rename the rows report is the tree view's, so its binding and observers hear it.
+        const Bool Picked   = Message.Kind == Signal::kChange || Message.Kind == Signal::kActivate;
+        const Bool Reported = Picked || Message.Kind == Repeater::kRename;
 
         if (Reported && Message.Target == Own->List)
         {
             Event Forward = Message;
             Forward.Target = Self;
-            return Owner.Dispatch(Forward);
+            return Owner.Dispatch(Forward) || Message.Kind == Signal::kChange;
         }
 
         const Bool Carried = !Own->Carry.IsEmpty() && Owner.GetParent(Message.Target) == Own->List;
@@ -505,10 +481,10 @@ namespace ZyPlugin::UI
 
         if (Message.Kind == Signal::kKey && Message.Target == Own->List)
         {
-            const SInt32 Lead = Repeater::GetIndex(List);
+            const SInt32 Lead     = Repeater::GetIndex(List);
+            const Bool   Sideways = Message.Key == ZyInput::Key::Left || Message.Key == ZyInput::Key::Right;
 
-            if (Lead < 0 || static_cast<UInt>(Lead) >= Own->Limbs.GetSize()
-                || (Message.Key != ZyInput::Key::Left && Message.Key != ZyInput::Key::Right))
+            if (Lead < 0 || static_cast<UInt>(Lead) >= Own->Limbs.GetSize() || !Sideways)
             {
                 return false;
             }
@@ -553,9 +529,10 @@ namespace ZyPlugin::UI
 
         // An arrow is a part of a row, and a row a child of the list.
         const Handle Parent = Owner.GetParent(Message.Target);
-        const Bool   Arrow  = Parent.IsValid() && Owner.GetParent(Parent) == Own->List
-            && GetArrow(Element(Owner, Parent)).GetHandle() == Message.Target;
-        const Bool   Twice  = Message.Kind == Signal::kPress && Message.Count == 2 && Parent == Own->List;
+        const Bool   Inside = Parent.IsValid() && Owner.GetParent(Parent) == Own->List;
+        const Bool   Arrow  = Inside && GetArrow(Element(Owner, Parent)).GetHandle() == Message.Target;
+        const Bool   Press  = Message.Kind == Signal::kPress && Message.Button == ZyInput::Button::Left;
+        const Bool   Twice  = Press && Message.Count == 2 && Parent == Own->List;
 
         if ((Message.Kind != Signal::kClick || !Arrow) && !Twice)
         {
@@ -590,7 +567,7 @@ namespace ZyPlugin::UI
         const UInt32         Stamp = Data ? Data->GetRevision() : 0;
         Bool                 Due   = Own->Stale || Data != Own->Source;
 
-        // A model left as it was costs one comparison; a change elsewhere in it, one lookup of the tree view's list.
+        // A model left as it was costs one comparison, and a change elsewhere in it one lookup of the tree view's list.
         if (Due || Stamp != Own->Revision)
         {
             const UInt32 Deep = Data && !Own->Where.Steps.IsEmpty() ? Data->GetSubtreeStamp(Own->Where) : 0;
@@ -627,12 +604,12 @@ namespace ZyPlugin::UI
         }
 
         // Copied, since the content may hold a list of its own and move this facet.
-        const Ptr<Hierarchy>      Own      = Root.Get<Hierarchy>();
-        const Ptr<Markup>         Reader   = Own->Reader;
-        const ConstPtr<JsonValue> Node     = Own->Shape ? Own->Shape.Grab() : nullptr;
-        const Str                 Style    = Own->Style;
-        const Str                 Carry    = Own->Carry;
-        const Bool                Between  = Own->Between;
+        const Ptr<Hierarchy>      Own     = Root.Get<Hierarchy>();
+        const Ptr<Markup>         Reader  = Own->Reader;
+        const ConstPtr<JsonValue> Node    = Own->Shape ? Own->Shape.Grab() : nullptr;
+        const Str                 Style   = Own->Style;
+        const Str                 Carry   = Own->Carry;
+        const Bool                Between = Own->Between;
 
         Ref<Box> Line = Row.EditBox();
         Line.Flow    = Direction::Row;
@@ -669,7 +646,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // Each row is carried as the tree view's kind and takes a row of it, the payload set once it is picked up.
+        // Each row is a source and a target of the tree view's kind, its payload set once it is picked up.
         Drag::SetSource(Row, Carry);
         Drag::SetTarget(Row, Carry);
 
@@ -678,7 +655,7 @@ namespace ZyPlugin::UI
             return;
         }
 
-        // The marker stands over the row's top or bottom edge, out of the flow, hidden until a drop would land there.
+        // The marker is hidden until a drop would land beside the row.
         const Element Marker = Panel::Create(Row, Widget::Part(Style, "Marker"));
         Ref<Box>      Edge   = Marker.EditBox();
         Edge.Placement = Position::Absolute;
@@ -766,25 +743,8 @@ namespace ZyPlugin::UI
 
     Digest Outline::GetBranch(ConstPtr<Model> Data, Text Path)
     {
-        const SInt Open = StrFindLast(Path, '[');
-
-        // A record of a list ends in its index, which the model reads its key by.
-        if (Data && Open > 0 && Path.GetBack() == ']')
-        {
-            UInt32 Index = 0;
-
-            for (UInt Cursor = static_cast<UInt>(Open) + 1; Cursor + 1 < Path.GetSize() && StrIsDigit(Path[Cursor]);
-                 ++Cursor)
-            {
-                Index = Index * 10 + static_cast<UInt32>(Path[Cursor] - '0');
-            }
-
-            if (const UInt64 Key = Data->GetKey(Path.Slice(0, static_cast<UInt>(Open)), Index); Key != 0)
-            {
-                return Digest(Key);
-            }
-        }
-        return Digest(Identify(Path));
+        const UInt64 Key = Repeater::GetKey(Data, Path);
+        return Digest(Key != 0 ? Key : Identify(Path));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -856,20 +816,22 @@ namespace ZyPlugin::UI
         const Element             List = GetList(Owner);
         Real32                    Step = kIndent;
 
-        // A level's indent is the theme's width of the style plus `.Indent`, named on the stack for the frame loop.
+        // A level's indent is the theme's width for the style plus `.Indent`, named on the stack for the frame loop.
         String<128> Name;
         Name.Format("{0}.Indent", Own->Style);
 
-        if (Skin Found; Source && Source->Resolve(Identify(Name), State::None, Found)
-            && Found.Has(Skin::Field::Width) && Found.Width.Measure == Length::Unit::Pixel)
+        if (Skin Found; Source && Source->Resolve(Identify(Name), State::None, Found))
         {
-            Step = Found.Width.Value;
+            if (Found.Has(Skin::Field::Width) && Found.Width.Measure == Length::Unit::Pixel)
+            {
+                Step = Found.Width.Value;
+            }
         }
 
         Bool Changed = false;
 
         // Editing a row only changes its boxes and states, so the cells are read where they stand.
-        ConstRef<Sequence<Cell>> Cells = List.Get<Items>()->Cells;
+        ConstSpan<Cell> Cells = List.Get<Items>()->Cells;
 
         for (ConstRef<Cell> Entry : Cells)
         {

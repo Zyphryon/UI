@@ -11,14 +11,10 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Image.hpp"
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Facet/Visual/Picture.hpp"
-#include "UI.Core/Paint/Canvas.hpp"
 #include "UI.Core/Types.hpp"
 #include "UI.Data/Binder.hpp"
 #include "UI.Data/Datum.hpp"
 #include "UI.Data/Link.hpp"
-#include "UI.Markup/Markup.hpp"
 #include "UI.Markup/Parser.hpp"
 #include "UI.Markup/Sheet.hpp"
 
@@ -68,9 +64,8 @@ namespace ZyPlugin::UI
 
         Ref<Picture> Shown = * Result.Get<Picture>();
 
-        const ConstPtr<JsonValue> Region = Markup::GetField(Node, "Region");
-
-        const Bool Written = Region && !Binder::IsBound(Markup::GetText(Node, "Region"));
+        const ConstPtr<JsonValue> Region  = Markup::GetField(Node, "Region");
+        const Bool                Written = Region && !Binder::IsBound(Markup::GetText(Node, "Region"));
 
         if (Written && !Parser::ParseRegion(* Region, Shown.Region))
         {
@@ -90,9 +85,7 @@ namespace ZyPlugin::UI
             }
         }
 
-        const Real32 Layer = Markup::GetNumber(Node, "Layer", 0.0f);
-
-        Shown.Layer  = static_cast<UInt16>(Clamp(Layer, 0.0f, 65535.0f));
+        Shown.Layer  = static_cast<UInt16>(Clamp(Markup::GetNumber(Node, "Layer", 0.0f), 0.0f, 65535.0f));
         Shown.Filter = ZyEnum::Cast(Markup::GetText(Node, "Filter"), Canvas::Filter::Linear);
         Shown.Fit    = ZyEnum::Cast(Markup::GetText(Node, "Fit"), Fit::Stretch);
         Shown.Opaque = Markup::GetBool(Node, "Opaque");
@@ -106,7 +99,7 @@ namespace ZyPlugin::UI
             SetAddress(Target, * Loader, Value.GetText());
         }));
 
-        // A bound region is a text of four numbers, as `0 0 0.5 1`, so a row of a list shows its own frame of a sheet.
+        // A bound region is a text of four numbers, as `0 0 0.5 1`.
         Reader.Bind(Result, Node, "Region", Writer([](Element Target, ConstRef<Datum> Value)
         {
             const Text Content = Value.GetText();
@@ -115,16 +108,18 @@ namespace ZyPlugin::UI
 
             for (Ref<Real32> Corner : Corners)
             {
-                while (Cursor < Content.GetSize() && (StrIsSpace(Content[Cursor]) || Content[Cursor] == ','))
-                {
-                    ++Cursor;
-                }
-                Corner = StrExtractNumber<Real32>(Content, Cursor);
+                StrSkip(Content, Cursor, [](Char Letter) { return StrIsSpace(Letter) || Letter == ','; });
+                Corner =StrExtractNumber<Real32>(Content, Cursor);
             }
             SetRegion(Target, Rect(Corners[0], Corners[1], Corners[2], Corners[3]));
         }));
         Reader.Bind(Result, Node, "Layer", Binder::Put<UInt32, &Image::SetLayer>());
-        Reader.Bind(Result, Node, "Tint", Binder::Put<Color, &Image::SetTint>());
+
+        // A bound tint whose value holds no colour yet, as a key the model never set, shows the picture as it is.
+        Reader.Bind(Result, Node, "Tint", Writer([](Element Target, ConstRef<Datum> Value)
+        {
+            SetTint(Target, Value.GetForm() == Form::Color ? Value.GetColor() : Color::White());
+        }));
 
         // A list mixing art whose alpha is coverage with art whose alpha carries data, as a height, picks per row.
         Reader.Bind(Result, Node, "Opaque", Binder::Put<Bool, &Image::SetOpaque>());
@@ -137,11 +132,7 @@ namespace ZyPlugin::UI
     void Image::SetSource(Element Target, Retainer<ZyGraphic::Image> Source)
     {
         // A new picture may be of another size, so the image is measured again.
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Source != Source)
-        {
-            Shown->Source = Move(Source);
-            Target.GetTree().Mark(Target.GetHandle(), Picture::kMarks);
-        }
+        Change(Target, &Picture::Source, Move(Source), Picture::kMarks);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -188,12 +179,7 @@ namespace ZyPlugin::UI
     {
         // A bound value holding none reads as the largest number, which shows the first slice.
         const UInt16 Slice = (Layer == kMaximum<UInt32>) ? 0 : static_cast<UInt16>(Min(Layer, 0xFFFFu));
-
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Layer != Slice)
-        {
-            Shown->Layer = Slice;
-            Target.GetTree().Mark(Target.GetHandle(), Dirty::Paint);
-        }
+        Change(Target, &Picture::Layer, Slice, Dirty::Paint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -202,11 +188,7 @@ namespace ZyPlugin::UI
     void Image::SetRegion(Element Target, Rect Region)
     {
         // The image asks for the pixels of the part it shows, so another part measures it again.
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Region != Region)
-        {
-            Shown->Region = Region;
-            Target.GetTree().Mark(Target.GetHandle(), Picture::kMarks);
-        }
+        Change(Target, &Picture::Region, Region, Picture::kMarks);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -214,11 +196,7 @@ namespace ZyPlugin::UI
 
     void Image::SetTint(Element Target, Color Tint)
     {
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Tint != Tint)
-        {
-            Shown->Tint = Tint;
-            Target.GetTree().Mark(Target.GetHandle(), Dirty::Paint);
-        }
+        Change(Target, &Picture::Tint, Tint, Dirty::Paint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -226,11 +204,7 @@ namespace ZyPlugin::UI
 
     void Image::SetFilter(Element Target, Canvas::Filter Filter)
     {
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Filter != Filter)
-        {
-            Shown->Filter = Filter;
-            Target.GetTree().Mark(Target.GetHandle(), Dirty::Paint);
-        }
+        Change(Target, &Picture::Filter, Filter, Dirty::Paint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -238,11 +212,7 @@ namespace ZyPlugin::UI
 
     void Image::SetFit(Element Target, Fit Mode)
     {
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Fit != Mode)
-        {
-            Shown->Fit = Mode;
-            Target.GetTree().Mark(Target.GetHandle(), Dirty::Paint);
-        }
+        Change(Target, &Picture::Fit, Mode, Dirty::Paint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -250,11 +220,7 @@ namespace ZyPlugin::UI
 
     void Image::SetOpaque(Element Target, Bool Opaque)
     {
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Opaque != Opaque)
-        {
-            Shown->Opaque = Opaque;
-            Target.GetTree().Mark(Target.GetHandle(), Dirty::Paint);
-        }
+        Change(Target, &Picture::Opaque, Opaque, Dirty::Paint);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -262,10 +228,19 @@ namespace ZyPlugin::UI
 
     void Image::SetFlip(Element Target, Bool Flip)
     {
-        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->Flip != Flip)
+        Change(Target, &Picture::Flip, Flip, Dirty::Paint);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    template<typename Type>
+    void Image::Change(Element Target, Type Picture::* Field, Type Value, Dirty Marks)
+    {
+        if (const Ptr<Picture> Shown = Target.Get<Picture>(); Shown && Shown->*Field != Value)
         {
-            Shown->Flip = Flip;
-            Target.GetTree().Mark(Target.GetHandle(), Dirty::Paint);
+            Shown->*Field = Move(Value);
+            Target.GetTree().Mark(Target.GetHandle(), Marks);
         }
     }
 }

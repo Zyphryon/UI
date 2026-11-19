@@ -24,25 +24,21 @@ namespace ZyPlugin::UI
 
     Bool Path::Parse(Text Source, Ref<Path> Output)
     {
-        // The steps are written straight into the path given, which keeps what it had room for.
-        Ref<Path> Result = Output;
-        Result.Steps.Clear();
+        // Written into the path given, which keeps its room.
+        Output.Steps.Clear();
 
         for (UInt Start = 0;;)
         {
             const SInt Open = StrFind(Source.Slice(Start), '[');
 
-            // Past the last bracket, the rest is the name of the value, dots and all.
+            // Past the last bracket, the rest is the value's name, dots and all.
             if (Open < 0)
             {
-                const Text Name = Source.Slice(Start);
-
-                if (Name.IsEmpty())
+                if (const Text Name = Source.Slice(Start); !Name.IsEmpty())
                 {
-                    Result.Steps.Clear();
-                    return false;
+                    Output.Steps.Append(Identify(Name), Step::kLeaf);
+                    return true;
                 }
-                Result.Steps.Append(Identify(Name), Step::kLeaf);
                 break;
             }
 
@@ -52,22 +48,22 @@ namespace ZyPlugin::UI
 
             if (Open == 0 || Close < 0 || !ParseIndex(Source.Slice(Bracket + 1, static_cast<UInt>(Close) - 1), Index))
             {
-                Result.Steps.Clear();
-                return false;
+                break;
             }
 
-            Result.Steps.Append(Identify(Source.Slice(Start, static_cast<UInt>(Open))), Index);
+            Output.Steps.Append(Identify(Source.Slice(Start, static_cast<UInt>(Open))), Index);
 
-            // A record is never a value of its own, so a dot and the name of one of its values must follow.
+            // A record is never a value, so a dot and a value's name must follow.
             Start = Bracket + static_cast<UInt>(Close) + 1;
 
             if (!StrConsume(Source, Start, '.'))
             {
-                Result.Steps.Clear();
-                return false;
+                break;
             }
         }
-        return true;
+
+        Output.Steps.Clear();
+        return false;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

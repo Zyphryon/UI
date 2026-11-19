@@ -51,7 +51,7 @@ namespace ZyPlugin::UI
         /// The side of each cell its text sits at.
         Align             Alignment = Align::Start;
 
-        /// `true` when a click on its heading sorts the grid by it.
+        /// `true` when a click on its heading sorts the grid by it, `false` when the heading ignores clicks.
         Bool              Sortable  = true;
 
         /// The name of the template each cell is made from, or empty for a label showing the value.
@@ -64,7 +64,7 @@ namespace ZyPlugin::UI
     /// \brief Represents a grid, with its columns, the list its rows come from, and how they are sorted.
     struct Ledger final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The columns, in the order they stand.
@@ -115,13 +115,13 @@ namespace ZyPlugin::UI
         /// The distance the press on a column's grip landed left of its heading's right edge, in pixels.
         Real32           Grab       = 0.0f;
 
-        /// `true` when the rows run from the last value to the first.
+        /// `true` when the rows run from the last value to the first, `false` from the first to the last.
         Bool             Descending = false;
 
-        /// `true` when the group whose value reads highest, as a set flag, comes first, `false` when the lowest does.
+        /// `true` when the group whose value reads highest comes first, `false` when the lowest does.
         Bool             GroupDown  = true;
 
-        /// `true` when the rows are to be ordered again at the next update.
+        /// `true` when the rows are to be ordered again at the next update, `false` while their order holds.
         Bool             Stale      = true;
     };
 
@@ -139,6 +139,8 @@ namespace ZyPlugin::UI
         /// The event reported when the column the grid is sorted by, or the way it runs, changes.
         static constexpr UInt64 kSort   = Identify("Sort");
 
+    public:
+
         /// \brief Creates a grid holding no column.
         ///
         /// \param Parent The element the grid is added to.
@@ -148,7 +150,7 @@ namespace ZyPlugin::UI
 
         /// \brief Creates a grid from a layout node, with its `Items`, `Columns`, sorting, grouping and `Selected`.
         ///
-        /// \param Reader The markup reading the layout, which must outlive the grid, since rows are made as it scrolls.
+        /// \param Reader The markup reading the layout, which must outlive the grid.
         /// \param Parent The element the grid is added to.
         /// \param Node   The layout node the grid is read from.
         /// \return The grid, showing the columns the node lists.
@@ -192,7 +194,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner      The grid whose rows are sorted.
         /// \param Index      The index of the column sorted by, or below nought for the model's order.
-        /// \param Descending The flag, `true` to run from the last value to the first, `false` the other way.
+        /// \param Descending `true` to run from the last value to the first, `false` the other way.
         static void SetSort(Element Owner, SInt32 Index, Bool Descending = false);
 
         /// \brief Gets the column the rows are sorted by.
@@ -217,7 +219,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner      The grid whose rows are grouped.
         /// \param Key        The name of the value the rows are grouped by, as `Folder`, or empty to group none.
-        /// \param Descending The flag, `true` to put the highest first, as a set flag does, `false` the lowest.
+        /// \param Descending `true` to put the highest first, as a set flag does, `false` the lowest.
         static void SetGroup(Element Owner, Text Key, Bool Descending = true);
 
         /// \brief Orders the rows again at the next update, as when a value a game's comparer reads changed.
@@ -228,7 +230,7 @@ namespace ZyPlugin::UI
         /// \brief Lets control and shift pick several rows together.
         ///
         /// \param Owner   The grid whose pick is set up.
-        /// \param Enabled The flag, `true` to pick several, `false` to pick one at a time.
+        /// \param Enabled `true` to pick several, `false` to pick one at a time.
         static void SetMultiple(Element Owner, Bool Enabled);
 
         /// \brief Picks the row of a record alone, without reporting it.
@@ -290,10 +292,10 @@ namespace ZyPlugin::UI
             /// The name of the value the records are grouped by first, or empty for none.
             Str      Group;
 
-            /// `true` when the column runs from the last value to the first.
+            /// `true` when the column runs from the last value to the first, `false` from the first to the last.
             Bool     Descending = false;
 
-            /// `true` when the group reading highest comes first.
+            /// `true` when the group reading highest comes first, `false` when the lowest does.
             Bool     GroupDown  = true;
         };
 
@@ -356,7 +358,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Row    The row whose cells are sized.
         /// \param Widths The width of each column, in pixels.
-        static void Fit(Element Row, ConstRef<Sequence<Real32>> Widths);
+        static void Fit(Element Row, ConstSpan<Real32> Widths);
 
         /// \brief Shows the sort mark on the heading sorted by and hides the others.
         ///
@@ -374,8 +376,8 @@ namespace ZyPlugin::UI
         ///
         /// \param First  The record weighed first.
         /// \param Second The record weighed against it.
-        /// \param Key    The name of the value.
-        /// \return Below nought when the first sorts first, above nought when the second does, nought on a tie.
+        /// \param Key    The name of the value the records are weighed by.
+        /// \return The order, below nought when the first sorts first, above nought when the second does.
         static SInt32 Weigh(ConstRef<Model> First, ConstRef<Model> Second, Text Key);
 
         /// \brief Checks whether one record sorts before another, by group, then column, then the model's order.
@@ -385,7 +387,7 @@ namespace ZyPlugin::UI
         /// \param First   The position of the record asked about.
         /// \param Second  The position of the record it is weighed against.
         /// \return `true` if the first sorts before the second, `false` otherwise.
-        static Bool Precedes(ConstRef<Sequence<Ptr<Model>>> Records, ConstRef<Rule> Order, UInt32 First, UInt32 Second);
+        static Bool Precedes(ConstSpan<Ptr<Model>> Records, ConstRef<Rule> Order, UInt32 First, UInt32 Second);
 
         /// \brief Finds the grid an element stands in.
         ///

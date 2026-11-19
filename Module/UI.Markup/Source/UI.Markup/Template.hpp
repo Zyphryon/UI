@@ -31,7 +31,7 @@ namespace ZyPlugin::UI
         /// \return The template, or `nullptr` when none has the name.
         ConstPtr<JsonValue> Find(UInt64 Name) const;
 
-        /// \brief Checks whether a template is being made already, further up, so making it again would never end.
+        /// \brief Checks whether a template is being made already, further up.
         ///
         /// \param Name The identifier of the template's name.
         /// \return `true` if it is, `false` otherwise.
@@ -47,13 +47,6 @@ namespace ZyPlugin::UI
 
     public:
 
-        /// \brief Copies a template as a node using it makes it, with the parameters and the node's fields.
-        ///
-        /// \param Template The template's root node.
-        /// \param Node     The node using it, or one that is not an object to take every default.
-        /// \return The copy, ready to be built.
-        static JsonValue Copy(ConstRef<JsonValue> Template, ConstRef<JsonValue> Node);
-
         /// \brief Gets a template as a node using it makes it, copied only when a parameter or the node changes it.
         ///
         /// \param Template The template's root node.
@@ -67,7 +60,7 @@ namespace ZyPlugin::UI
     private:
 
         /// The field of a template that holds its parameters.
-        static constexpr Symbol kParameters  = "Parameters";
+        static constexpr Symbol kParameters = "Parameters";
 
         /// The fields of a node using a template that are never copied into it, as its widget, parameters and children.
         static constexpr Array<Text, 3> kOwnFields { "Widget", "Parameters", "Children" };

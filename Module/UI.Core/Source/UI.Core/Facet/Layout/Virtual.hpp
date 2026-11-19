@@ -29,7 +29,7 @@ namespace ZyPlugin::UI
     /// \brief Represents an element that makes what it holds from the room the last layout gave it, as a list's rows.
     struct Virtual final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The code making what the element holds.

@@ -24,7 +24,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the popup a right press on an element opens at the pointer, as a context menu.
     struct Context final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks       = Dirty::None;
 
         /// `true`, so the pointer stops at an element holding it.

@@ -12,11 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "UI.Core/Element.hpp"
-#include "UI.Core/Event.hpp"
-#include "UI.Core/Handle.hpp"
-#include "UI.Core/Interface.hpp"
-#include "UI.Core/Types.hpp"
 #include "UI.Markup/Markup.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -28,7 +23,7 @@ namespace ZyPlugin::UI
     /// \brief Represents the tab a tab control shows, and the parts its tabs and pages stand in.
     struct Deck final
     {
-        /// What a change to the facet must have worked out again.
+        /// The parts a change to the facet must have worked out again.
         static constexpr Dirty kMarks = Dirty::None;
 
         /// The row the tab buttons stand in.
@@ -46,7 +41,7 @@ namespace ZyPlugin::UI
     {
     public:
 
-        /// The event reported on a tab's close button click, `Other` naming it; a handler stopping it keeps the tab.
+        /// The event reported when a tab's close button is clicked, `Other` naming the tab, kept if a handler stops it.
         static constexpr UInt64 kClose = Identify("TabClose");
 
     public:
@@ -71,7 +66,7 @@ namespace ZyPlugin::UI
         /// \param Owner    The tab control to add the tab to.
         /// \param Title    The text on the tab.
         /// \param Style    The name of the style the tab control wears.
-        /// \param Closable The flag, `true` to give the tab a close button after its title, `false` otherwise.
+        /// \param Closable `true` to give the tab a close button after its title, `false` otherwise.
         /// \return The page, to hold what the tab shows.
         static Element AddTab(Element Owner, Text Title, Text Style = "Tabs", Bool Closable = false);
 
@@ -79,7 +74,7 @@ namespace ZyPlugin::UI
         ///
         /// \param Owner    The tab control holding the tab.
         /// \param Index    The index of the tab, left alone when it names none.
-        /// \param Closable The flag, `true` to give it a close button, `false` to take the button away.
+        /// \param Closable `true` to give it a close button, `false` to take the button away.
         /// \param Style    The name of the style the tab control wears, which the button wears followed by `.Close`.
         static void SetClosable(Element Owner, UInt32 Index, Bool Closable, Text Style = "Tabs");
 
@@ -90,7 +85,7 @@ namespace ZyPlugin::UI
         /// \return The button after the tab's title, or one naming nothing for a tab with none or past the last.
         static Element GetClose(Element Owner, UInt32 Index);
 
-        /// \brief Takes a tab, its page and its contents away, showing the next tab; move out what must live on.
+        /// \brief Takes a tab and its page away with what the page holds, showing the next tab.
         ///
         /// \param Owner The tab control to take the tab from.
         /// \param Index The index of the tab, left alone when it names none.
@@ -136,7 +131,7 @@ namespace ZyPlugin::UI
         /// \param Owner    The tab control to add the tab to.
         /// \param Node     The entry, giving `Title`, `Name`, `Closable` and `Children`.
         /// \param Style    The name of the style the tab control wears.
-        /// \param Closable The flag, `true` when the control gives tabs a close button unless the entry says not.
+        /// \param Closable `true` when the control gives tabs a close button the entry may refuse, `false` otherwise.
         static void BuildTab(Ref<Markup> Reader, Element Owner, ConstRef<JsonValue> Node, Text Style, Bool Closable);
 
         /// \brief Reports a tab's close button clicked, and takes the tab away unless a handler stops the report.
@@ -149,7 +144,7 @@ namespace ZyPlugin::UI
         /// \brief Gives a tab button a close button after its title, or takes it away.
         ///
         /// \param Tab      The tab button given the close button or losing it.
-        /// \param Closable The flag, `true` to give it a close button, `false` to take the button away.
+        /// \param Closable `true` to give it a close button, `false` to take the button away.
         /// \param Style    The name of the style the tab control wears.
         static void Equip(Element Tab, Bool Closable, Text Style);
 
