@@ -272,6 +272,15 @@ namespace ZyPlugin::UI
             mDispatcher.UnbindAll();
         }
 
+        /// \brief Checks whether code runs on the events of the controls naming an action.
+        ///
+        /// \param Action The name of the action.
+        /// \return `true` if code is bound to it, `false` otherwise.
+        ZY_INLINE Bool IsBound(Text Action) const
+        {
+            return mDispatcher.IsBound(Action);
+        }
+
         /// \brief Runs code when a control naming an action is clicked.
         ///
         /// \param Action The name of the action, which replaces whatever code it ran before.

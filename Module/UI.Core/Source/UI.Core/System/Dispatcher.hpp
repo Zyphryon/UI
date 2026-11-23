@@ -63,6 +63,12 @@ namespace ZyPlugin::UI
         /// \brief Stops running code on the events of the controls naming any action.
         void UnbindAll();
 
+        /// \brief Checks whether code runs on the events of the controls naming an action.
+        ///
+        /// \param Action The name of the action.
+        /// \return `true` if code is bound to it, `false` otherwise.
+        Bool IsBound(Text Action) const;
+
         /// \brief Runs a shortcut's code, or else the code bound to its action, as its key goes down.
         ///
         /// \param Entry   The shortcut whose code or action runs.
