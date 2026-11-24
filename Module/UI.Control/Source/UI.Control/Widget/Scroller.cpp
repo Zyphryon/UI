@@ -66,7 +66,7 @@ namespace ZyPlugin::UI
     {
         const Element Result = Create(Parent, Markup::GetText(Node, "Style", "Scroller"));
 
-        SetHorizontal(Result, Markup::GetBool(Node, "Horizontal", true));
+        SetHorizontal(Result, Markup::GetBool(Node, "Horizontal"));
         SetFollow(Result, Markup::GetBool(Node, "Follow"));
         Remember(Result, Memory::GetKey(Reader, Node));
         return Result;

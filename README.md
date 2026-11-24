@@ -20,6 +20,16 @@ FetchContent_Declare(ZyUI GIT_REPOSITORY https://github.com/Zyphryon/UI GIT_TAG 
 FetchContent_MakeAvailable(ZyUI)
 
 TARGET_LINK_LIBRARIES(MyGame PRIVATE ZyUI)
+ZyApplyResources(MyGame)
+```
+
+The canvas draws with shaders embedded as resources. `ZyApplyResources` writes `MyGame.Embedded.hpp`, and the game hands
+its content service to the function it declares before it draws anything, or the canvas finds no shader:
+
+```cpp
+#include "MyGame.Embedded.hpp"
+
+ZyRegisterEmbedded(* GetService<ZyContent::Service>());
 ```
 
 `ZyUI` gathers five libraries, which can also be linked on their own:
@@ -67,7 +77,8 @@ named by its `Widget` in a layout.
 Events bubble from the target through every control above it. Each control runs its behaviour, then the game's
 observers, then the action it names. Most actions only care that their control was clicked or changed: `OnClick` and
 `OnChange` hear just that, from the control naming the action, and let the event bubble on so a menu or dialog holding
-the control still closes. `Bind` hears every event raw, and can stop one.
+the control still closes. `Bind` hears every event raw, and can stop one. An action holds one piece of code, so a
+second `OnClick`, `OnChange` or `Bind` on its name replaces the first, and `IsBound` tells whether one is held.
 
 ```cpp
 Interface.OnClick("Shop.Buy", [this](Element Control) { Buy(Repeater::GetKey(mStock, Control)); });
@@ -449,8 +460,9 @@ mInterface.PreviousFocus();
 `Navigate` with nothing holding the keyboard gives it to the first control, so a pad needs no pointer to start.
 
 **Scrolling.** A `Scroller` is content with a bar down its side and along its bottom, each shown only while there is
-something to scroll. `Horizontal` lets it scroll sideways, and `Follow` keeps it at its end, as a log. A `Scrollbar`
-scrolls any element named by its `Target`. A viewer must be given a height (200 unless given).
+something to scroll. `Horizontal` lets it scroll sideways, off unless given so labels inside wrap, and `Follow` keeps
+it at its end, as a log. A `Scrollbar` scrolls any element named by its `Target`. A viewer must be given a height (200
+unless given).
 
 ```json
 { "Widget": "Scroller", "Height": 250, "Horizontal": true, "Follow": false, "Children": [ ... ] }

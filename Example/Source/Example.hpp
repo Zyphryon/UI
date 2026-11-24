@@ -445,6 +445,11 @@ namespace ZyPlugin::UI
                 {
                     return OnPressed(Message, Self, "Defend");
                 }));
+            mInterface.Bind("Quest",
+                Handler::Create([this](Ref<Interface>, ConstRef<Event> Message, Handle Self)
+                {
+                    return OnPressed(Message, Self, "Take the quest");
+                }));
             mInterface.Bind("ShowNames",
                 Handler::Create([this](Ref<Interface>, ConstRef<Event> Message, Handle Self)
                 {
